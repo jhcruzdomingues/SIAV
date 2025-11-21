@@ -1,0 +1,399 @@
+/**
+ * =============================================
+ * ESTILOS DE ACESSIBILIDADE
+ * =============================================
+ * Melhora foco visual, navegação por teclado e suporte a leitores de tela
+ */
+
+/* ===== UTILITÁRIO SCREEN READER ONLY ===== */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* ===== FOCO VISÍVEL APRIMORADO ===== */
+*:focus {
+    outline: 3px solid #4A90E2;
+    outline-offset: 2px;
+}
+
+/* Foco especial para navegação por teclado */
+.keyboard-focus {
+    outline: 3px dashed #e74c3c !important;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.2);
+}
+
+/* Remove outline quando clicado com mouse (não por teclado) */
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+:focus-visible {
+    outline: 3px solid #4A90E2;
+    outline-offset: 2px;
+}
+
+/* ===== SKIP LINKS ===== */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #000;
+    color: #fff;
+    padding: 8px 16px;
+    text-decoration: none;
+    z-index: 100000;
+    font-weight: bold;
+    border-radius: 0 0 4px 0;
+    transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* ===== BOTÕES E INTERATIVOS ===== */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 3px solid #4A90E2;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.1);
+}
+
+/* Aumenta área de toque em dispositivos móveis */
+@media (max-width: 768px) {
+    button,
+    a,
+    input[type="button"],
+    input[type="submit"] {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 12px 16px;
+    }
+}
+
+/* ===== CARDS FOCÁVEIS ===== */
+.card[role="button"]:focus,
+.protocol-item:focus,
+.settings-card:focus {
+    outline: 3px solid #4A90E2;
+    outline-offset: 3px;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== MODAIS ===== */
+.modal[aria-modal="true"] {
+    /* Garante que modal capture foco */
+}
+
+.modal-content:focus-within {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== ALERTAS E NOTIFICAÇÕES ===== */
+[role="alert"],
+[role="status"],
+[aria-live] {
+    border-left: 4px solid currentColor;
+    padding-left: 12px;
+}
+
+/* ===== TOASTS ===== */
+.toast-container {
+    position: fixed;
+    right: 16px;
+    bottom: 24px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 360px;
+}
+
+.toast {
+    background: rgba(0,0,0,0.85);
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    transform-origin: right bottom;
+}
+
+.toast-hidden { opacity: 0; transform: translateY(12px) scale(0.98); }
+
+.toast-info { background: var(--primary, #4A90E2); }
+.toast-success { background: var(--success, #2ecc71); }
+.toast-warning { background: var(--warning, #f39c12); color: #222; }
+.toast-danger { background: var(--danger, #e74c3c); }
+
+.toast[role="status"] { border-left: 4px solid rgba(255,255,255,0.15); }
+
+/* ===== CONTRASTE APRIMORADO ===== */
+/* Modo de alto contraste */
+@media (prefers-contrast: high) {
+    * {
+        border-color: currentColor !important;
+    }
+
+    button,
+    .btn {
+        border: 2px solid currentColor;
+        font-weight: bold;
+    }
+
+    .card {
+        border: 2px solid #333;
+    }
+}
+
+/* ===== MODO ESCURO (Acessibilidade) ===== */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --focus-color: #6FB1FC;
+    }
+
+    *:focus-visible {
+        outline-color: var(--focus-color);
+    }
+}
+
+/* ===== MOVIMENTO REDUZIDO ===== */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ===== TIMER E ELEMENTOS DINÂMICOS ===== */
+[role="timer"],
+[aria-live="polite"],
+[aria-live="assertive"] {
+    border: 2px solid transparent;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+/* Indica quando elementos estão sendo atualizados */
+[aria-busy="true"] {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+/* ===== NAVEGAÇÃO ===== */
+.nav-item[aria-selected="true"] {
+    border-bottom: 3px solid currentColor;
+    font-weight: bold;
+}
+
+/* ===== FORMULÁRIOS ===== */
+input:invalid,
+select:invalid,
+textarea:invalid {
+    border-color: #e74c3c;
+    background-color: rgba(231, 76, 60, 0.05);
+}
+
+input:invalid:focus,
+select:invalid:focus,
+textarea:invalid:focus {
+    outline-color: #e74c3c;
+    box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.1);
+}
+
+label[for] {
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* Indica campos obrigatórios */
+input:required,
+select:required,
+textarea:required {
+    border-left: 3px solid #3498db;
+}
+
+/* ===== TOOLTIPS E HINTS ===== */
+[aria-describedby],
+[aria-labelledby] {
+    position: relative;
+}
+
+/* ===== TABELAS ACESSÍVEIS ===== */
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th {
+    text-align: left;
+    font-weight: bold;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+th[scope="col"] {
+    border-bottom: 2px solid #333;
+}
+
+th[scope="row"] {
+    border-right: 2px solid #333;
+}
+
+/* ===== ESTADOS DESABILITADOS ===== */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ===== LISTAS ===== */
+[role="list"] {
+    list-style: none;
+    padding: 0;
+}
+
+[role="listitem"] {
+    padding: 8px 0;
+}
+
+/* ===== BREADCRUMBS E NAVEGAÇÃO ===== */
+[aria-label="Breadcrumb"] ol {
+    display: flex;
+    flex-wrap: wrap;
+    list-style: none;
+    padding: 0;
+}
+
+[aria-label="Breadcrumb"] li:not(:last-child)::after {
+    content: "›";
+    margin: 0 8px;
+    color: #666;
+}
+
+/* ===== INDICADORES DE PROGRESSO ===== */
+[role="progressbar"] {
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+[role="progressbar"]::before {
+    content: "";
+    display: block;
+    height: 100%;
+    background-color: #4CAF50;
+    width: var(--progress-value, 0%);
+    transition: width 0.3s ease;
+}
+
+/* ===== TABS ===== */
+[role="tablist"] {
+    display: flex;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+[role="tab"] {
+    padding: 12px 24px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: inherit;
+}
+
+[role="tab"][aria-selected="true"] {
+    border-bottom: 3px solid #4A90E2;
+    font-weight: bold;
+    margin-bottom: -2px;
+}
+
+[role="tab"]:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+[role="tabpanel"] {
+    padding: 20px 0;
+}
+
+[role="tabpanel"][aria-hidden="true"] {
+    display: none;
+}
+
+/* ===== ACORDEONS ===== */
+[aria-expanded="true"] .accordion-icon {
+    transform: rotate(180deg);
+}
+
+/* ===== DIÁLOGOS ===== */
+[role="dialog"],
+[role="alertdialog"] {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    background: white;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: auto;
+}
+
+[role="dialog"]:focus,
+[role="alertdialog"]:focus {
+    outline: none;
+}
+
+/* Overlay do modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+/* ===== IMPRESSÃO (Acessibilidade) ===== */
+@media print {
+    .skip-link,
+    button,
+    nav,
+    .no-print {
+        display: none !important;
+    }
+
+    a[href]::after {
+        content: " (" attr(href) ")";
+        font-size: 0.8em;
+        color: #666;
+    }
+
+    /* Garante contraste em impressão */
+    * {
+        background: white !important;
+        color: black !important;
+    }
+}

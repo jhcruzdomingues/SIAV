@@ -1,0 +1,54 @@
+{
+  "name": "siav",
+  "version": "1.1.0",
+  "description": "Sistema Inteligente de Assistência à Vida - App médico para PCR/ACLS",
+  "main": "index.html",
+  "scripts": {
+    "build": "npm run build:css && npm run build:js",
+    "build:js": "terser script.js -o build-optimized/script.min.js --compress --mangle --comments false && terser settings-integration.js -o build-optimized/settings-integration.min.js --compress --mangle --comments false",
+    "build:css": "npm run purgecss && npm run minify:css",
+    "purgecss": "purgecss --config purgecss.config.js --output build-optimized/",
+    "minify:css": "postcss build-optimized/style.css -o build-optimized/style.min.css --use cssnano && postcss build-optimized/shock-styles.css -o build-optimized/shock-styles.min.css --use cssnano",
+    "serve": "npx http-server . -p 8000 -o",
+    "serve:build": "npx http-server build-optimized -p 8000 -o",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:run": "vitest run",
+    "deploy": "npm run build && echo 'Build pronto! Envie a pasta build-optimized/ para seu servidor'"
+  },
+  "keywords": [
+    "medical",
+    "pcr",
+    "acls",
+    "emergency",
+    "health",
+    "pwa"
+  ],
+  "author": "SIAV Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seu-usuario/siav"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "jspdf": "^3.0.4",
+    "mercadopago": "^2.10.0"
+  },
+  "devDependencies": {
+    "@fullhuman/postcss-purgecss": "^6.0.0",
+    "@vitest/coverage-v8": "^2.1.8",
+    "@vitest/ui": "^2.1.8",
+    "cssnano": "^7.0.6",
+    "cssnano-cli": "^1.0.5",
+    "jsdom": "^25.0.1",
+    "postcss": "^8.4.49",
+    "postcss-cli": "^11.0.0",
+    "purgecss": "^6.0.0",
+    "terser": "^5.36.0",
+    "vitest": "^2.1.8"
+  }
+}

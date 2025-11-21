@@ -1,0 +1,286 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2025-11-18",
+  "questions": [
+    {
+      "id": 1,
+      "type": "sbv",
+      "difficulty": "facil",
+      "question": "Qual é a sequência correta das compressões torácicas em RCP adulto?",
+      "options": [
+        "100 compressões por minuto, profundidade de 3cm",
+        "100-120 compressões por minuto, profundidade de 5-6cm",
+        "80-100 compressões por minuto, profundidade de 4-5cm",
+        "120-140 compressões por minuto, profundidade de 6-7cm"
+      ],
+      "answer": 1,
+      "explanation": "As diretrizes da AHA recomendam 100-120 compressões por minuto com profundidade de 5-6cm em adultos."
+    },
+    {
+      "id": 2,
+      "type": "sbv",
+      "difficulty": "facil",
+      "question": "Em um adulto em PCR, qual a proporção correta de compressões para ventilações?",
+      "options": [
+        "15:2",
+        "30:2",
+        "20:1",
+        "30:1"
+      ],
+      "answer": 1,
+      "explanation": "A proporção padrão para adultos é 30 compressões para 2 ventilações, tanto para 1 quanto para 2 socorristas."
+    },
+    {
+      "id": 3,
+      "type": "sbv",
+      "difficulty": "medio",
+      "question": "Qual o tempo máximo recomendado para interrupção das compressões torácicas?",
+      "options": [
+        "5 segundos",
+        "10 segundos",
+        "15 segundos",
+        "20 segundos"
+      ],
+      "answer": 1,
+      "explanation": "As interrupções devem ser minimizadas e não exceder 10 segundos, exceto para procedimentos específicos como desfibrilação."
+    },
+    {
+      "id": 4,
+      "type": "acls",
+      "difficulty": "facil",
+      "question": "Qual é a dose inicial de adrenalina em PCR adulto?",
+      "options": [
+        "0.5mg IV/IO",
+        "1mg IV/IO",
+        "2mg IV/IO",
+        "5mg IV/IO"
+      ],
+      "answer": 1,
+      "explanation": "A dose padrão de adrenalina em PCR é 1mg IV/IO, repetida a cada 3-5 minutos."
+    },
+    {
+      "id": 5,
+      "type": "acls",
+      "difficulty": "facil",
+      "question": "Em FV/TV sem pulso, qual deve ser a energia do primeiro choque com desfibrilador bifásico?",
+      "options": [
+        "120-200J",
+        "200-360J",
+        "360J",
+        "100J"
+      ],
+      "answer": 0,
+      "explanation": "A energia inicial recomendada para desfibriladores bifásicos é 120-200J, seguindo as especificações do fabricante."
+    },
+    {
+      "id": 6,
+      "type": "acls",
+      "difficulty": "medio",
+      "question": "Qual medicação é indicada em TV/FV refratária após o 3º choque?",
+      "options": [
+        "Atropina",
+        "Lidocaína",
+        "Amiodarona",
+        "Adenosina"
+      ],
+      "answer": 2,
+      "explanation": "Amiodarona 300mg IV/IO é a medicação de escolha em FV/TV refratária após o 3º choque. Uma segunda dose de 150mg pode ser administrada."
+    },
+    {
+      "id": 7,
+      "type": "acls",
+      "difficulty": "medio",
+      "question": "Qual a dose de amiodarona na primeira administração em PCR?",
+      "options": [
+        "150mg",
+        "200mg",
+        "300mg",
+        "450mg"
+      ],
+      "answer": 2,
+      "explanation": "A primeira dose de amiodarona em PCR é 300mg IV/IO em bolus. Se necessário, pode-se administrar mais 150mg."
+    },
+    {
+      "id": 8,
+      "type": "acls",
+      "difficulty": "dificil",
+      "question": "Em assistolia confirmada, qual a conduta INCORRETA?",
+      "options": [
+        "Iniciar RCP de alta qualidade",
+        "Administrar adrenalina 1mg",
+        "Realizar desfibrilação imediata",
+        "Verificar e corrigir causas reversíveis"
+      ],
+      "answer": 2,
+      "explanation": "Assistolia não é um ritmo chocável. A desfibrilação não está indicada e pode causar atraso no RCP de qualidade."
+    },
+    {
+      "id": 9,
+      "type": "acls",
+      "difficulty": "medio",
+      "question": "Qual o intervalo de administração da adrenalina em PCR?",
+      "options": [
+        "A cada 2-3 minutos",
+        "A cada 3-5 minutos",
+        "A cada 5-7 minutos",
+        "Apenas uma dose inicial"
+      ],
+      "answer": 1,
+      "explanation": "Adrenalina deve ser administrada a cada 3-5 minutos durante a PCR, independente do ritmo."
+    },
+    {
+      "id": 10,
+      "type": "acls",
+      "difficulty": "facil",
+      "question": "Qual dispositivo avançado de via aérea permite ventilações contínuas durante RCP?",
+      "options": [
+        "Máscara facial",
+        "Tubo orofaríngeo",
+        "Tubo endotraqueal",
+        "Máscara laríngea"
+      ],
+      "answer": 2,
+      "explanation": "Com tubo endotraqueal ou dispositivo supraglótico confirmado, pode-se ventilar continuamente (1 ventilação a cada 6 segundos) sem pausar compressões."
+    },
+    {
+      "id": 11,
+      "type": "pals",
+      "difficulty": "facil",
+      "question": "Qual a dose de adrenalina em PCR pediátrica?",
+      "options": [
+        "0.01mg/kg IV/IO (1:10.000)",
+        "0.1mg/kg IV/IO (1:1.000)",
+        "1mg total independente do peso",
+        "0.001mg/kg IV/IO"
+      ],
+      "answer": 0,
+      "explanation": "Em PCR pediátrica, a dose é 0.01mg/kg (1:10.000), máximo de 1mg, repetida a cada 3-5 minutos."
+    },
+    {
+      "id": 12,
+      "type": "pals",
+      "difficulty": "medio",
+      "question": "Em criança com bradicardia sintomática não responsiva a ventilação, qual a dose de atropina?",
+      "options": [
+        "0.01mg/kg (mín 0.1mg, máx 0.5mg)",
+        "0.02mg/kg (mín 0.1mg, máx 1mg)",
+        "0.5mg dose fixa",
+        "1mg dose fixa"
+      ],
+      "answer": 1,
+      "explanation": "Atropina em PALS: 0.02mg/kg IV/IO, dose mínima 0.1mg, máxima 0.5mg (criança) ou 1mg (adolescente)."
+    },
+    {
+      "id": 13,
+      "type": "pals",
+      "difficulty": "facil",
+      "question": "Qual a proporção compressão:ventilação em lactente com 2 socorristas?",
+      "options": [
+        "30:2",
+        "15:2",
+        "20:2",
+        "30:1"
+      ],
+      "answer": 1,
+      "explanation": "Com 2 socorristas em PCR pediátrica/neonatal, a proporção é 15:2 (15 compressões para 2 ventilações)."
+    },
+    {
+      "id": 14,
+      "type": "pals",
+      "difficulty": "medio",
+      "question": "Qual a profundidade das compressões torácicas em lactente?",
+      "options": [
+        "Pelo menos 1/4 do diâmetro AP do tórax (~2cm)",
+        "Pelo menos 1/3 do diâmetro AP do tórax (~4cm)",
+        "5-6cm como em adultos",
+        "1-2cm apenas"
+      ],
+      "answer": 1,
+      "explanation": "Em lactentes, comprimir pelo menos 1/3 do diâmetro anteroposterior do tórax, aproximadamente 4cm."
+    },
+    {
+      "id": 15,
+      "type": "pals",
+      "difficulty": "dificil",
+      "question": "Em choque séptico pediátrico refratário a volume, qual a dose inicial de noradrenalina?",
+      "options": [
+        "0.05-0.1 mcg/kg/min",
+        "0.1-0.2 mcg/kg/min",
+        "0.5-1 mcg/kg/min",
+        "1-2 mcg/kg/min"
+      ],
+      "answer": 0,
+      "explanation": "Noradrenalina em PALS inicia com 0.05-0.1 mcg/kg/min, titulando conforme resposta (até 2 mcg/kg/min)."
+    },
+    {
+      "id": 16,
+      "type": "acls",
+      "difficulty": "medio",
+      "question": "Quais são os 4 Hs das causas reversíveis de PCR?",
+      "options": [
+        "Hipóxia, Hipovolemia, Hipo/Hipercalemia, Hipotermia",
+        "Hipóxia, Hipovolemia, Hipo/Hiperpotassemia, Hipotermia",
+        "Hipoglicemia, Hipovolemia, Hipertensão, Hipotermia",
+        "Hipóxia, Hiperglicemia, Hipovolemia, Hipotermia"
+      ],
+      "answer": 1,
+      "explanation": "Os 4 Hs: Hipóxia, Hipovolemia, Hidrogênio (acidose), Hipo/Hiperpotassemia, Hipotermia."
+    },
+    {
+      "id": 17,
+      "type": "acls",
+      "difficulty": "medio",
+      "question": "Quais são os 4 Ts das causas reversíveis de PCR?",
+      "options": [
+        "Trombose coronária, Trombose pulmonar, Tamponamento cardíaco, Tóxicos",
+        "Trauma, Trombose, Tensão no tórax, Taquicardia",
+        "Trombose, Tamponamento, Tóxicos, Taquiarritmia",
+        "TEP, Tamponamento, Toxinas, Trauma"
+      ],
+      "answer": 0,
+      "explanation": "Os 4 Ts: Trombose coronária (IAM), Trombose pulmonar (TEP), Tamponamento cardíaco, Tensão no tórax (pneumotórax), Tóxicos."
+    },
+    {
+      "id": 18,
+      "type": "sbv",
+      "difficulty": "medio",
+      "question": "Ao presenciar uma PCR, qual a primeira ação?",
+      "options": [
+        "Iniciar compressões torácicas",
+        "Verificar responsividade e acionar ajuda",
+        "Abrir via aérea",
+        "Aplicar DEA"
+      ],
+      "answer": 1,
+      "explanation": "Primeiro verificar responsividade, acionar serviço de emergência (192/SAMU), pedir DEA, depois iniciar RCP."
+    },
+    {
+      "id": 19,
+      "type": "acls",
+      "difficulty": "dificil",
+      "question": "Em PCR por hiperpotassemia severa (K+ > 6.5), qual tratamento específico?",
+      "options": [
+        "Apenas adrenalina padrão",
+        "Cloreto de cálcio 10% 10-20ml + bicarbonato",
+        "Apenas bicarbonato de sódio",
+        "Amiodarona em dose dobrada"
+      ],
+      "answer": 1,
+      "explanation": "Hiperpotassemia severa: Cloreto de cálcio 10% 10-20ml IV, bicarbonato de sódio, insulina+glicose, considerar diálise."
+    },
+    {
+      "id": 20,
+      "type": "acls",
+      "difficulty": "medio",
+      "question": "Qual a fração de oxigênio (FiO2) recomendada durante RCP?",
+      "options": [
+        "21% (ar ambiente)",
+        "50%",
+        "100%",
+        "40%"
+      ],
+      "answer": 2,
+      "explanation": "Durante a PCR, administrar oxigênio a 100% (FiO2 1.0) para maximizar a oxigenação. Após RCE, titular conforme SpO2."
+    }
+  ]
+}

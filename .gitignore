@@ -1,0 +1,47 @@
+# =============================================
+# GITIGNORE - SIAV
+# =============================================
+
+# Credenciais e Variáveis de Ambiente
+.env
+.env.local
+.env.production
+.env.development
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# Build
+dist/
+build/
+*.min.js
+*.min.css
+
+# Logs
+logs/
+*.log
+
+# Sistema Operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporários
+*.tmp
+*.temp
+.cache/
+
+# Testes
+coverage/
+.nyc_output/

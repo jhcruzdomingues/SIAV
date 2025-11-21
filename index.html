@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Sistema Inteligente de Assistência à Vida - Aplicativo médico para assistência em PCR seguindo protocolos ACLS">
+    <meta name="theme-color" content="#e74c3c">
+    <title>SIAV - Sistema Inteligente de Assistência à Vida</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- iOS PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SIAV">
+    
+    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="shock-styles.css?v=2">
+    <link rel="stylesheet" href="sound-settings-styles.css?v=2">
+    <link rel="stylesheet" href="settings-menu-styles.css?v=2">
+    <link rel="stylesheet" href="profile-plan-styles.css?v=1">
+    <link rel="stylesheet" href="plans-modal.css?v=2">
+
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script>
+            // Diagnóstico: Verificar se o objeto Supabase está disponível
+            window.addEventListener('DOMContentLoaded', function() {
+                console.log('window.supabase:', window.supabase);
+            });
+        </script>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+    <!-- ================================================
+         MODAL DE PLANOS OTIMIZADO - Carregado Dinamicamente
+         ================================================ -->
+    <div id="plans-modal-container"></div>
+
+    <audio id="shock-sound" preload="none"></audio>
+    <audio id="alert-sound" preload="none"></audio>
+    <audio id="drug-sound" preload="none"></audio>
+    <audio id="metronome-sound" preload="none"></audio>
+
+    <div class="app-container">
+        
+        <header>
+            <div class="logo-container">
+                <span class="logo-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                        <path d="M228.3 469.1L47.6 300.4c-4.2-3.9-8.2-8.1-11.9-12.4h87c22.6 0 43-13.6 51.7-34.5l10.5-25.2 49.3 109.5c3.8 8.5 12.1 14 21.4 14.1s17.8-5 22-13.3L320 253.7l1.7 3.4c9.5 19 28.9 31 50.1 31H476.3c-3.7 4.3-7.7 8.5-11.9 12.4L283.7 469.1c-7.5 7-17.4 10.9-27.7 10.9s-20.2-3.9-27.7-10.9zM503.7 240h-132c-3 0-5.8-1.7-7.2-4.4l-23.2-46.3c-4.1-8.1-12.4-13.3-21.5-13.3s-17.4 5.1-21.5 13.3l-41.4 82.8L205.9 158.2c-3.9-8.7-12.7-14.3-22.2-14.1s-18.1 5.9-21.8 14.8l-31.8 76.3c-1.2 3-4.2 4.9-7.4 4.9H16c-2.6 0-5 .4-7.3 1.1C3 225.2 0 208.2 0 190.9v-5.8c0-69.9 50.5-129.5 119.4-141C165 36.5 211.4 51.4 244 84l12 12 12-12c32.6-32.6 79-47.5 124.6-39.9C461.5 55.6 512 115.2 512 185.1v5.8c0 16.9-2.8 33.5-8.3 49.1z" fill="#e74c3c"/>
+                    </svg>
+                </span>
+                <div class="logo-text">
+                    <h1>SIAV</h1>
+                    <p class="logo-subtitle">Sistema Inteligente de Assistência à Vida</p>
+                </div>
+            </div>
+            <button id="settings-btn" class="header-btn" onclick="openSettingsMenu()" title="Configurações">
+                <i class="fas fa-cog"></i>
+            </button>
+        </header>
+
+        <main>
+            
+            <section id="home-screen" class="screen active">
+                <h2 id="home-greeting">Olá, Profissional de Saúde!</h2>
+                <p class="section-description">Selecione uma ferramenta ou inicie um novo atendimento.</p>
+                
+                <div class="quick-access-grid">
+                    <div id="start-pcr-card" class="card primary-card" role="button" tabindex="0" aria-label="Iniciar novo atendimento de parada cardiorrespiratória">
+                        <i class="fas fa-heartbeat" aria-hidden="true"></i>
+                        <h3>INICIAR PCR AGORA</h3>
+                        <p>Registro completo de atendimento de parada cardiorrespiratória.</p>
+                    </div>
+                    
+                    <div id="protocols-tool" class="card secondary-card">
+                        <i class="fas fa-file-contract"></i>
+                        <h3>Protocolos ACLS</h3>
+                    </div>
+                    
+                    <div id="studies-tool" class="card secondary-card">
+                        <i class="fas fa-book-medical"></i>
+                        <h3>Guias de Estudo</h3>
+                    </div>
+
+                    <div id="quiz-config-tool" class="card secondary-card">
+                        <i class="fas fa-clipboard-list"></i>
+                        <h3>Simulado de Quiz</h3>
+                    </div>
+                    
+                    <div id="glasgow-tool" class="card secondary-card">
+                        <i class="fas fa-brain"></i>
+                        <h3>Escala de Glasgow</h3>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="pcr-screen" class="screen">
+                <!-- Header com Timer e Info do Paciente -->
+                <div class="pcr-header">
+                    <div class="pcr-timer-box">
+                        <span id="pcr-timer">00:00</span>
+                        <small>Tempo Total</small>
+                    </div>
+                    <div id="patient-info-display" class="patient-info-display" style="display: none;">
+                        <span id="display-name" class="info-name">N/I</span>
+                        <span id="display-age" class="info-age">N/I</span>
+                        <span id="display-sex" class="info-sex">N/I</span>
+                        <div id="allergies-row" style="display: none;">
+                            <span class="info-label">Alergias:</span>
+                            <span id="display-allergies" class="info-alert">Nenhuma</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Badge de Ciclo -->
+                <div id="floating-cycle-badge" class="floating-cycle-badge">
+                    <span id="cycle-info">Ciclo 0</span>
+                </div>
+
+                <!-- Card de Guia do Protocolo -->
+                <div id="protocol-hint-box" class="protocol-hint-box improved-panel">
+                    <div class="protocol-panel-mobile improved-panel-mobile">
+                        <div class="protocol-panel-header improved-panel-header">
+                            <span id="hint-icon" class="protocol-panel-icon dynamic-icon"><i class="fas fa-heartbeat"></i></span>
+                            <div class="protocol-panel-main">
+                                <p id="hint-message" class="protocol-panel-message highlight-message">Pronto para iniciar!</p>
+                                <span id="current-step" class="protocol-panel-step step-highlight">Aguardando início do atendimento</span>
+                            </div>
+                        </div>
+                        <div class="protocol-panel-body improved-panel-body">
+                            <div id="protocol-alerts-panel" class="protocol-alerts-panel improved-alerts-panel">
+                                <!-- Exemplo de dica rápida -->
+                                <div class="alert-tip" id="alert-tip" style="display:none;"><i class="fas fa-lightbulb"></i> Lembre-se: registre o tempo de início!</div>
+                            </div>
+                            <div id="hint-details" class="protocol-details"></div>
+                            <div id="protocol-checklist" class="protocol-checklist"></div>
+                        </div>
+                        <div class="protocol-panel-footer improved-panel-footer">
+                            <div class="progress-container improved-progress-container">
+                                <div id="cycle-progress" class="progress-bar improved-progress-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Ação Principal: Compressões -->
+                <button id="compressions-btn" class="btn-compressions" aria-label="Iniciar compressões torácicas">
+                    <div class="btn-compressions-icon">
+                        <i class="fas fa-compress-arrows-alt"></i>
+                    </div>
+                    <div class="btn-compressions-text">
+                        <span>COMPRESSÕES TORÁCICAS</span>
+                        <small><i class="fas fa-sync-alt"></i> Ciclo 30:2 • <i class="fas fa-heartbeat"></i> 100-120 bpm</small>
+                    </div>
+                </button>
+                
+                <!-- Checar Ritmo -->
+                <button id="rhythm-conduta-btn" class="btn-check-rhythm" aria-label="Checar ritmo cardíaco do paciente">
+                    <i class="fas fa-heart-pulse"></i> CHECAR RITMO
+                </button>
+
+                <!-- Metrônomo -->
+                <div class="metronome-section">
+                    <button id="bpm-minus" class="btn-bpm">−</button>
+                    <button id="metro-btn" class="btn-metronome" aria-label="Alternar metrônomo">
+                        <i class="fas fa-drum"></i>
+                        <div class="metro-info">
+                            <span id="metro-status">METRÔNOMO</span>
+                            <small id="bpm-value">110 BPM</small>
+                        </div>
+                    </button>
+                    <button id="bpm-plus" class="btn-bpm">+</button>
+                </div>
+                
+                <!-- Ações Secundárias -->
+                <div class="pcr-actions-grid">
+                    <button id="med-btn" class="btn-action btn-drug">
+                        <i class="fas fa-syringe"></i>
+                        <span>Droga</span>
+                    </button>
+                    <button id="vitals-btn" class="btn-action btn-vitals">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Sinais Vitais</span>
+                    </button>
+                    <button id="notes-btn" class="btn-action btn-notes">
+                        <i class="fas fa-clipboard"></i>
+                        <span>Anotar</span>
+                    </button>
+                    <button id="hs-ts-btn" class="btn-action btn-causes">
+                        <i class="fas fa-vials"></i>
+                        <span>5H's & 5T's</span>
+                    </button>
+                </div>
+                
+                <!-- RCE Obtido -->
+                <button id="rosc-btn" class="btn-rosc" aria-label="Registrar retorno da circulação espontânea">
+                    <i class="fas fa-heart-circle-check"></i> RCE OBTIDO (PULSO +)
+                </button>
+
+                <!-- Timeline -->
+                <div class="timeline-container">
+                    <h3><i class="fas fa-clock-rotate-left"></i> Linha do Tempo</h3>
+                    <div id="timeline-events" class="timeline-events">
+                        <div class="event-item">
+                            <span class="event-time">00:00</span>
+                            <span class="event-text">✅ RCP Iniciada</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Finalizar -->
+                <button id="finish-pcr-btn" class="btn-finish">FINALIZAR ATENDIMENTO</button>
+            </section>
+            
+            <section id="rhythm-selector-screen" class="screen">
+                
+                <div class="rhythm-selector-header">
+                    <div class="rhythm-header-icon">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                    <h2>Qual o Ritmo Cardíaco Atual?</h2>
+                    <p class="rhythm-header-subtitle">A identificação correta define a conduta:<br><strong>Choque imediato</strong> ou <strong>RCP + Medicação</strong></p>
+                </div>
+
+                <div class="rhythm-categories-container">
+                    <div class="rhythm-category">
+                        <h3 class="category-title shockable">
+                            <i class="fas fa-bolt"></i> Ritmos Chocáveis
+                        </h3>
+                        <button class="rhythm-option-btn chocable" data-rhythm="FV" aria-label="Selecionar Fibrilação Ventricular - ritmo chocável">
+                            <div class="rhythm-icon-wrapper">
+                                <i class="fas fa-chart-bar" aria-hidden="true"></i>
+                            </div>
+                            <div class="rhythm-abbr">FV</div>
+                            <div class="rhythm-name">Fibrilação Ventricular</div>
+                            <div class="rhythm-description">Ondas caóticas sem QRS definido</div>
+                        </button>
+                        <button class="rhythm-option-btn chocable" data-rhythm="TVSP" aria-label="Selecionar Taquicardia Ventricular sem Pulso - ritmo chocável">
+                            <div class="rhythm-icon-wrapper">
+                                <i class="fas fa-wave-square" aria-hidden="true"></i>
+                            </div>
+                            <div class="rhythm-abbr">TVSP</div>
+                            <div class="rhythm-name">TV sem Pulso</div>
+                            <div class="rhythm-description">QRS alargado rápido, sem pulso</div>
+                        </button>
+                    </div>
+
+                    <div class="rhythm-category">
+                        <h3 class="category-title non-shockable">
+                            <i class="fas fa-syringe"></i> Ritmos Não-Chocáveis
+                        </h3>
+                        <button class="rhythm-option-btn non-chocable" data-rhythm="AESP" aria-label="Selecionar Atividade Elétrica sem Pulso - ritmo não-chocável">
+                            <div class="rhythm-icon-wrapper">
+                                <i class="fas fa-chart-line" aria-hidden="true"></i>
+                            </div>
+                            <div class="rhythm-abbr">AESP</div>
+                            <div class="rhythm-name">Atividade Elétrica sem Pulso</div>
+                            <div class="rhythm-description">Ritmo organizado, pulso ausente</div>
+                        </button>
+                        <button class="rhythm-option-btn non-chocable" data-rhythm="Assistolia">
+                            <div class="rhythm-icon-wrapper">
+                                <i class="fas fa-minus"></i>
+                            </div>
+                            <div class="rhythm-abbr">Assistolia</div>
+                            <div class="rhythm-name">Linha Isoelétrica</div>
+                            <div class="rhythm-description">Ausência completa de atividade</div>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="rhythm-notes-area">
+                    <label for="selector-rhythm-notes">
+                        <i class="fas fa-clipboard"></i> Observações Clínicas (Opcional)
+                    </label>
+                    <textarea id="selector-rhythm-notes" rows="3" placeholder="Ex: Ritmo alternante, causa provável identificada, achados do monitor..."></textarea>
+                </div>
+                
+                <div class="rhythm-back-btn-container">
+                    <button onclick="showScreen('pcr')" class="back-btn-screen"><i class="fas fa-arrow-left"></i> Voltar ao Atendimento</button>
+                </div>
+            </section>
+
+            <section id="shock-action-screen" class="screen">
+                <button onclick="showScreen('pcr')" class="back-btn-screen"><i class="fas fa-arrow-left"></i> Cancelar</button>
+
+                <div class="shock-header">
+                    <div class="shock-icon-container">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h2>DESFIBRILAÇÃO</h2>
+                    <p class="shock-rhythm-info">
+                        Ritmo detectado: <span id="final-shock-rhythm" class="rhythm-badge">FV</span>
+                    </p>
+                    <p class="shock-alert">⚡ Choque necessário imediatamente</p>
+                </div>
+
+                <div class="recommendation-box-modern">
+                    <div class="recommendation-header">
+                        <i class="fas fa-lightbulb"></i>
+                        <span>ENERGIA RECOMENDADA</span>
+                    </div>
+                    <div class="recommendation-value">
+                        <span id="shock-rec-display" class="energy-value">200</span>
+                        <span class="energy-unit">Joules</span>
+                    </div>
+                </div>
+
+                <div class="energy-selection-section">
+                    <h3 class="selection-title">
+                        <i class="fas fa-sliders-h"></i> Selecione a Energia
+                    </h3>
+                    <div class="energy-buttons-grid" id="shock-buttons-grid">
+                    </div>
+                </div>
+
+                <div class="custom-energy-section">
+                    <label for="shock-applied-energy" class="custom-energy-label">
+                        <i class="fas fa-edit"></i> Energia Personalizada (opcional)
+                    </label>
+                    <div class="custom-energy-input-wrapper">
+                        <input type="number"
+                               id="shock-applied-energy"
+                               placeholder="Digite a energia em Joules"
+                               min="0"
+                               max="360">
+                        <span class="input-unit">J</span>
+                    </div>
+                    <small class="input-hint">Será registrado no log do atendimento</small>
+                </div>
+
+                <button id="apply-shock-btn" class="shock-apply-btn" aria-label="Aplicar choque e retomar ressuscitação cardiopulmonar">
+                    <span class="btn-icon"><i class="fas fa-bolt" aria-hidden="true"></i></span>
+                    <span class="btn-text">APLICAR CHOQUE E RETOMAR RCP</span>
+                    <span class="btn-subtitle">Pressione após afastamento seguro</span>
+                </button>
+                
+                <p class="shock-protocol-note">* Padrão adulto bifásico conforme AHA 2025</p>
+            </section>
+
+
+            <section id="causes-screen" class="screen">
+                <div class="causes-header">
+                    <div class="causes-icon-container">
+                        <i class="fas fa-search-plus"></i>
+                    </div>
+                    <h2 id="causes-header-title">5 H's e 5 T's</h2>
+                    <p class="causes-subtitle" id="causes-subtitle-text">Identifique as possíveis causas reversíveis da PCR</p>
+                    <div class="causes-treatment-box" id="causes-treatment-box" style="display: none;">
+                        <h3 id="selected-cause-name"></h3>
+                        <p id="selected-cause-treatment"></p>
+                    </div>
+                </div>
+                
+                <div class="causes-grid">
+                    <div class="cause-item" data-cause="Hipovolemia" data-treatment="Administrar cristaloides em bolus rápido (500-1000ml). Considerar hemoderivados se sangramento ativo. Avaliar fontes de perda volêmica.">
+                        🩸 Hipovolemia
+                    </div>
+                    <div class="cause-item" data-cause="Hipóxia" data-treatment="Checar via aérea avançada e ventilação. Aumentar FiO2 para 100%. Verificar SpO2 e capnografia. Descartar intubação esofágica.">
+                        🌬️ Hipóxia
+                    </div>
+                    <div class="cause-item" data-cause="Hidrogênio (Acidose)" data-treatment="Ventilar adequadamente (primeira medida). Bicarbonato de sódio 1 mEq/kg se acidose metabólica grave (pH <7.1) ou hipercalemia.">
+                        🧪 H+ (Acidose)
+                    </div>
+                    <div class="cause-item" data-cause="Hipo/Hipercalemia" data-treatment="Solicitar gasometria urgente. Hipocalemia: KCl IV. Hipercalemia: Cálcio 10%, Insulina + Glicose, Bicarbonato. Considerar diálise.">
+                        ⚖️ Hipo/HiperK
+                    </div>
+                    <div class="cause-item" data-cause="Hipotermia" data-treatment="Reaquecer ativamente se T° <30°C. Fluidos aquecidos IV. Aquecimento externo. Considerar ECMO/bypass se disponível. RCP prolongada pode ser necessária.">
+                        🧊 Hipotermia
+                    </div>
+                    
+                    <div class="cause-item" data-cause="Tamponamento Cardíaco" data-treatment="Pericardiocentese de emergência guiada por ECO se disponível. Avaliar sinais de Beck (turgência jugular, abafamento de bulhas, hipotensão). Reposição volêmica agressiva.">
+                        🫀 Tamponamento
+                    </div>
+                    <div class="cause-item" data-cause="Pneumotórax Hipertensivo" data-treatment="Descompressão imediata com agulha (2° EIC linha hemiclavicular). Seguir com drenagem torácica. Não aguardar RX de tórax se suspeita clínica forte.">
+                        🎈 Pneumotórax
+                    </div>
+                    <div class="cause-item" data-cause="Trombose (TEP/IAM)" data-treatment="TEP maciço: Considerar trombolítico (Alteplase). IAM: Cateterismo de emergência se disponível. RCP prolongada pode ser necessária (45-60min).">
+                        🩸 Trombose
+                    </div>
+                    <div class="cause-item" data-cause="Tóxicos" data-treatment="Identificar toxina e administrar antídoto específico se disponível. Carvão ativado se ingestão recente. Considerar hemodiálise para toxinas dialisáveis.">
+                        🍄 Tóxicos
+                    </div>
+                    <div class="cause-item" data-cause="Trauma" data-treatment="Controlar hemorragias visíveis. Considerar toracotomia de ressuscitação se trauma penetrante torácico. Pneumotórax bilateral? Tamponamento? Transporte rápido ao centro de trauma.">
+                        🩹 Trauma
+                    </div>
+                </div>
+                
+                <button onclick="showScreen('pcr')" class="secondary-btn wide-btn" style="margin-top: 25px;">
+                    <i class="fas fa-arrow-left"></i> Voltar ao Atendimento
+                </button>
+            </section>
+            
+            <section id="protocols-screen" class="screen">
+                <h2>Protocolos de Emergência</h2>
+                <p class="section-description">Acesse os fluxogramas ACLS/PALS e diretrizes de trauma/AVC.</p>
+                
+                <div class="protocols-list">
+                    <div id="protocol-adulto" class="protocol-item">
+                        <div class="protocol-title">PCR Adulto (ACLS)</div>
+                        <div class="protocol-desc">FV/TVSP vs. AESP/Assistolia</div>
+                    </div>
+                    <div id="protocol-pediatrica" class="protocol-item">
+                        <div class="protocol-title">PCR Pediátrica (PALS)</div>
+                        <div class="protocol-desc">Choques e Doses Pediátricas</div>
+                    </div>
+                    <div id="protocol-avc" class="protocol-item">
+                        <div class="protocol-title">AVC Agudo</div>
+                        <div class="protocol-desc">Janela de Trombólise e Conduta</div>
+                    </div>
+                    <div id="protocol-iam" class="protocol-item">
+                        <div class="protocol-title">SCA (IAM)</div>
+                        <div class="protocol-desc">Infarto com/sem Supra de ST</div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="studies-screen" class="screen">
+                <h2>Guias de Estudo e Revisão</h2>
+                <p class="section-description">Material de apoio para aprofundar seu conhecimento em emergências.</p>
+                
+                <div class="studies-list">
+                    <div id="study-ecg-ritmos" class="protocol-item">
+                        <div class="protocol-title">Ritmos de PCR (ECG)</div>
+                        <div class="protocol-desc">FV, TVSP, AESP e Assistolia</div>
+                    </div>
+                    <div id="study-ecg-interpretacao" class="protocol-item">
+                        <div class="protocol-title">Interpretação de ECG</div>
+                        <div class="protocol-desc">Guia básico para Isquemia e Infarto</div>
+                    </div>
+                    <div id="study-farmaco" class="protocol-item">
+                        <div class="protocol-title">Farmacologia ACLS</div>
+                        <div class="protocol-desc">Adrenalina, Amiodarona, Atropina, etc.</div>
+                    </div>
+                    
+                    <div id="hs-ts-study-container" class="protocol-item expanded-toggle">
+                        <div class="protocol-title">Revisão dos 5 H's e 5 T's</div>
+                        <div class="protocol-desc">Clique para ver as causas detalhadamente</div>
+                        <div id="hs-ts-study-list" class="protocols-list" style="display: none;">
+                            </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="quiz-config-screen" class="screen">
+                <h2>Configurar Simulado</h2>
+                <p class="section-description">Teste seus conhecimentos em SBV e SAV. Questões carregadas do banco de dados.</p>
+                
+                <div class="quiz-config-form">
+                    <label for="question-count">Número de Questões:</label>
+                    <select id="question-count">
+                        <option value="10">10 Questões</option>
+                        <option value="20">20 Questões</option>
+                        <option value="50">50 Questões</option>
+                        <option value="180">Todas (180 Questões)</option>
+                    </select>
+                    
+                    <label for="difficulty">Nível de Dificuldade:</label>
+                    <select id="difficulty">
+                        <option value="todos">Todos os Níveis</option>
+                        <option value="facil">Fácil</option>
+                        <option value="medio">Médio</option>
+                        <option value="dificil">Difícil</option>
+                    </select>
+                    
+                    <div class="quiz-type-selection">
+                        <label>Foco:</label>
+                        <div>
+                            <input type="radio" id="type-sbv" name="quiz-type" value="sbv" checked>
+                            <label for="type-sbv">SBV (Básico)</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="type-sav" name="quiz-type" value="sav">
+                            <label for="type-sav">SAV (Avançado)</label>
+                        </div>
+                    </div>
+                    
+                    <button id="start-quiz-btn" class="big-btn start-btn">INICIAR SIMULADO</button>
+                </div>
+            </section>
+
+            <section id="log-screen" class="screen">
+                <h2>Histórico de Atendimentos</h2>
+                <p class="section-description">Acesso ao log detalhado e performance de PCR (Plano Profissional).</p>
+                
+                <div id="patient-log-list" class="log-list-container">
+                    <p style="text-align: center;">Carregando Histórico Online...</p>
+                </div>
+                <button onclick="showScreen('dashboard')" class="secondary-btn wide-btn" style="margin-top: 20px;">
+                    <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+                </button>
+            </section>
+
+            <section id="dashboard-screen" class="screen">
+                <h2>Painel de Performance</h2>
+                <p class="section-description">Acompanhe suas estatísticas e evolução profissional.</p>
+                
+                <!-- Cabeçalho Premium do Dashboard -->
+                <div class="dashboard-header">
+                    <div id="dashboard-user-info" class="dashboard-user-info">
+                        <div class="dashboard-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="dashboard-user-text">
+                            <h3 id="dashboard-user-name">Profissional de Saúde</h3>
+                            <p id="dashboard-welcome-message" class="dashboard-subtitle">Desempenho em RCP Avançada</p>
+                        </div>
+                    </div>
+                    <div class="dashboard-header-right">
+                        <span class="dashboard-date" id="dashboardDate">16 Nov 2025</span>
+                    </div>
+                </div>
+                
+                <!-- Área de Login Premium -->
+                <div id="login-to-dashboard-btn" class="dashboard-action-area">
+                    <div class="login-prompt-card">
+                        <div class="login-prompt-icon">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <h3>Acesso Profissional Completo</h3>
+                        <p>Desbloqueie estatísticas avançadas, histórico ilimitado de PCR e análise de performance</p>
+                        <div class="login-features">
+                            <div class="login-feature">
+                                <i class="fas fa-check"></i> Acesso a recursos premium
+                            </div>
+                            <div class="login-feature">
+                                <i class="fas fa-check"></i> Salvar e recuperar dados
+                            </div>
+                            <div class="login-feature">
+                                <i class="fas fa-check"></i> Personalização de perfil
+                            </div>
+                            <div class="login-feature">
+                                <i class="fas fa-check"></i> Suporte prioritário
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 12px; margin-top: 18px;">
+                            <button id="open-login-btn" class="primary-btn" type="button">
+                                <i class="fas fa-sign-in-alt"></i> Login
+                            </button>
+                            <button id="open-register-btn" class="primary-btn" type="button" style="background: #22b573;">
+                                <i class="fas fa-user-plus"></i> Cadastro
+                            </button>
+                        </div>
+                        <!-- MODAL DE LOGIN -->
+                        <div id="login-modal" class="modal" style="display:none;">
+                            <div class="modal-content">
+                                <h3>Login</h3>
+                                <form id="login-form-simple" class="login-form">
+                                    <div class="form-field">
+                                        <label for="login-email-modal"><i class="fas fa-envelope"></i> E-mail</label>
+                                        <input type="email" id="login-email-modal" name="login-email-modal" required placeholder="seu.email@exemplo.com">
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="login-password-modal"><i class="fas fa-lock"></i> Senha</label>
+                                        <input type="password" id="login-password-modal" name="login-password-modal" required placeholder="Mínimo 6 caracteres">
+                                    </div>
+                                    <button type="submit" class="primary-btn wide-btn"><i class="fas fa-sign-in-alt"></i> Entrar</button>
+                                </form>
+                                <button type="button" class="close-btn" onclick="document.getElementById('login-modal').style.display='none'">Fechar</button>
+                            </div>
+                        </div>
+                        <!-- MODAL DE CADASTRO -->
+                        <div id="register-modal" class="modal" style="display:none;">
+                            <div class="modal-content">
+                                <h3>Cadastro</h3>
+                                <form id="register-form-full" class="register-form">
+                                    <div class="form-field">
+                                        <label for="register-name"><i class="fas fa-user"></i> Nome Completo</label>
+                                        <input type="text" id="register-name" name="register-name" required placeholder="Seu nome completo">
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="register-profession"><i class="fas fa-briefcase-medical"></i> Profissão/Especialidade</label>
+                                        <input type="text" id="register-profession" name="register-profession" placeholder="Ex: Enfermeiro">
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-field">
+                                            <label for="register-council"><i class="fas fa-id-card"></i> Registro Profissional</label>
+                                            <input type="text" id="register-council" name="register-council" placeholder="Ex: CRM-SP 123456">
+                                        </div>
+                                        <div class="form-field">
+                                            <label for="register-birth-date"><i class="fas fa-calendar"></i> Data de Nascimento</label>
+                                            <input type="date" id="register-birth-date" name="register-birth-date">
+                                        </div>
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="register-phone"><i class="fas fa-phone"></i> Telefone (opcional)</label>
+                                        <input type="tel" id="register-phone" name="register-phone" placeholder="(99) 99999-9999">
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="register-email"><i class="fas fa-envelope"></i> E-mail</label>
+                                        <input type="email" id="register-email" name="register-email" required placeholder="seu.email@exemplo.com">
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="register-password"><i class="fas fa-lock"></i> Senha</label>
+                                        <input type="password" id="register-password" name="register-password" required placeholder="Mínimo 6 caracteres">
+                                    </div>
+                                    <button type="submit" class="primary-btn wide-btn" style="background: #22b573;"><i class="fas fa-user-plus"></i> Cadastrar</button>
+                                </form>
+                                <button type="button" class="close-btn" onclick="document.getElementById('register-modal').style.display='none'">Fechar</button>
+                            </div>
+                        </div>
+                        <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const btnLogin = document.getElementById('open-login-btn');
+                            const btnRegister = document.getElementById('open-register-btn');
+                            if (btnLogin) btnLogin.onclick = () => {
+                                document.getElementById('login-modal').style.display = 'block';
+                            };
+                            if (btnRegister) btnRegister.onclick = () => {
+                                document.getElementById('register-modal').style.display = 'block';
+                            };
+                        });
+                        </script>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dashboard Completo (quando logado) -->
+                <div id="dashboard-stats-content" style="display: none;">
+                    
+                    <!-- Métricas Principais -->
+                    <div class="dashboard-section">
+                        <div class="section-header">
+                            <h3 class="section-title">
+                                <i class="fas fa-chart-line"></i> Visão Geral de Performance
+                            </h3>
+                            <span class="section-badge">Últimos 30 dias</span>
+                        </div>
+                        <div class="stats-grid-premium">
+                            <!-- PCR Total -->
+                            <div class="stat-card-premium stat-pcr">
+                                <div class="stat-card-header">
+                                    <div class="stat-icon-premium">
+                                        <i class="fas fa-heartbeat"></i>
+                                    </div>
+                                    <div class="stat-badge-tag">Total</div>
+                                </div>
+                                <div class="stat-content-premium">
+                                    <span id="total-pcr-count" class="stat-value-premium">0</span>
+                                    <span class="stat-label-premium">Paradas Cardiorrespiratórias</span>
+                                    <div class="stat-progress-bar">
+                                        <div class="stat-progress-fill" style="width: 0%"></div>
+                                    </div>
+                                    <div class="stat-trend-premium neutral">
+                                        <i class="fas fa-heartbeat"></i>
+                                        <span>Atendimentos realizados</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Taxa de Sucesso RCE -->
+                            <div class="stat-card-premium stat-success">
+                                <div class="stat-card-header">
+                                    <div class="stat-icon-premium">
+                                        <i class="fas fa-heart-pulse"></i>
+                                    </div>
+                                    <div class="stat-badge-tag">RCE</div>
+                                </div>
+                                <div class="stat-content-premium">
+                                    <span id="rosc-success-rate" class="stat-value-premium">0%</span>
+                                    <span class="stat-label-premium">Taxa de Sucesso (RCE)</span>
+                                    <div class="stat-progress-bar">
+                                        <div class="stat-progress-fill success" style="width: 0%"></div>
+                                    </div>
+                                    <div class="stat-trend-premium positive">
+                                        <i class="fas fa-trophy"></i>
+                                        <span>Referência: 25-30%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Tempo Médio até Choque -->
+                            <div class="stat-card-premium stat-time">
+                                <div class="stat-card-header">
+                                    <div class="stat-icon-premium">
+                                        <i class="fas fa-stopwatch"></i>
+                                    </div>
+                                    <div class="stat-badge-tag">Tempo</div>
+                                </div>
+                                <div class="stat-content-premium">
+                                    <span id="avg-time-to-shock" class="stat-value-premium">N/A</span>
+                                    <span class="stat-label-premium">Tempo até 1º Choque</span>
+                                    <div class="stat-progress-bar">
+                                        <div class="stat-progress-fill warning" style="width: 0%"></div>
+                                    </div>
+                                    <div class="stat-trend-premium neutral">
+                                        <i class="fas fa-clock"></i>
+                                        <span>Meta: <2 min</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Adesão ao Protocolo -->
+                            <div class="stat-card-premium stat-protocol">
+                                <div class="stat-card-header">
+                                    <div class="stat-icon-premium">
+                                        <i class="fas fa-clipboard-check"></i>
+                                    </div>
+                                    <div class="stat-badge-tag">ACLS</div>
+                                </div>
+                                <div class="stat-content-premium">
+                                    <span id="protocol-adherence" class="stat-value-premium">98%</span>
+                                    <span class="stat-label-premium">Adesão ao Protocolo</span>
+                                    <div class="stat-progress-bar">
+                                        <div class="stat-progress-fill success" style="width: 98%"></div>
+                                    </div>
+                                    <div class="stat-trend-premium positive">
+                                        <i class="fas fa-medal"></i>
+                                        <span>Excelente desempenho</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Indicadores Clínicos -->
+                    <div class="dashboard-section">
+                        <div class="section-header">
+                            <h3 class="section-title">
+                                <i class="fas fa-stethoscope"></i> Indicadores Clínicos
+                            </h3>
+                        </div>
+                        <div class="clinical-indicators">
+                            <div class="indicator-row">
+                                <div class="indicator-item">
+                                    <div class="indicator-icon shock">
+                                        <i class="fas fa-bolt"></i>
+                                    </div>
+                                    <div class="indicator-content">
+                                        <span class="indicator-label">Choques</span>
+                                        <span id="avg-shock-count" class="indicator-value">N/A</span>
+                                    </div>
+                                    <div class="indicator-status">
+                                        <span class="status-badge neutral">Média</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <div class="indicator-icon drug">
+                                        <i class="fas fa-syringe"></i>
+                                    </div>
+                                    <div class="indicator-content">
+                                        <span class="indicator-label">Adrenalina</span>
+                                        <span id="total-epi-count" class="indicator-value">0</span>
+                                    </div>
+                                    <div class="indicator-status">
+                                        <span class="status-badge success">OK</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="indicator-row">
+                                <div class="indicator-item">
+                                    <div class="indicator-icon time">
+                                        <i class="fas fa-compress"></i>
+                                    </div>
+                                    <div class="indicator-content">
+                                        <span class="indicator-label">Compressão</span>
+                                        <span id="compression-quality" class="indicator-value">100%</span>
+                                    </div>
+                                    <div class="indicator-status">
+                                        <span class="status-badge success">Alta</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="indicator-item">
+                                    <div class="indicator-icon study">
+                                        <i class="fas fa-graduation-cap"></i>
+                                    </div>
+                                    <div class="indicator-content">
+                                        <span class="indicator-label">Quiz</span>
+                                        <span id="quiz-avg-score" class="indicator-value">0%</span>
+                                    </div>
+                                    <div class="indicator-status">
+                                        <span class="status-badge warning">Estude</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Conquistas e Metas -->
+                    <div class="dashboard-section">
+                        <div class="section-header">
+                            <h3 class="section-title">
+                                <i class="fas fa-trophy"></i> Conquistas & Certificações
+                            </h3>
+                        </div>
+                        <div class="achievements-premium">
+                            <div class="achievement-card locked">
+                                <div class="achievement-icon">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div class="achievement-info">
+                                    <h4>Primeiro PCR</h4>
+                                    <p>Complete 1 atendimento</p>
+                                    <div class="achievement-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 0%"></div>
+                                        </div>
+                                        <span class="progress-text">0/1</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="achievement-card locked">
+                                <div class="achievement-icon">
+                                    <i class="fas fa-award"></i>
+                                </div>
+                                <div class="achievement-info">
+                                    <h4>Dedicado</h4>
+                                    <p>50 atendimentos</p>
+                                    <div class="achievement-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 0%"></div>
+                                        </div>
+                                        <span class="progress-text">0/50</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="achievement-card locked">
+                                <div class="achievement-icon">
+                                    <i class="fas fa-brain"></i>
+                                </div>
+                                <div class="achievement-info">
+                                    <h4>Mestre Quiz</h4>
+                                    <p>90% de acertos</p>
+                                    <div class="achievement-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 0%"></div>
+                                        </div>
+                                        <span class="progress-text">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="achievement-card locked">
+                                <div class="achievement-icon">
+                                    <i class="fas fa-fire"></i>
+                                </div>
+                                <div class="achievement-info">
+                                    <h4>Sequência</h4>
+                                    <p>7 dias de prática</p>
+                                    <div class="achievement-progress">
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: 0%"></div>
+                                        </div>
+                                        <span class="progress-text">0/7</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                <!-- Ações Premium do Dashboard -->
+                <div class="dashboard-bottom-actions">
+                    <button id="view-full-log-btn" class="btn-dashboard-action secondary">
+                        <i class="fas fa-file-medical-alt"></i>
+                        <div>
+                            <span class="btn-title">Histórico Completo</span>
+                            <span class="btn-subtitle">Ver todos os atendimentos</span>
+                        </div>
+                    </button>
+                    <button id="upgrade-plan-btn" class="btn-dashboard-action premium">
+                        <i class="fas fa-crown"></i>
+                        <div>
+                            <span class="btn-title">Upgrade para PRO</span>
+                            <span class="btn-subtitle">Recursos ilimitados</span>
+                        </div>
+                    </button>
+                </div>
+
+            </section>
+
+        </main>
+
+        <!-- TOASTS ACCESSÍVEIS: Mensagens não-bloqueantes (anúncios para leitores de tela) -->
+        <div id="toast-container" aria-live="polite" aria-atomic="true" class="toast-container"></div>
+
+        <footer>
+            <nav>
+                <button id="nav-home" class="nav-item active"><i class="fas fa-home"></i> Home</button>
+                <button id="nav-pcr" class="nav-item"><i class="fas fa-heartbeat"></i> PCR</button>
+                <button id="nav-dashboard" class="nav-item"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
+            </nav>
+        </footer>
+
+    </div>
+
+    <div id="patient-modal" class="modal">
+        <div class="modal-content">
+            <h3>Preparar Novo Atendimento</h3>
+            <p>Insira os dados do paciente para cálculos pediátricos e registro.</p>
+            <form id="patient-form">
+                <label for="patient-name">Nome / ID do Paciente (opcional):</label>
+                <input type="text" id="patient-name" placeholder="Ex: Paciente 001">
+
+                <div class="input-group">
+                    <div>
+                        <label for="patient-age">Idade (anos):</label>
+                        <input type="number" id="patient-age" placeholder="Ex: 5" min="0">
+                    </div>
+                    <div>
+                        <label for="patient-weight">Peso (kg):</label>
+                        <input type="number" id="patient-weight" placeholder="Ex: 20" min="1">
+                    </div>
+                </div>
+                
+                <label>Sexo:</label>
+                <div class="radio-group">
+                    <input type="radio" id="sex-m" name="sex" value="Masculino">
+                    <label for="sex-m">Masculino</label>
+                    <input type="radio" id="sex-f" name="sex" value="Feminino">
+                    <label for="sex-f">Feminino</label>
+                </div>
+
+                <label for="patient-allergies">Alergias Conhecidas (opcional):</label>
+                <input type="text" id="patient-allergies" placeholder="Ex: Penicilina, Látex">
+
+                <label for="patient-comorbidities">Comorbidades Relevantes (opcional):</label>
+                <input type="text" id="patient-comorbidities" placeholder="Ex: ICC, DPOC">
+
+                <button type="submit" class="primary-btn">INICIAR ATENDIMENTO</button>
+                <button type="button" id="start-pcr-no-data-btn" class="secondary-btn">Iniciar com dados N/I</button>
+                <button type="button" id="cancel-patient-btn" class="cancel-btn">Cancelar</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="med-modal" class="modal">
+        <div class="modal-content">
+            <h3>Registrar Medicamento</h3>
+            
+            <label for="medication-select">Medicação:</label>
+            <select id="medication-select">
+                <option value="">Selecione...</option>
+                <option value="adrenalina">Adrenalina (Epinefrina)</option>
+                <option value="amiodarona">Amiodarona</option>
+                <option value="atropina">Atropina</option>
+                <option value="lidocaina">Lidocaína</option>
+                <option value="bicarbonato">Bicarbonato de Sódio</option>
+                <option value="sulfato">Sulfato de Magnésio</option>
+            </select>
+
+            <label for="medication-dose">Dose Sugerida (Auto-calculada):</label>
+            <input type="text" id="medication-dose" readonly placeholder="A dose será calculada aqui">
+            
+            <label>Via de Administração:</label>
+            <div class="radio-group">
+                <input type="radio" id="route-ev" name="administration-route" value="EV" checked>
+                <label for="route-ev">EV</label>
+                <input type="radio" id="route-io" name="administration-route" value="IO">
+                <label for="route-io">IO</label>
+                <input type="radio" id="route-et" name="administration-route" value="ET">
+                <label for="route-et">ET (se aplicável)</label>
+            </div>
+
+            <button id="record-med-btn" class="primary-btn">REGISTRAR ADMINISTRAÇÃO</button>
+            <button id="cancel-med-btn" class="cancel-btn">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="notes-modal" class="modal">
+        <div class="modal-content">
+            <h3>Anotações Clínicas</h3>
+            <p>Registre informações importantes que não se encaixam nas ações padronizadas.</p>
+            
+            <label for="clinical-notes">Anotação (Será salva no Log):</label>
+            <textarea id="clinical-notes" rows="5" placeholder="Ex: Via aérea avançada estabelecida com tubo 7.5."></textarea>
+
+            <button id="save-notes-btn" class="primary-btn">SALVAR ANOTAÇÃO</button>
+            <button id="cancel-notes-btn" class="cancel-btn">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="vitals-modal" class="modal">
+        <div class="modal-content">
+            <h3>Registro de Sinais Vitais</h3>
+            <p>Registre o estado do paciente (não deve ser feito durante RCP ativa).</p>
+            
+            <div class="vitals-grid">
+                <div>
+                    <label for="vital-pa-sistolica">PA Sistólica:</label>
+                    <input type="number" id="vital-pa-sistolica" placeholder="Ex: 120">
+                </div>
+                <div>
+                    <label for="vital-pa-diastolica">PA Diastólica:</label>
+                    <input type="number" id="vital-pa-diastolica" placeholder="Ex: 80">
+                </div>
+                
+                <div>
+                    <label for="vital-fc">Frequência Cardíaca (bpm):</label>
+                    <input type="number" id="vital-fc" placeholder="Ex: 85">
+                </div>
+                <div>
+                    <label for="vital-fr">Frequência Resp. (ipm):</label>
+                    <input type="number" id="vital-fr" placeholder="Ex: 16">
+                </div>
+
+                <div>
+                    <label for="vital-spo2">SpO₂ (%):</label>
+                    <input type="number" id="vital-spo2" placeholder="Ex: 98">
+                </div>
+                <div>
+                    <label for="vital-temp">Temperatura (°C):</label>
+                    <input type="text" id="vital-temp" placeholder="Ex: 36.5">
+                </div>
+            </div>
+
+            <label for="vital-notes">Observações Adicionais:</label>
+            <textarea id="vital-notes" rows="2" placeholder="Ex: Glasgow 15, sem déficit focal."></textarea>
+
+            <button id="record-vitals-btn" class="primary-btn">REGISTRAR SINAIS VITAIS</button>
+            <button id="cancel-vitals-btn" class="cancel-btn">Cancelar</button>
+        </div>
+    </div>
+    
+    <div id="protocol-detail-modal" class="modal large-modal">
+        <div class="modal-content protocol-content-box">
+            <button onclick="closeModal('protocol-detail-modal')" class="close-btn"><i class="fas fa-times"></i></button>
+            <h3 id="protocol-title-display">Fluxograma ACLS</h3>
+            
+            <button id="protocol-download-btn" class="secondary-btn" style="margin-top: 15px;">📥 Baixar PDF</button>
+
+            <div id="protocol-content" class="flow-content-container">
+                </div>
+            
+            <div id="pdf-watermark-overlay" style="display: none;">
+                </div>
+            
+        </div>
+    </div>
+
+    <div id="study-detail-modal" class="modal large-modal">
+        <div class="modal-content study-content-box">
+            <button onclick="closeModal('study-detail-modal')" class="close-btn"><i class="fas fa-times"></i></button>
+            <h3 id="study-title-display">Guia de Estudo</h3>
+            
+            <div id="study-content" class="study-content-container">
+                </div>
+            
+            <button id="close-study-btn" class="primary-btn">Voltar</button>
+        </div>
+    </div>
+
+    <div id="log-detail-modal" class="modal large-modal">
+        <div class="modal-content log-detail-content-box">
+            <button onclick="closeModal('log-detail-modal')" class="close-btn"><i class="fas fa-times"></i></button>
+            <h3>Relatório de Atendimento #<span id="log-detail-id">N/A</span></h3>
+            
+            <div id="log-detail-content" class="report-container">
+                </div>
+            
+            <button id="close-log-detail-btn" class="primary-btn">Voltar ao Histórico</button>
+        </div>
+    </div>
+
+    <div id="quiz-running-modal" class="modal large-modal">
+        <div class="modal-content quiz-content-box">
+            <div class="quiz-header-info">
+                <span id="quiz-q-count">Questão 1/10</span>
+                <span id="quiz-score">Pontuação: 0</span>
+            </div>
+            
+            <div class="quiz-question-area">
+                <p id="question-text" class="question-text">Aguardando carregamento da questão...</p>
+                <div id="options-container" class="options-container">
+                    </div>
+            </div>
+            
+            <div id="feedback-box" class="feedback-box" style="display: none;">
+                <p id="feedback-message" class="feedback-message">Correto!</p>
+                <div id="feedback-explanation" class="feedback-explanation">Explicação: ...</div>
+            </div>
+
+            <button id="next-q-btn" class="primary-btn" disabled>PRÓXIMA QUESTÃO</button>
+            <button id="finish-quiz-early-btn" class="cancel-btn">Sair do Simulado</button>
+        </div>
+    </div>
+    
+    <div id="quiz-result-modal" class="modal">
+        <div class="modal-content">
+            <h3>Resultado do Simulado</h3>
+            <p id="result-message" class="section-description">Excelente! Dominando os protocolos.</p>
+            
+            <div class="result-display">
+                <span id="final-score-display" class="final-score-value">0</span>
+                <span class="final-score-label">acertos de <span id="total-questions-display">0</span></span>
+            </div>
+
+            <button id="close-result-btn" class="primary-btn">Voltar</button>
+        </div>
+    </div>
+    
+    <div id="glasgow-modal" class="modal">
+        <div class="modal-content">
+            <h3>Escala de Coma de Glasgow (GCS)</h3>
+            <p>Pontue os três critérios para obter o Escore.</p>
+            
+            <div class="glasgow-criteria">
+                <label for="glasgow-ocular">Ocular (Abre os olhos - 1 a 4):</label>
+                <select id="glasgow-ocular" onchange="updateGlasgowScore()">
+                    <option value="0">Selecione...</option>
+                    <option value="4">Espontânea (4)</option>
+                    <option value="3">Ao comando verbal (3)</option>
+                    <option value="2">À dor (2)</option>
+                    <option value="1">Ausente (1)</option>
+                </select>
+
+                <label for="glasgow-verbal">Verbal (Melhor resposta - 1 a 5):</label>
+                <select id="glasgow-verbal" onchange="updateGlasgowScore()">
+                    <option value="0">Selecione...</option>
+                    <option value="5">Orientado (5)</option>
+                    <option value="4">Confuso (4)</option>
+                    <option value="3">Palavras inapropriadas (3)</option>
+                    <option value="2">Sons incompreensíveis (2)</option>
+                    <option value="1">Ausente (1)</option>
+                </select>
+
+                <label for="glasgow-motora">Motora (Melhor resposta - 1 a 6):</label>
+                <select id="glasgow-motora" onchange="updateGlasgowScore()">
+                    <option value="0">Selecione...</option>
+                    <option value="6">Obedece a comandos (6)</option>
+                    <option value="5">Localiza dor (5)</option>
+                    <option value="4">Retira à dor (4)</option>
+                    <option value="3">Flexão Anormal (3)</option>
+                    <option value="2">Extensão Anormal (2)</option>
+                    <option value="1">Ausente (1)</option>
+                </select>
+            </div>
+            
+            <div class="recommendation-box" style="margin-top: 15px; background-color: var(--primary);">
+                <p>Escore Final:</p>
+                <span id="glasgow-score-display" class="final-score-value">N/A</span>
+                <p id="glasgow-severity" class="final-score-label">Selecione os três critérios</p>
+            </div>
+
+            <button id="save-glasgow-btn" class="primary-btn">REGISTRAR (Se em PCR)</button>
+            <button id="close-glasgow-btn" class="cancel-btn">Fechar</button>
+        </div>
+    </div>
+
+    <div id="upgrade-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="upgrade-plan-title" style="color: var(--danger);">🚨 Acesso Restrito</h3>
+            <p class="section-description">Funcionalidade exclusiva do Plano <strong id="required-level">Profissional</strong>.</p>
+            
+            <p id="restriction-text" style="color: #666; font-style: italic;">Esta funcionalidade (Log de Atendimento/Salvar Dados) é exclusiva para o Plano Profissional.</p>
+            
+            <button onclick="startSubscriptionFlow()" class="danger-btn wide-btn" style="margin-top: 15px;">Fazer Upgrade Agora</button>
+            <button onclick="closeModal('upgrade-modal')" class="secondary-btn">Voltar</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE MENU DE CONFIGURAÇÕES -->
+    <div id="settings-menu-modal" class="modal">
+        <div class="modal-content settings-modal-content">
+            <div class="settings-header">
+                <div class="settings-header-content">
+                    <div class="settings-header-icon">
+                        <i class="fas fa-sliders-h"></i>
+                    </div>
+                    <div>
+                        <h3>Configurações</h3>
+                        <p class="settings-subtitle">Personalize sua experiência no SIAV</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('settings-menu-modal')" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="settings-menu-grid">
+                <!-- Perfil -->
+                <div class="settings-card" onclick="openProfileSettings()">
+                    <div class="settings-card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="settings-card-content">
+                        <h4>Perfil</h4>
+                        <p>Edite suas informações pessoais</p>
+                    </div>
+                    <i class="fas fa-chevron-right settings-card-arrow"></i>
+                </div>
+
+                <!-- Sons e Alertas -->
+                <div class="settings-card" onclick="openSoundSettings()">
+                    <div class="settings-card-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <i class="fas fa-volume-up"></i>
+                    </div>
+                    <div class="settings-card-content">
+                        <h4>Sons e Alertas</h4>
+                        <p>Configure toques e notificações</p>
+                    </div>
+                    <i class="fas fa-chevron-right settings-card-arrow"></i>
+                </div>
+
+                <!-- Tema -->
+                <div class="settings-card" onclick="openThemeSettings()">
+                    <div class="settings-card-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <i class="fas fa-palette"></i>
+                    </div>
+                    <div class="settings-card-content">
+                        <h4>Aparência</h4>
+                        <p>Escolha entre tema claro ou escuro</p>
+                    </div>
+                    <i class="fas fa-chevron-right settings-card-arrow"></i>
+                </div>
+
+                <!-- Plano -->
+                <div class="settings-card" onclick="openPlanSettings()">
+                    <div class="settings-card-icon" style="background: linear-gradient(135deg, #ffd89b 0%, #ff9a56 100%);">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <div class="settings-card-content">
+                        <h4>Plano Profissional</h4>
+                        <p>Gerencie sua assinatura</p>
+                    </div>
+                    <i class="fas fa-chevron-right settings-card-arrow"></i>
+                </div>
+
+                <!-- Dados e Privacidade -->
+                <div class="settings-card" onclick="openDataSettings()">
+                    <div class="settings-card-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="settings-card-content">
+                        <h4>Dados e Privacidade</h4>
+                        <p>Backup, exportar e limpar dados</p>
+                    </div>
+                    <i class="fas fa-chevron-right settings-card-arrow"></i>
+                </div>
+
+                <!-- Sobre -->
+                <div class="settings-card" onclick="openAboutSettings()">
+                    <div class="settings-card-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="settings-card-content">
+                        <h4>Sobre o SIAV</h4>
+                        <p>Versão 2.0.0 • Créditos e ajuda</p>
+                    </div>
+                    <i class="fas fa-chevron-right settings-card-arrow"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE TEMA -->
+    <div id="theme-settings-modal" class="modal">
+        <div class="modal-content">
+            <h3>🎨 Aparência</h3>
+            <button onclick="closeModal('theme-settings-modal')" class="close-btn"><i class="fas fa-times"></i></button>
+
+            <div class="theme-selector">
+                <div class="theme-option" id="theme-light" onclick="setTheme('light')">
+                    <div class="theme-preview theme-preview-light">
+                        <div class="preview-header"></div>
+                        <div class="preview-body">
+                            <div class="preview-card"></div>
+                            <div class="preview-card"></div>
+                        </div>
+                    </div>
+                    <h4>☀️ Tema Claro</h4>
+                    <p>Recomendado para ambientes iluminados</p>
+                    <span class="theme-checkmark">✓</span>
+                </div>
+
+                <div class="theme-option" id="theme-dark" onclick="setTheme('dark')">
+                    <div class="theme-preview theme-preview-dark">
+                        <div class="preview-header"></div>
+                        <div class="preview-body">
+                            <div class="preview-card"></div>
+                            <div class="preview-card"></div>
+                        </div>
+                    </div>
+                    <h4>🌙 Tema Escuro</h4>
+                    <p>Ideal para ambientes com pouca luz</p>
+                    <span class="theme-checkmark">✓</span>
+                </div>
+
+                <div class="theme-option" id="theme-auto" onclick="setTheme('auto')">
+                    <div class="theme-preview theme-preview-auto">
+                        <div class="preview-header"></div>
+                        <div class="preview-body">
+                            <div class="preview-card"></div>
+                            <div class="preview-card"></div>
+                        </div>
+                    </div>
+                    <h4>🔄 Automático</h4>
+                    <p>Segue o sistema operacional</p>
+                    <span class="theme-checkmark">✓</span>
+                </div>
+            </div>
+
+            <button onclick="closeModal('theme-settings-modal')" class="primary-btn wide-btn" style="margin-top: 20px;">Aplicar Tema</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIGURAÇÃO DE SONS -->
+    <div id="sound-settings-modal" class="modal large-modal">
+        <div class="modal-content">
+            <!-- Cabeçalho -->
+            <div class="sound-settings-header">
+                <h3><i class="fas fa-volume-up"></i> Configurações de Sons</h3>
+                <p>Personalize os sons e alertas do SIAV</p>
+                <button onclick="closeModal('sound-settings-modal')" class="close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Conteúdo -->
+            <div class="sound-settings-content">
+                <!-- Toggle de Sons -->
+                <div class="sound-setting-group">
+                    <div class="setting-row">
+                        <label class="setting-label">
+                            <i class="fas fa-power-off"></i> Ativar Sons
+                        </label>
+                        <label class="switch">
+                            <input type="checkbox" id="sounds-enabled-toggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Controle de Volume -->
+                <div class="sound-setting-group">
+                    <h4><i class="fas fa-sliders-h"></i> Volume Global</h4>
+                    <p class="sound-description">Ajuste o volume de todos os sons do aplicativo</p>
+                    <div class="volume-control">
+                        <div class="volume-slider-wrapper">
+                            <input type="range" id="volume-slider" min="0" max="100" value="70" step="1">
+                        </div>
+                        <span id="volume-value">70%</span>
+                    </div>
+                </div>
+
+                <div class="sound-settings-divider"></div>
+
+                <!-- Configuração de Som de Choque -->
+                <div class="sound-setting-group">
+                    <h4><i class="fas fa-bolt"></i> Som de Desfibrilação</h4>
+                    <p class="sound-description">Alerta sonoro ao aplicar choque elétrico</p>
+
+                    <div class="sound-selector">
+                        <select id="shock-sound-select" class="sound-select">
+                            <option value="">Selecione um som...</option>
+                            <optgroup label="Biblioteca Padrão">
+                                <option value="sounds/library/shocks/shock-1.mp3">Som de Choque 1</option>
+                                <option value="sounds/library/shocks/shock-2.mp3">Som de Choque 2</option>
+                                <option value="sounds/library/shocks/shock-3.mp3">Som de Choque 3</option>
+                            </optgroup>
+                            <optgroup label="Sons Personalizados" id="shock-custom-group">
+                            </optgroup>
+                        </select>
+                        <button class="preview-btn" onclick="previewSound('shock')">
+                            <i class="fas fa-play"></i> Testar
+                        </button>
+                    </div>
+
+                    <div class="upload-area">
+                        <input type="file" id="upload-shock-sound" accept="audio/*" style="display: none;">
+                        <button class="upload-btn" onclick="document.getElementById('upload-shock-sound').click()">
+                            <i class="fas fa-upload"></i> Adicionar Som Personalizado
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Configuração de Som de Alerta -->
+                <div class="sound-setting-group">
+                    <h4><i class="fas fa-bell"></i> Som de Checagem de Ritmo</h4>
+                    <p class="sound-description">Lembrete a cada 2 minutos para verificar ritmo cardíaco</p>
+
+                    <div class="sound-selector">
+                        <select id="alert-sound-select" class="sound-select">
+                            <option value="">Selecione um som...</option>
+                            <optgroup label="Biblioteca Padrão">
+                                <option value="sounds/library/alerts/alert-1.mp3">Som de Alerta 1</option>
+                                <option value="sounds/library/alerts/alert-2.mp3">Som de Alerta 2</option>
+                                <option value="sounds/library/alerts/alert-3.mp3">Som de Alerta 3</option>
+                                <option value="sounds/library/alerts/alert-4.mp3">Som de Alerta 4</option>
+                                <option value="sounds/library/alerts/alert-5.mp3">Som de Alerta 5</option>
+                            </optgroup>
+                            <optgroup label="Sons Personalizados" id="alert-custom-group">
+                            </optgroup>
+                        </select>
+                        <button class="preview-btn" onclick="previewSound('alert')">
+                            <i class="fas fa-play"></i> Testar
+                        </button>
+                    </div>
+
+                    <div class="upload-area">
+                        <input type="file" id="upload-alert-sound" accept="audio/*" style="display: none;">
+                        <button class="upload-btn" onclick="document.getElementById('upload-alert-sound').click()">
+                            <i class="fas fa-upload"></i> Adicionar Som Personalizado
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Configuração de Som de Medicação -->
+                <div class="sound-setting-group">
+                    <h4><i class="fas fa-syringe"></i> Som de Medicação</h4>
+                    <p class="sound-description">Confirmação sonora ao registrar medicamentos</p>
+
+                    <div class="sound-selector">
+                        <select id="drug-sound-select" class="sound-select">
+                            <option value="">Selecione um som...</option>
+                            <optgroup label="Biblioteca Padrão">
+                                <option value="sounds/library/drugs/drug-1.mp3">Som de Medicação 1</option>
+                                <option value="sounds/library/drugs/drug-2.mp3">Som de Medicação 2</option>
+                                <option value="sounds/library/drugs/drug-3.mp3">Som de Medicação 3</option>
+                            </optgroup>
+                            <optgroup label="Sons Personalizados" id="drug-custom-group">
+                            </optgroup>
+                        </select>
+                        <button class="preview-btn" onclick="previewSound('drug')">
+                            <i class="fas fa-play"></i> Testar
+                        </button>
+                    </div>
+
+                    <div class="upload-area">
+                        <input type="file" id="upload-drug-sound" accept="audio/*" style="display: none;">
+                        <button class="upload-btn" onclick="document.getElementById('upload-drug-sound').click()">
+                            <i class="fas fa-upload"></i> Adicionar Som Personalizado
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Configuração de Som de Metrônomo -->
+                <div class="sound-setting-group">
+                    <h4><i class="fas fa-heartbeat"></i> Som do Metrônomo</h4>
+                    <p class="sound-description">Ritmo das compressões torácicas (100-120 bpm)</p>
+
+                    <div class="sound-selector">
+                        <select id="metronome-sound-select" class="sound-select">
+                            <option value="">Selecione um som...</option>
+                            <optgroup label="Biblioteca Padrão">
+                                <option value="sounds/library/metronome/metronome-1.mp3">Som de Metrônomo 1</option>
+                                <option value="sounds/library/metronome/metronome-2.wav">Som de Metrônomo 2</option>
+                                <option value="sounds/library/metronome/metronome-3.wav">Som de Metrônomo 3</option>
+                                <option value="sounds/library/metronome/metronome-4.mp3">Som de Metrônomo 4</option>
+                            </optgroup>
+                            <optgroup label="Sons Personalizados" id="metronome-custom-group">
+                            </optgroup>
+                        </select>
+                        <button class="preview-btn" onclick="previewSound('metronome')">
+                            <i class="fas fa-play"></i> Testar
+                        </button>
+                    </div>
+
+                    <div class="upload-area">
+                        <input type="file" id="upload-metronome-sound" accept="audio/*" style="display: none;">
+                        <button class="upload-btn" onclick="document.getElementById('upload-metronome-sound').click()">
+                            <i class="fas fa-upload"></i> Adicionar Som Personalizado
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer com Ações -->
+            <div class="sound-settings-footer">
+                <button class="btn-back" onclick="backToSettingsMenu()">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </button>
+                <button class="btn-reset" onclick="resetSoundSettings()">
+                    <i class="fas fa-undo"></i> Restaurar
+                </button>
+                <button class="btn-save-sounds" onclick="saveSoundSettings()">
+                    <i class="fas fa-save"></i> Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Autenticação (Login/Cadastro) -->
+    <div id="auth-modal-container"></div>
+    <link rel="stylesheet" href="auth-modal.css">
+    <script src="auth-modal.js" defer></script>
+
+    <div id="profile-modal" class="modal">
+        <div class="modal-content profile-modal-content">
+            <div class="profile-header">
+                <div class="profile-header-content">
+                    <div class="profile-header-icon">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div>
+                        <h3 id="profile-header-title">Perfil</h3>
+                        <p class="profile-subtitle">Gerencie suas informações pessoais e de acesso</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('profile-modal')" class="close-btn"><i class="fas fa-times"></i></button>
+            </div>
+
+            <form id="login-form" class="profile-form">
+                <!-- Status de Login -->
+                <div id="profile-logged-status" class="profile-status-card" style="display: none;">
+                    <div class="status-badge status-badge-success">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Conectado</span>
+                    </div>
+                    <div class="status-info">
+                        <div class="status-user">
+                            <strong id="status-user-name">Jhonatan Cruz</strong>
+                            <span id="status-user-email">jhonatan@example.com</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Informativo do Plano (Separado) -->
+                <div id="profile-plan-info" class="profile-plan-info-card" style="display: none;">
+                    <div class="plan-info-header">
+                        <i class="fas fa-crown" id="profile-plan-icon"></i>
+                        <div class="plan-info-text">
+                            <strong id="profile-plan-name">Plano Gratuito</strong>
+                            <span id="profile-plan-status">Ativo</span>
+                        </div>
+                    </div>
+                    <button type="button" onclick="openPlanSettings()" class="btn-manage-plan">
+                        <i class="fas fa-cog"></i> Gerenciar Plano
+                    </button>
+                </div>
+
+                <div id="login-form-fields" class="login-section">
+                    <div class="form-section-header">
+                        <i class="fas fa-key"></i>
+                        <h4>Acesso à Conta</h4>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="login-email">
+                            <i class="fas fa-envelope"></i>
+                            E-mail
+                        </label>
+                        <input type="email" id="login-email" name="login-email" required placeholder="seu.email@exemplo.com">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="login-password">
+                            <i class="fas fa-lock"></i>
+                            Senha
+                        </label>
+                        <input type="password" id="login-password" name="login-password" required placeholder="Mínimo 6 caracteres">
+                    </div>
+                </div>
+
+                <div id="profile-update-form" style="display: none;">
+                    <div class="form-section-header">
+                        <i class="fas fa-user-edit"></i>
+                        <h4>Informações Pessoais</h4>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="profile-name">
+                            <i class="fas fa-user"></i>
+                            Nome Completo
+                        </label>
+                        <input type="text" id="profile-name" name="profile-name" placeholder="Seu nome completo">
+                    </div>
+                    
+                    <div class="form-field">
+                        <label for="profile-profession">
+                            <i class="fas fa-briefcase-medical"></i>
+                            Profissão/Especialidade
+                        </label>
+                        <input type="text" id="profile-profession" placeholder="Ex: Enfermeiro">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="profile-council">
+                                <i class="fas fa-id-card"></i>
+                                Registro Profissional
+                            </label>
+                            <input type="text" id="profile-council" placeholder="Ex: CRM-SP 123456">
+                        </div>
+                        <div class="form-field">
+                            <label for="profile-birth-date">
+                                <i class="fas fa-calendar"></i>
+                                Data de Nascimento
+                            </label>
+                            <input type="date" id="profile-birth-date">
+                        </div>
+                    </div>
+                    
+                    <div class="form-field">
+                        <label for="profile-phone">
+                            <i class="fas fa-phone"></i>
+                            Telefone (opcional)
+                        </label>
+                        <input type="tel" id="profile-phone" placeholder="(99) 99999-9999">
+                    </div>
+                    
+                    <div class="form-section-header" style="margin-top: 20px;">
+                                        <div class="form-field" style="margin-bottom: 10px;">
+                                            <input type="checkbox" id="remember-login" checked>
+                                            <label for="remember-login" style="display: inline; font-weight: normal;">Lembrar login nesta máquina</label>
+                                        </div>
+                        <i class="fas fa-shield-alt"></i>
+                        <h4>Segurança</h4>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="profile-email">
+                            <i class="fas fa-envelope"></i>
+                            E-mail
+                        </label>
+                        <input type="email" id="profile-email" placeholder="seu.email@exemplo.com">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="profile-current-password">
+                            <i class="fas fa-lock"></i>
+                            Senha Atual (para confirmar alterações)
+                        </label>
+                        <input type="password" id="profile-current-password" placeholder="Digite sua senha atual">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="profile-new-password">
+                            <i class="fas fa-key"></i>
+                            Nova Senha (deixe vazio para manter a atual)
+                        </label>
+                        <input type="password" id="profile-new-password" placeholder="Nova senha (opcional)">
+                    </div>
+
+                    <button type="submit" class="primary-btn wide-btn profile-save-btn">
+                        <i class="fas fa-save"></i> ATUALIZAR PERFIL
+                    </button>
+                </div>
+
+                <div id="profile-actions">
+                    <button type="submit" class="primary-btn wide-btn profile-save-btn">
+                        <i class="fas fa-sign-in-alt"></i> FAZER LOGIN / CADASTRAR
+                    </button>
+                    <p class="profile-hint">Use os campos de E-mail e Senha. Se a conta não existir, será criado um novo cadastro.</p>
+                </div>
+            </form>
+            
+            <button id="logout-btn" class="danger-btn wide-btn" style="display: none; margin-top: 15px;">
+                <i class="fas fa-sign-out-alt"></i> SAIR (LOGOUT)
+            </button>
+        </div>
+    </div>
+
+
+    <!-- Carregar modal de autenticação -->
+    <!-- Modal de autenticação agora é gerenciado pelo sistema principal (script.js/src/) -->
+
+    <!-- ===== NOVO SISTEMA MODULAR (ES6) ===== -->
+    <script type="module" src="src/main.js"></script>
+
+    <!-- ===== CARREGAR MODAL DE PLANOS DINAMICAMENTE ===== -->
+    <script>
+    // Carrega modal de planos otimizado sob demanda
+    async function loadPlansModal() {
+        if (document.getElementById('plans-modal')) return; // Já carregado
+        
+        try {
+            const response = await fetch('plans-modal.html');
+            const html = await response.text();
+            document.getElementById('plans-modal-container').innerHTML = html;
+            
+            // Carrega o script otimizado
+            const script = document.createElement('script');
+            script.src = 'plans-modal-optimized.js';
+            script.defer = true;
+            document.body.appendChild(script);
+            
+            console.log('✅ Modal de planos otimizado carregado');
+        } catch (e) {
+            console.error('Erro ao carregar modal de planos:', e);
+        }
+    }
+    
+    // Pré-carregar quando necessário
+    window.addEventListener('load', () => {
+        // Pré-carregar após 3 segundos de página carregada
+        setTimeout(loadPlansModal, 3000);
+    });
+    </script>
+
+    <!-- ===== CÓDIGO LEGADO (Otimizado) ===== -->
+    <script src="settings-integration.js?v=3" defer></script>
+    <script src="sound-settings.js" defer></script>
+    <script src="mercadopago-config.js" defer></script>
+    <script src="mercadopago-integration.js" defer></script>
+    <script src="script.js?v=3" defer></script>
+</body>
+</html>

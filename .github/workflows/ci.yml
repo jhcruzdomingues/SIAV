@@ -1,0 +1,90 @@
+name: CI - Testes e Build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: 🧪 Testes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📚 Instalar dependências
+        run: npm ci
+
+      - name: 🧪 Executar testes
+        run: npm run test:run
+
+      - name: 📊 Gerar relatório de cobertura
+        run: npm run test:coverage
+
+      - name: 📤 Upload cobertura para Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage/coverage-final.json
+          flags: unittests
+          name: siav-coverage
+
+  build:
+    name: 🏗️ Build de Produção
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 📚 Instalar dependências
+        run: npm ci
+
+      - name: 🏗️ Build otimizado
+        run: npm run build
+
+      - name: 📤 Upload artefato de build
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-optimized
+          path: build-optimized/
+          retention-days: 7
+
+  lint:
+    name: 🔍 Linting e Qualidade
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout código
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 🔍 Verificar sintaxe JavaScript
+        run: |
+          find src -name "*.js" -type f -exec node -c {} \;
+          echo "✅ Sintaxe JavaScript válida"
+
+      - name: 📏 Verificar tamanho dos arquivos
+        run: |
+          echo "📊 Tamanho dos arquivos principais:"
+          ls -lh script.js style.css index.html
+          echo "✅ Verificação de tamanho concluída"

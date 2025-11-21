@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --version:*)",
+      "Bash(npm:*)",
+      "Bash(terser:*)",
+      "Bash(cssnano:*)",
+      "Bash(find:*)",
+      "Bash(dir:*)",
+      "Bash(xargs rm:*)",
+      "Bash(md5sum:*)",
+      "Bash(node:*)",
+      "Bash(cat:*)",
+      "Bash(echo:*)",
+      "Bash(settings-integration.js)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

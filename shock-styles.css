@@ -1,0 +1,510 @@
+/* =============================================
+   ESTILOS MODERNOS DA TELA DE DESFIBRILAÇÃO
+   ============================================= */
+
+/* Header da tela de choque */
+.shock-header {
+    text-align: center;
+    margin-bottom: 30px;
+    animation: fadeInDown 0.5s ease;
+}
+
+.shock-icon-container {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 15px;
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
+    animation: pulse 2s infinite;
+}
+
+.shock-icon-container i {
+    font-size: 40px;
+    color: white;
+}
+
+.shock-header h2 {
+    font-size: 2em;
+    color: var(--danger);
+    margin: 10px 0;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.shock-rhythm-info {
+    font-size: 1.1em;
+    color: #2c3e50 !important;
+    margin: 10px 0;
+    font-weight: 700;
+    opacity: 1 !important;
+}
+
+.rhythm-badge {
+    display: inline-block;
+    background: transparent;
+    color: #2c3e50;
+    padding: 0;
+    border-radius: 0;
+    font-weight: 700;
+    font-size: 1em;
+    box-shadow: none;
+}
+
+.shock-alert {
+    color: #c0392b !important;
+    font-size: 1.1em;
+    font-weight: 700;
+    margin-top: 10px;
+    animation: blink 1.5s infinite;
+    opacity: 1 !important;
+}
+
+/* Box de recomendação moderna - Card com destaque premium */
+.recommendation-box-modern {
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+    border: 3px solid #e74c3c;
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin: 20px 0;
+    box-shadow: 0 8px 24px rgba(231, 76, 60, 0.25), 0 0 0 1px rgba(231, 76, 60, 0.1);
+    animation: fadeInUp 0.6s ease;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.recommendation-box-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%);
+}
+.recommendation-box-modern:hover {
+    box-shadow: 0 12px 32px rgba(231, 76, 60, 0.35), 0 0 0 1px rgba(231, 76, 60, 0.2);
+    transform: translateY(-3px);
+    border-color: #c0392b;
+}
+
+.recommendation-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.85em;
+    color: #e74c3c;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 700;
+}
+
+.recommendation-header i {
+    color: #e74c3c;
+    font-size: 1.3em;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.recommendation-value {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 10px;
+    margin: 18px 0;
+}
+
+.energy-value {
+    font-size: 5.5em;
+    font-weight: 900;
+    color: #e74c3c;
+    line-height: 1;
+    letter-spacing: -3px;
+    text-shadow: 0 3px 12px rgba(231, 76, 60, 0.3);
+}
+
+.energy-unit {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: #c0392b;
+    margin-left: 6px;
+}
+
+.recommendation-details {
+    text-align: center;
+    color: #2c3e50 !important;
+    font-size: 1.05em;
+    margin-top: 18px;
+    font-weight: 600;
+    line-height: 1.6;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 8px;
+    border-left: 3px solid #f39c12;
+}
+
+/* Seção de seleção de energia */
+.energy-selection-section {
+    margin: 20px 0;
+    animation: fadeInUp 0.7s ease;
+}
+
+.selection-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.2em;
+    color: #2c3e50 !important;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--secondary);
+    font-weight: 700;
+    opacity: 1 !important;
+}
+
+.selection-title i {
+    color: var(--primary);
+}
+
+#shock-action-screen .energy-buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 12px auto;
+    max-width: 400px;
+}
+
+#shock-action-screen .energy-buttons-grid .energy-btn {
+    background: linear-gradient(135deg, #34495e, #2c3e50);
+    border: 2px solid var(--secondary);
+    border-radius: 12px;
+    padding: 15px 10px;
+    font-size: 1.2em;
+    font-weight: 700;
+    color: white;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+#shock-action-screen .energy-buttons-grid .energy-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(52, 152, 219, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s ease, height 0.4s ease;
+}
+
+#shock-action-screen .energy-buttons-grid .energy-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(52, 152, 219, 0.3);
+    border-color: var(--primary);
+}
+
+#shock-action-screen .energy-buttons-grid .energy-btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+#shock-action-screen .energy-buttons-grid .energy-btn.selected {
+    background: linear-gradient(135deg, var(--warning), #f39c12);
+    border-color: var(--danger);
+    color: var(--dark);
+    box-shadow: 0 8px 20px rgba(241, 196, 15, 0.4);
+    transform: scale(1.05);
+}
+
+/* Seção de energia personalizada */
+.custom-energy-section {
+    background: rgba(248, 249, 250, 0.5);
+    border: 2px dashed #bdc3c7;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    animation: fadeInUp 0.8s ease;
+}
+
+.custom-energy-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1em;
+    font-weight: 700;
+    color: #34495e !important;
+    margin-bottom: 12px;
+}
+
+.custom-energy-label i {
+    color: #e74c3c;
+}
+
+.custom-energy-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.custom-energy-input-wrapper input {
+    flex: 1;
+    background: #ffffff;
+    border: 2px solid #bdc3c7;
+    border-radius: 10px;
+    padding: 15px 50px 15px 15px;
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #2c3e50;
+    transition: all 0.3s ease;
+}
+
+.custom-energy-input-wrapper input:focus {
+    outline: none;
+    border-color: #e74c3c;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+    background: #ffffff;
+}
+
+.custom-energy-input-wrapper input::placeholder {
+    color: #95a5a6;
+    font-weight: 400;
+}
+
+.input-unit {
+    position: absolute;
+    right: 15px;
+    font-size: 1.2em;
+    font-weight: 700;
+    color: #e74c3c;
+    pointer-events: none;
+}
+
+.input-hint {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.85em;
+    color: #7f8c8d !important;
+    font-style: italic;
+    font-weight: 500;
+}
+
+/* Botão de aplicar choque */
+.shock-apply-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    border: none;
+    border-radius: 15px;
+    padding: 22px;
+    margin-top: 5px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(231, 76, 60, 0.4);
+    transition: all 0.3s ease;
+    animation: fadeInUp 0.9s ease;
+}
+
+.shock-apply-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(231, 76, 60, 0.6);
+}
+
+.shock-apply-btn:active {
+    transform: translateY(-1px);
+}
+
+.shock-apply-btn:active .btn-icon {
+    animation: shockBurst 0.5s ease-out;
+}
+
+@keyframes shockBurst {
+    0% {
+        transform: scale(1);
+        color: #ffffff;
+        filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
+    }
+    30% {
+        transform: scale(3.5);
+        color: #f1c40f;
+        filter: drop-shadow(0 0 40px #f1c40f) drop-shadow(0 0 80px #f39c12) drop-shadow(0 0 120px #e67e22);
+    }
+    60% {
+        transform: scale(3);
+        color: #f39c12;
+        filter: drop-shadow(0 0 35px #f1c40f) drop-shadow(0 0 70px #f39c12);
+    }
+    100% {
+        transform: scale(1);
+        color: #ffffff;
+        filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
+    }
+}
+
+.shock-apply-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+}
+
+.shock-apply-btn:hover::before {
+    width: 400px;
+    height: 400px;
+}
+
+.btn-icon {
+    font-size: 2.5em;
+    display: block;
+    margin-bottom: 10px;
+    color: #ffffff;
+    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.5));
+    animation: bolt-flash 1.5s infinite;
+    transition: all 0.15s ease;
+}
+
+.btn-text {
+    display: block;
+    font-size: 1.3em;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #ffffff;
+    margin-bottom: 5px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.btn-subtitle {
+    display: block;
+    font-size: 0.9em;
+    font-weight: 500;
+    color: #ffe6e6;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Nota de protocolo */
+.shock-protocol-note {
+    text-align: center;
+    font-size: 0.85em;
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
+    margin-top: 15px;
+    font-weight: 400;
+}
+
+/* Animações */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+@keyframes blink {
+    0%, 50%, 100% {
+        opacity: 1;
+    }
+    25%, 75% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes bolt-flash {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.1);
+    }
+}
+
+/* ============================================= */
+/* FORÇA MÁXIMA: Sobrescrever TODOS os estilos */
+/* ============================================= */
+
+/* Textos críticos - COR ESCURA para contrastar com fundo branco */
+#shock-action-screen .shock-rhythm-info,
+#shock-action-screen .shock-alert,
+#shock-action-screen .selection-title,
+#shock-action-screen .custom-energy-label,
+#shock-action-screen .input-hint,
+#shock-action-screen .recommendation-details {
+    color: #2c3e50 !important;
+    opacity: 1 !important;
+}
+
+/* Garantir que NENHUM elemento P ou LABEL herde cor apagada */
+#shock-action-screen p,
+#shock-action-screen label,
+#shock-action-screen span {
+    color: #2c3e50 !important;
+}
+
+/* Força específica para os 3 textos problemáticos */
+#shock-action-screen .selection-title,
+#shock-action-screen .shock-alert,
+#shock-action-screen .shock-rhythm-info {
+    color: #2c3e50 !important;
+    opacity: 1 !important;
+    font-weight: 700 !important;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .shock-header h2 {
+        font-size: 1.5em;
+    }
+
+    .energy-value {
+        font-size: 3em;
+    }
+
+    #shock-action-screen .energy-buttons-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .btn-text {
+        font-size: 1.1em;
+    }
+}
