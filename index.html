@@ -448,9 +448,49 @@
             
             <section id="quiz-config-screen" class="screen">
                 <h2>Configurar Simulado</h2>
-                <p class="section-description">Teste seus conhecimentos em SBV e SAV. Questões carregadas do banco de dados.</p>
-                
-                <div class="quiz-config-form">
+                <p class="section-description">Escolha o modo de treinamento desejado.</p>
+
+                <!-- Cards de Seleção de Modo -->
+                <div id="quiz-mode-selection" class="quiz-mode-selection">
+
+                    <!-- Card A: Banco de Questões (Offline) -->
+                    <div class="quiz-mode-card quiz-mode-card-questions" id="quiz-mode-questions">
+                        <div class="quiz-mode-card-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div class="quiz-mode-card-content">
+                            <h3>📚 Banco de Questões</h3>
+                            <p>Pratique com perguntas aleatórias de SBV/SAV. Funciona offline.</p>
+                        </div>
+                        <div class="quiz-mode-card-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+
+                    <!-- Card B: Simulador Avançado (Online) -->
+                    <div class="quiz-mode-card quiz-mode-card-simulator" id="quiz-mode-simulator">
+                        <div class="quiz-mode-card-icon">
+                            <i class="fas fa-cloud"></i>
+                        </div>
+                        <div class="quiz-mode-card-content">
+                            <h3>⚡ Simulador Avançado</h3>
+                            <p>Casos clínicos complexos e dinâmicos. <strong>Requer Internet</strong></p>
+                        </div>
+                        <div class="quiz-mode-card-badge">
+                            <i class="fas fa-wifi"></i> Online
+                        </div>
+                        <div class="quiz-mode-card-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="quiz-config-form" style="display: none;">
+                    <button id="back-to-mode-selection" class="secondary-btn wide-btn" style="margin-bottom: 20px;">
+                        <i class="fas fa-arrow-left"></i> Voltar aos Modos
+                    </button>
+
                     <label for="question-count">Número de Questões:</label>
                     <select id="question-count">
                         <option value="10">10 Questões</option>

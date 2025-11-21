@@ -5019,3 +5019,796 @@ body[data-theme="dark"] .btn-dashboard-action .btn-subtitle {
 body[data-theme="dark"] .btn-dashboard-action:hover {
     background: var(--bg-container);
 }
+
+/* =============================================
+   QUIZ MODE SELECTION CARDS
+   ============================================= */
+
+.quiz-mode-selection {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.quiz-mode-card {
+    background: white;
+    border: 2px solid #e8ecef;
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.quiz-mode-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border-color: #667eea;
+}
+
+.quiz-mode-card:active {
+    transform: translateY(-1px);
+}
+
+/* Card de Banco de Questões */
+.quiz-mode-card-questions {
+    border-left: 5px solid #3498db;
+}
+
+.quiz-mode-card-questions:hover {
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.05) 0%, rgba(52, 152, 219, 0.02) 100%);
+    border-color: #3498db;
+}
+
+/* Card de Simulador Avançado */
+.quiz-mode-card-simulator {
+    border-left: 5px solid #667eea;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.02) 100%);
+}
+
+.quiz-mode-card-simulator:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.05) 100%);
+    border-color: #667eea;
+}
+
+/* Ícone do Card */
+.quiz-mode-card-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8em;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.quiz-mode-card-questions .quiz-mode-card-icon {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+}
+
+.quiz-mode-card-simulator .quiz-mode-card-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.quiz-mode-card:hover .quiz-mode-card-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+
+/* Conteúdo do Card */
+.quiz-mode-card-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.quiz-mode-card-content h3 {
+    margin: 0 0 6px 0;
+    font-size: 1.1em;
+    font-weight: 800;
+    color: var(--dark);
+    line-height: 1.3;
+}
+
+.quiz-mode-card-content p {
+    margin: 0;
+    font-size: 0.88em;
+    color: var(--secondary);
+    line-height: 1.4;
+}
+
+.quiz-mode-card-content p strong {
+    color: #667eea;
+    font-weight: 700;
+}
+
+/* Badge Online */
+.quiz-mode-card-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75em;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.quiz-mode-card-badge i {
+    font-size: 0.9em;
+}
+
+/* Seta do Card */
+.quiz-mode-card-arrow {
+    font-size: 1.2em;
+    color: var(--secondary);
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.quiz-mode-card:hover .quiz-mode-card-arrow {
+    color: #667eea;
+    transform: translateX(6px);
+}
+
+/* Dark Mode - Quiz Mode Cards */
+body[data-theme="dark"] .quiz-mode-card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+body[data-theme="dark"] .quiz-mode-card:hover {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: #667eea;
+}
+
+body[data-theme="dark"] .quiz-mode-card-content h3 {
+    color: var(--text-primary);
+}
+
+body[data-theme="dark"] .quiz-mode-card-content p {
+    color: var(--text-secondary);
+}
+
+body[data-theme="dark"] .quiz-mode-card-arrow {
+    color: var(--text-secondary);
+}
+
+body[data-theme="dark"] .quiz-mode-card:hover .quiz-mode-card-arrow {
+    color: #667eea;
+}
+
+/* Responsivo para Mobile */
+@media (max-width: 768px) {
+    .quiz-mode-card {
+        padding: 16px;
+    }
+
+    .quiz-mode-card-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.5em;
+    }
+
+    .quiz-mode-card-content h3 {
+        font-size: 1em;
+    }
+
+    .quiz-mode-card-content p {
+        font-size: 0.82em;
+    }
+
+    .quiz-mode-card-badge {
+        font-size: 0.7em;
+        padding: 5px 10px;
+    }
+}
+
+/* =============================================
+   GAME ENGINE: Simulador Avançado Interativo
+   ============================================= */
+
+/* Container Principal do Jogo */
+.sim-game-container {
+    max-width: 700px !important;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Badge de Dificuldade */
+.sim-difficulty-badge {
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.8em;
+    font-weight: 700;
+}
+
+.sim-difficulty-badge.facil {
+    background: rgba(46, 204, 113, 0.15);
+    color: #27ae60;
+    border: 1px solid #27ae60;
+}
+
+.sim-difficulty-badge.medio {
+    background: rgba(243, 156, 18, 0.15);
+    color: #f39c12;
+    border: 1px solid #f39c12;
+}
+
+.sim-difficulty-badge.dificil {
+    background: rgba(231, 76, 60, 0.15);
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+}
+
+/* Display de Pontuação */
+.sim-score-display {
+    background: linear-gradient(135deg, #ffd89b 0%, #ff9a56 100%);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 8px rgba(255, 154, 86, 0.3);
+}
+
+/* Barra de Progresso */
+.sim-progress-bar-container {
+    height: 6px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.sim-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transition: width 0.5s ease;
+    border-radius: 10px;
+}
+
+.sim-progress-text {
+    text-align: center;
+    font-size: 0.85em;
+    color: var(--secondary);
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+/* MONITOR MULTIPARAMÉTRICO */
+.sim-monitor {
+    background: #0a0e1a;
+    border: 3px solid #1a2332;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(0, 255, 150, 0.05);
+}
+
+.sim-monitor-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #1a2332;
+    color: #00ff88;
+    font-weight: 800;
+    font-size: 0.75em;
+    letter-spacing: 1.5px;
+}
+
+.sim-monitor-pulse {
+    font-size: 1.3em;
+    animation: pulse-heartbeat 1.2s infinite;
+}
+
+@keyframes pulse-heartbeat {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.sim-monitor-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sim-vital-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.sim-vital-box {
+    background: #0d1420;
+    border: 2px solid #1a2332;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sim-vital-label {
+    font-size: 0.7em;
+    color: #5a6c7d;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.sim-vital-value {
+    font-size: 1.8em;
+    font-weight: 900;
+    color: #00ff88;
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+    line-height: 1;
+}
+
+.sim-vital-value.critical {
+    color: #ff3366;
+    text-shadow: 0 0 15px rgba(255, 51, 102, 0.8);
+    animation: blink-critical 1s infinite;
+}
+
+@keyframes blink-critical {
+    0%, 49%, 100% { opacity: 1; }
+    50%, 99% { opacity: 0.3; }
+}
+
+.sim-vital-unit {
+    font-size: 0.65em;
+    color: #5a6c7d;
+    font-weight: 600;
+}
+
+/* Ritmo ECG */
+.sim-rhythm-display {
+    background: #0d1420;
+    border: 2px solid #1a2332;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.sim-rhythm-label {
+    font-size: 0.75em;
+    color: #5a6c7d;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.sim-rhythm-value {
+    font-size: 1.3em;
+    font-weight: 900;
+    color: #00ff88;
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+    text-transform: uppercase;
+}
+
+.sim-rhythm-value.rhythm-vf {
+    color: #ff3366;
+    text-shadow: 0 0 15px rgba(255, 51, 102, 0.8);
+    animation: blink-critical 0.8s infinite;
+}
+
+.sim-rhythm-value.rhythm-asystole {
+    color: #ff6b6b;
+    text-shadow: 0 0 12px rgba(255, 107, 107, 0.7);
+}
+
+.sim-rhythm-value.rhythm-sinus {
+    color: #00ff88;
+    text-shadow: 0 0 10px rgba(0, 255, 136, 0.6);
+}
+
+.sim-rhythm-value.rhythm-tachy {
+    color: #ffd93d;
+    text-shadow: 0 0 12px rgba(255, 217, 61, 0.7);
+}
+
+.sim-rhythm-value.rhythm-brady {
+    color: #6bcbef;
+    text-shadow: 0 0 12px rgba(107, 203, 239, 0.7);
+}
+
+/* Caixa de Cenário */
+.sim-scenario-box {
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-left: 5px solid #667eea;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 20px;
+}
+
+.sim-scenario-title {
+    font-size: 1.1em;
+    font-weight: 800;
+    color: var(--dark);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sim-scenario-title i {
+    color: #667eea;
+}
+
+.sim-scenario-message {
+    font-size: 0.95em;
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+/* Grid de Opções */
+.sim-options-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.sim-option-btn {
+    background: var(--bg-card);
+    border: 3px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    transition: all 0.2s ease;
+}
+
+.sim-option-btn:hover:not(:disabled) {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+    transform: translateX(4px);
+}
+
+.sim-option-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.sim-option-letter {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1em;
+    font-weight: 900;
+    flex-shrink: 0;
+}
+
+.sim-option-text {
+    flex: 1;
+    font-size: 0.95em;
+    font-weight: 600;
+    color: var(--dark);
+    line-height: 1.4;
+}
+
+/* Estados dos Botões */
+.sim-option-btn.correct {
+    border-color: #27ae60;
+    background: rgba(39, 174, 96, 0.1);
+    animation: pulse-correct 0.5s ease;
+}
+
+.sim-option-btn.correct .sim-option-letter {
+    background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+}
+
+.sim-option-btn.incorrect {
+    border-color: #e74c3c;
+    background: rgba(231, 76, 60, 0.1);
+    animation: shake 0.5s ease;
+}
+
+.sim-option-btn.incorrect .sim-option-letter {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+}
+
+.sim-option-btn.reveal {
+    animation: pulse-reveal 0.8s ease;
+}
+
+@keyframes pulse-correct {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+@keyframes pulse-reveal {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Caixa de Feedback */
+.sim-feedback-box {
+    border-radius: 12px;
+    padding: 18px;
+    margin-top: 20px;
+    display: none;
+    align-items: flex-start;
+    gap: 14px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.sim-feedback-box.show {
+    display: flex;
+}
+
+.sim-feedback-box.animate {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.sim-feedback-box.success {
+    background: rgba(39, 174, 96, 0.1);
+    border: 2px solid #27ae60;
+}
+
+.sim-feedback-box.error {
+    background: rgba(231, 76, 60, 0.1);
+    border: 2px solid #e74c3c;
+}
+
+.sim-feedback-icon {
+    font-size: 2.5em;
+    flex-shrink: 0;
+}
+
+.sim-feedback-box.success .sim-feedback-icon {
+    color: #27ae60;
+}
+
+.sim-feedback-box.error .sim-feedback-icon {
+    color: #e74c3c;
+}
+
+.sim-feedback-content {
+    flex: 1;
+}
+
+.sim-feedback-title {
+    font-size: 1.2em;
+    font-weight: 900;
+    margin-bottom: 8px;
+}
+
+.sim-feedback-box.success .sim-feedback-title {
+    color: #27ae60;
+}
+
+.sim-feedback-box.error .sim-feedback-title {
+    color: #e74c3c;
+}
+
+.sim-feedback-message {
+    font-size: 0.95em;
+    line-height: 1.5;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.sim-feedback-points {
+    font-size: 1.1em;
+    font-weight: 800;
+    margin-top: 8px;
+}
+
+.sim-feedback-box.success .sim-feedback-points {
+    color: #27ae60;
+}
+
+.sim-feedback-box.error .sim-feedback-points {
+    color: #e74c3c;
+}
+
+/* Tela de Game Over */
+.sim-game-over {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.sim-game-over-icon {
+    font-size: 5em;
+    margin-bottom: 20px;
+    animation: bounce-in 0.6s ease;
+}
+
+@keyframes bounce-in {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.sim-game-over-title {
+    font-size: 2em;
+    font-weight: 900;
+    margin-bottom: 8px;
+}
+
+.sim-game-over-subtitle {
+    font-size: 1.1em;
+    color: var(--secondary);
+    margin-bottom: 30px;
+    font-weight: 600;
+}
+
+.sim-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.sim-stat-card {
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.sim-stat-icon {
+    font-size: 2em;
+    color: #667eea;
+}
+
+.sim-stat-value {
+    font-size: 1.8em;
+    font-weight: 900;
+    color: var(--dark);
+}
+
+.sim-stat-label {
+    font-size: 0.85em;
+    color: var(--secondary);
+    font-weight: 600;
+}
+
+.sim-game-over-message {
+    background: rgba(102, 126, 234, 0.1);
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+    font-size: 1em;
+    line-height: 1.6;
+    color: var(--dark);
+}
+
+.sim-game-over-actions {
+    display: flex;
+    gap: 12px;
+}
+
+/* Dark Mode - Simulador */
+body[data-theme="dark"] .sim-scenario-box {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+body[data-theme="dark"] .sim-scenario-title,
+body[data-theme="dark"] .sim-scenario-message,
+body[data-theme="dark"] .sim-option-text,
+body[data-theme="dark"] .sim-feedback-message {
+    color: var(--text-primary);
+}
+
+body[data-theme="dark"] .sim-option-btn {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+body[data-theme="dark"] .sim-option-btn:hover:not(:disabled) {
+    background: rgba(102, 126, 234, 0.15);
+}
+
+body[data-theme="dark"] .sim-stat-card {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+body[data-theme="dark"] .sim-stat-value {
+    color: var(--text-primary);
+}
+
+body[data-theme="dark"] .sim-game-over-message {
+    background: rgba(102, 126, 234, 0.15);
+    border-color: rgba(102, 126, 234, 0.4);
+    color: var(--text-primary);
+}
+
+/* Responsivo para Mobile */
+@media (max-width: 768px) {
+    .sim-game-container {
+        max-width: 100% !important;
+    }
+
+    .sim-vital-row {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+
+    .sim-vital-box {
+        padding: 8px;
+    }
+
+    .sim-vital-value {
+        font-size: 1.4em;
+    }
+
+    .sim-option-btn {
+        padding: 12px;
+    }
+
+    .sim-option-letter {
+        width: 35px;
+        height: 35px;
+        font-size: 1em;
+    }
+
+    .sim-option-text {
+        font-size: 0.9em;
+    }
+
+    .sim-stats-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .sim-stat-card {
+        padding: 16px;
+    }
+
+    .sim-game-over-icon {
+        font-size: 3.5em;
+    }
+
+    .sim-game-over-title {
+        font-size: 1.5em;
+    }
+}

@@ -1,3 +1,47 @@
+/**
+ * Gerencia a visibilidade de elementos de venda com base no plano
+ */
+function manageProVisibility() {
+    // Verifica o plano com segurança (default para 'free' se nulo)
+    const userPlan = (state.currentUser?.plan || 'free').toLowerCase();
+    const isPro = (userPlan === 'professional' || userPlan === 'pro');
+
+    console.log('🎨 Ajustando visibilidade PRO. Plano:', userPlan);
+
+    // LISTA DE IDs DE ELEMENTOS QUE DEVEM SUMIR PARA PROS
+    const salesElements = [
+        'upgrade-plan-btn',       // Botão grande do Dashboard
+        'login-to-dashboard-btn', // Card de Login/Venda no topo
+        'upgrade-modal-trigger',  // Gatilhos extras
+        'premium-banner'          // Banners promocionais (se houver)
+    ];
+
+    salesElements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            if (isPro) {
+                // Se for PRO, esconde o elemento de venda
+                el.style.display = 'none'; 
+            } else {
+                // Se NÃO for PRO, restaura (remove o inline style para assumir o CSS)
+                el.style.display = ''; 
+            }
+        }
+    });
+
+    // AJUSTE DE LAYOUT:
+    // Se o botão de upgrade sumir, o botão de "Histórico Completo" deve ocupar 100% da largura
+    const historyBtn = document.getElementById('view-full-log-btn');
+    if (historyBtn) {
+        if (isPro) {
+            historyBtn.style.width = '100%';
+            historyBtn.classList.remove('secondary'); // Opcional: torna-o primário
+            historyBtn.classList.add('primary-btn'); 
+        } else {
+            historyBtn.style.width = ''; // Volta ao normal
+        }
+    }
+}
 // =============================================
 // SISTEMA DE DEA INTELIGENTE E PROTOCOLOS
 // =============================================
@@ -336,6 +380,9 @@ async function fetchUserProfile(userId, userEmail) {
             state.currentUser.councilRegister = data.council_register || null;
             state.currentUser.phone = data.phone_number || null;
             state.currentUser.birthDate = data.birth_date || null;
+
+            // Chama a função de limpeza visual após atualizar o perfil
+            manageProVisibility();
             
         } else {
             state.currentUser.name = userEmail ? userEmail.split('@')[0] : DEFAULT_USER_DATA.name;
@@ -3919,6 +3966,12 @@ async function updateDashboard() {
     
     if (!dashboardScreen) return; 
     updateSidebarPlan();
+    manageProVisibility();
+// Se existir uma função updateUI, integre a chamada ao final dela:
+// function updateUI() {
+//   ...
+//   manageProVisibility();
+// }
 
     // Atualiza data atual
     if (dashboardDate) {
@@ -4232,7 +4285,425 @@ function finishQuiz() {
     if(totalDisplay) totalDisplay.textContent = total;
     
     state.quiz.active = false;
-    updateDashboard(); 
+    updateDashboard();
+}
+
+// =====================================================
+// GAME ENGINE: Simulador Avançado Interativo
+// =====================================================
+
+// Variável global para armazenar o estado do jogo
+let simulationState = {
+    caseData: null,
+    currentStepIndex: 0,
+    totalScore: 0,
+    attempts: [],
+    startTime: null
+};
+
+/**
+ * Inicia o Simulador Avançado com um caso clínico do Supabase
+ * @param {Object} clinicalCase - Caso clínico carregado do banco
+ */
+async function startAdvancedSimulator(clinicalCase) {
+    console.log('🚀 Iniciando Game Engine com caso:', clinicalCase.title);
+
+    // Resetar estado do jogo
+    simulationState = {
+        caseData: clinicalCase,
+        currentStepIndex: 0,
+        totalScore: 0,
+        attempts: [],
+        startTime: Date.now()
+    };
+
+    // Criar modal do jogo
+    const modal = document.createElement('div');
+    modal.className = 'modal show';
+    modal.id = 'simulation-game-modal';
+    modal.style.zIndex = '10000';
+
+    modal.innerHTML = `
+        <div class="modal-content sim-game-container">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <h2 style="margin: 0;">⚡ ${clinicalCase.title}</h2>
+                    <span class="sim-difficulty-badge ${clinicalCase.difficulty}">
+                        ${clinicalCase.difficulty === 'facil' ? '🟢 Fácil' : clinicalCase.difficulty === 'medio' ? '🟡 Médio' : '🔴 Difícil'}
+                    </span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <div class="sim-score-display">
+                        <i class="fas fa-star"></i> <span id="sim-score">0</span> pts
+                    </div>
+                    <button onclick="closeSimulation()" class="close-modal-btn" title="Sair do Simulador">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="modal-body" id="simulation-game-body">
+                <!-- Conteúdo dinâmico renderizado por renderSimulationStep() -->
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Resetar o card do simulador
+    resetSimulatorCard();
+
+    // Renderizar primeira etapa
+    renderSimulationStep(0);
+}
+
+/**
+ * Renderiza uma etapa específica do jogo
+ * @param {number} stepIndex - Índice da etapa a ser renderizada
+ */
+function renderSimulationStep(stepIndex) {
+    const step = simulationState.caseData.game_flow[stepIndex];
+
+    if (!step) {
+        console.error('Etapa não encontrada:', stepIndex);
+        return;
+    }
+
+    simulationState.currentStepIndex = stepIndex;
+
+    const container = document.getElementById('simulation-game-body');
+    if (!container) return;
+
+    // Badge de progresso
+    const totalSteps = simulationState.caseData.game_flow.length;
+    const progressPercent = ((stepIndex + 1) / totalSteps) * 100;
+
+    container.innerHTML = `
+        <!-- Barra de Progresso -->
+        <div class="sim-progress-bar-container">
+            <div class="sim-progress-bar" style="width: ${progressPercent}%"></div>
+        </div>
+        <div class="sim-progress-text">Etapa ${stepIndex + 1} de ${totalSteps}</div>
+
+        <!-- Monitor de Sinais Vitais -->
+        <div class="sim-monitor">
+            <div class="sim-monitor-header">
+                <i class="fas fa-heartbeat sim-monitor-pulse"></i>
+                <span>MONITOR MULTIPARAMÉTRICO</span>
+            </div>
+            <div class="sim-monitor-body">
+                <div class="sim-vital-row">
+                    <div class="sim-vital-box">
+                        <div class="sim-vital-label">FC</div>
+                        <div class="sim-vital-value ${step.monitor.fc === 0 ? 'critical' : ''}">${step.monitor.fc}</div>
+                        <div class="sim-vital-unit">bpm</div>
+                    </div>
+                    <div class="sim-vital-box">
+                        <div class="sim-vital-label">PA</div>
+                        <div class="sim-vital-value ${step.monitor.pa === '0/0' ? 'critical' : ''}">${step.monitor.pa}</div>
+                        <div class="sim-vital-unit">mmHg</div>
+                    </div>
+                    <div class="sim-vital-box">
+                        <div class="sim-vital-label">SpO₂</div>
+                        <div class="sim-vital-value ${step.monitor.spo2 < 90 ? 'critical' : ''}">${step.monitor.spo2}</div>
+                        <div class="sim-vital-unit">%</div>
+                    </div>
+                </div>
+                <div class="sim-rhythm-display">
+                    <div class="sim-rhythm-label">RITMO ECG:</div>
+                    <div class="sim-rhythm-value ${getRhythmClass(step.monitor.ritmo)}">${step.monitor.ritmo}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cenário/Mensagem -->
+        <div class="sim-scenario-box">
+            <div class="sim-scenario-title">
+                <i class="fas fa-stethoscope"></i> ${step.title}
+            </div>
+            <div class="sim-scenario-message">${step.message}</div>
+        </div>
+
+        <!-- Opções de Resposta -->
+        <div class="sim-options-grid" id="sim-options-container">
+            ${step.options.map((option, index) => `
+                <button class="sim-option-btn" data-option-id="${option.id}" onclick="handleOptionClick('${option.id}', ${stepIndex})">
+                    <span class="sim-option-letter">${option.id.toUpperCase()}</span>
+                    <span class="sim-option-text">${option.text}</span>
+                </button>
+            `).join('')}
+        </div>
+
+        <!-- Área de Feedback (Inicialmente oculta) -->
+        <div id="sim-feedback-box" class="sim-feedback-box" style="display: none;"></div>
+    `;
+}
+
+/**
+ * Trata o clique em uma opção de resposta
+ * @param {string} optionId - ID da opção clicada
+ * @param {number} stepIndex - Índice da etapa atual
+ */
+function handleOptionClick(optionId, stepIndex) {
+    const step = simulationState.caseData.game_flow[stepIndex];
+    const option = step.options.find(opt => opt.id === optionId);
+
+    if (!option) return;
+
+    // Registrar tentativa
+    simulationState.attempts.push({
+        step: stepIndex,
+        option: optionId,
+        correct: option.correct,
+        points: option.points || 0
+    });
+
+    // Desabilitar todos os botões
+    document.querySelectorAll('.sim-option-btn').forEach(btn => {
+        btn.disabled = true;
+        btn.style.pointerEvents = 'none';
+    });
+
+    // Destacar botão clicado
+    const clickedBtn = document.querySelector(`[data-option-id="${optionId}"]`);
+    if (clickedBtn) {
+        clickedBtn.classList.add(option.correct ? 'correct' : 'incorrect');
+    }
+
+    // Destacar resposta correta se errou
+    if (!option.correct) {
+        const correctOption = step.options.find(opt => opt.correct);
+        if (correctOption) {
+            const correctBtn = document.querySelector(`[data-option-id="${correctOption.id}"]`);
+            if (correctBtn) {
+                setTimeout(() => {
+                    correctBtn.classList.add('correct', 'reveal');
+                }, 500);
+            }
+        }
+    }
+
+    // Atualizar pontuação
+    simulationState.totalScore += (option.points || 0);
+    document.getElementById('sim-score').textContent = simulationState.totalScore;
+
+    // Mostrar feedback
+    showFeedback(option);
+
+    // Determinar próximo passo
+    if (option.correct && option.next_step !== null && option.next_step !== undefined) {
+        // Há próxima etapa - avançar após 3 segundos
+        setTimeout(() => {
+            const nextStepIndex = simulationState.caseData.game_flow.findIndex(s => s.step_id === option.next_step);
+            if (nextStepIndex !== -1) {
+                renderSimulationStep(nextStepIndex);
+            } else {
+                // Fim do jogo
+                showGameOver();
+            }
+        }, 3000);
+    } else if (option.correct && (option.next_step === null || option.next_step === undefined)) {
+        // Fim do jogo - acertou a última questão
+        setTimeout(() => {
+            showGameOver();
+        }, 3000);
+    } else {
+        // Resposta incorreta - permitir tentar novamente após 2 segundos
+        setTimeout(() => {
+            document.querySelectorAll('.sim-option-btn').forEach(btn => {
+                if (!btn.classList.contains('correct') && !btn.classList.contains('incorrect')) {
+                    btn.disabled = false;
+                    btn.style.pointerEvents = 'auto';
+                }
+            });
+        }, 2500);
+    }
+}
+
+/**
+ * Mostra o feedback visual da resposta
+ * @param {Object} option - Opção selecionada
+ */
+function showFeedback(option) {
+    const feedbackBox = document.getElementById('sim-feedback-box');
+    if (!feedbackBox) return;
+
+    feedbackBox.className = `sim-feedback-box ${option.correct ? 'success' : 'error'} show`;
+    feedbackBox.innerHTML = `
+        <div class="sim-feedback-icon">
+            ${option.correct ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-times-circle"></i>'}
+        </div>
+        <div class="sim-feedback-content">
+            <div class="sim-feedback-title">${option.correct ? 'CORRETO!' : 'INCORRETO'}</div>
+            <div class="sim-feedback-message">${option.feedback}</div>
+            ${option.points ? `<div class="sim-feedback-points">${option.points > 0 ? '+' : ''}${option.points} pontos</div>` : ''}
+        </div>
+    `;
+    feedbackBox.style.display = 'flex';
+
+    // Animação de entrada
+    setTimeout(() => {
+        feedbackBox.classList.add('animate');
+    }, 10);
+}
+
+/**
+ * Mostra a tela de fim de jogo
+ */
+function showGameOver() {
+    const container = document.getElementById('simulation-game-body');
+    if (!container) return;
+
+    const elapsedTime = Math.floor((Date.now() - simulationState.startTime) / 1000);
+    const minutes = Math.floor(elapsedTime / 60);
+    const seconds = elapsedTime % 60;
+
+    const totalPossibleScore = simulationState.caseData.game_flow.reduce((sum, step) => {
+        const correctOption = step.options.find(opt => opt.correct);
+        return sum + (correctOption?.points || 0);
+    }, 0);
+
+    const scorePercent = Math.round((simulationState.totalScore / totalPossibleScore) * 100);
+
+    let performanceLevel = '';
+    let performanceColor = '';
+    let performanceIcon = '';
+
+    if (scorePercent >= 90) {
+        performanceLevel = 'EXCELENTE!';
+        performanceColor = '#27ae60';
+        performanceIcon = 'fa-trophy';
+    } else if (scorePercent >= 70) {
+        performanceLevel = 'BOM TRABALHO!';
+        performanceColor = '#3498db';
+        performanceIcon = 'fa-thumbs-up';
+    } else if (scorePercent >= 50) {
+        performanceLevel = 'PODE MELHORAR';
+        performanceColor = '#f39c12';
+        performanceIcon = 'fa-star-half-alt';
+    } else {
+        performanceLevel = 'PRECISA REVISAR';
+        performanceColor = '#e74c3c';
+        performanceIcon = 'fa-book';
+    }
+
+    container.innerHTML = `
+        <div class="sim-game-over">
+            <div class="sim-game-over-icon" style="color: ${performanceColor};">
+                <i class="fas ${performanceIcon}"></i>
+            </div>
+            <h2 class="sim-game-over-title" style="color: ${performanceColor};">${performanceLevel}</h2>
+            <div class="sim-game-over-subtitle">Caso Clínico Concluído</div>
+
+            <div class="sim-stats-grid">
+                <div class="sim-stat-card">
+                    <div class="sim-stat-icon"><i class="fas fa-star"></i></div>
+                    <div class="sim-stat-value">${simulationState.totalScore}</div>
+                    <div class="sim-stat-label">Pontuação Final</div>
+                </div>
+                <div class="sim-stat-card">
+                    <div class="sim-stat-icon"><i class="fas fa-percentage"></i></div>
+                    <div class="sim-stat-value">${scorePercent}%</div>
+                    <div class="sim-stat-label">Aproveitamento</div>
+                </div>
+                <div class="sim-stat-card">
+                    <div class="sim-stat-icon"><i class="fas fa-clock"></i></div>
+                    <div class="sim-stat-value">${minutes}:${seconds.toString().padStart(2, '0')}</div>
+                    <div class="sim-stat-label">Tempo Total</div>
+                </div>
+            </div>
+
+            <div class="sim-game-over-message">
+                ${scorePercent >= 70
+                    ? '🎉 Parabéns! Você demonstrou ótimo conhecimento dos protocolos ACLS/BLS.'
+                    : '📚 Continue estudando! Revise os protocolos e tente novamente.'
+                }
+            </div>
+
+            <div class="sim-game-over-actions">
+                <button onclick="closeSimulation()" class="secondary-btn" style="flex: 1;">
+                    <i class="fas fa-arrow-left"></i> Voltar ao Menu
+                </button>
+                <button onclick="retryCase()" class="primary-btn" style="flex: 1;">
+                    <i class="fas fa-redo"></i> Tentar Novamente
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Fecha o simulador e limpa o estado
+ */
+function closeSimulation() {
+    const modal = document.getElementById('simulation-game-modal');
+    if (modal) {
+        modal.remove();
+    }
+
+    // Limpar estado
+    simulationState = {
+        caseData: null,
+        currentStepIndex: 0,
+        totalScore: 0,
+        attempts: [],
+        startTime: null
+    };
+
+    resetSimulatorCard();
+}
+
+/**
+ * Reinicia o caso atual
+ */
+function retryCase() {
+    if (simulationState.caseData) {
+        const caseData = simulationState.caseData;
+        closeSimulation();
+        setTimeout(() => {
+            startAdvancedSimulator(caseData);
+        }, 300);
+    }
+}
+
+/**
+ * Retorna classe CSS baseada no ritmo
+ * @param {string} rhythm - Nome do ritmo
+ * @returns {string} - Classe CSS
+ */
+function getRhythmClass(rhythm) {
+    const rhythmLower = rhythm.toLowerCase();
+    if (rhythmLower.includes('fibrilação') || rhythmLower.includes('fv')) return 'rhythm-vf';
+    if (rhythmLower.includes('assistolia')) return 'rhythm-asystole';
+    if (rhythmLower.includes('sinusal')) return 'rhythm-sinus';
+    if (rhythmLower.includes('taquicardia')) return 'rhythm-tachy';
+    if (rhythmLower.includes('bradicardia')) return 'rhythm-brady';
+    return '';
+}
+
+/**
+ * Reseta o card do simulador no quiz-config
+ */
+function resetSimulatorCard() {
+    const simulatorCard = document.getElementById('quiz-mode-simulator');
+    if (simulatorCard) {
+        simulatorCard.innerHTML = `
+            <div class="quiz-mode-card-icon">
+                <i class="fas fa-cloud"></i>
+            </div>
+            <div class="quiz-mode-card-content">
+                <h3>⚡ Simulador Avançado</h3>
+                <p>Casos clínicos complexos e dinâmicos. <strong>Requer Internet</strong></p>
+            </div>
+            <div class="quiz-mode-card-badge">
+                <i class="fas fa-wifi"></i> Online
+            </div>
+            <div class="quiz-mode-card-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        `;
+        simulatorCard.style.pointerEvents = 'auto';
+    }
 }
 
 function createMetronomeSound() {
@@ -4474,6 +4945,54 @@ if (submitBtn) {
     document.getElementById('close-result-btn')?.addEventListener('click', () => {
         closeModal('quiz-result-modal');
         showScreen('quiz-config');
+    });
+
+    // Event Listeners para os Cards de Modo de Quiz
+    document.getElementById('quiz-mode-questions')?.addEventListener('click', () => {
+        // Esconder os cards de seleção e mostrar o formulário de configuração
+        document.getElementById('quiz-mode-selection').style.display = 'none';
+        document.querySelector('.quiz-config-form').style.display = 'block';
+    });
+
+    document.getElementById('quiz-mode-simulator')?.addEventListener('click', async () => {
+        // Verificar se está online
+        if (!navigator.onLine) {
+            alert('⚠️ Conexão com a internet necessária para o Simulador Avançado\n\nEste modo requer acesso online ao banco de casos clínicos.');
+            return;
+        }
+
+        // Verificar permissão (se necessário)
+        if (!checkAccess('quiz_simulations')) return;
+
+        // Mostrar loading
+        const simulatorCard = document.getElementById('quiz-mode-simulator');
+        const originalHTML = simulatorCard.innerHTML;
+        simulatorCard.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Carregando caso clínico...</div>';
+        simulatorCard.style.pointerEvents = 'none';
+
+        try {
+            // Buscar caso clínico do Supabase
+            const clinicalCase = await window.SIAV.fetchRandomClinicalCase();
+
+            console.log('Caso clínico carregado:', clinicalCase);
+
+            // Iniciar o simulador avançado com o caso
+            await startAdvancedSimulator(clinicalCase);
+
+        } catch (error) {
+            console.error('Erro ao carregar caso clínico:', error);
+            alert('❌ Erro ao carregar o caso clínico\n\n' + error.message + '\n\nVerifique sua conexão com a internet.');
+
+            // Restaurar o card
+            simulatorCard.innerHTML = originalHTML;
+            simulatorCard.style.pointerEvents = 'auto';
+        }
+    });
+
+    // Botão Voltar aos Modos
+    document.getElementById('back-to-mode-selection')?.addEventListener('click', () => {
+        document.getElementById('quiz-mode-selection').style.display = 'flex';
+        document.querySelector('.quiz-config-form').style.display = 'none';
     });
 
     document.getElementById('close-protocol-btn')?.addEventListener('click', () => closeModal('protocol-detail-modal'));

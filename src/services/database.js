@@ -354,3 +354,39 @@ export async function loadUserStats() {
     };
   }
 }
+
+/**
+ * Busca um caso clínico aleatório do Supabase (Simulador Avançado)
+ * @returns {Promise<Object>} Caso clínico com todos os dados
+ * @throws {Error} Se houver erro de conexão ou nenhum caso encontrado
+ */
+export async function fetchRandomClinicalCase() {
+  try {
+    // Buscar todos os casos clínicos da tabela
+    const { data, error } = await supabase
+      .from('clinical_cases')
+      .select('*');
+
+    // Verificar erros do Supabase
+    if (error) {
+      console.error('Erro ao buscar casos clínicos:', error);
+      throw new Error('Erro ao buscar caso clínico: ' + error.message);
+    }
+
+    // Verificar se há dados
+    if (!data || data.length === 0) {
+      throw new Error('Nenhum caso clínico encontrado no banco de dados');
+    }
+
+    // Selecionar um caso aleatório
+    const randomIndex = Math.floor(Math.random() * data.length);
+    const selectedCase = data[randomIndex];
+
+    console.log('Caso clínico carregado:', selectedCase.title);
+    return selectedCase;
+
+  } catch (err) {
+    console.error('Erro no fetchRandomClinicalCase:', err);
+    throw err; // Propagar erro para ser tratado na UI
+  }
+}
