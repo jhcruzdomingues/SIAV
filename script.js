@@ -4306,7 +4306,29 @@ let simulationState = {
  * @param {Object} clinicalCase - Caso clínico carregado do banco
  */
 async function startAdvancedSimulator(clinicalCase) {
-    console.log('🚀 Iniciando Game Engine com caso:', clinicalCase.title);
+    console.log('🚀 [SIMULATOR] Iniciando Game Engine...');
+
+    // ===== VALIDAÇÕES DEFENSIVAS =====
+    if (!clinicalCase) {
+        console.error('❌ [SIMULATOR] clinicalCase é null/undefined');
+        alert('Erro crítico: Caso clínico não fornecido.');
+        return;
+    }
+
+    if (!clinicalCase.game_flow || !Array.isArray(clinicalCase.game_flow)) {
+        console.error('❌ [SIMULATOR] game_flow inválido:', clinicalCase);
+        alert('Erro: Estrutura do caso clínico corrompida. game_flow ausente ou inválido.');
+        return;
+    }
+
+    if (clinicalCase.game_flow.length === 0) {
+        console.error('❌ [SIMULATOR] game_flow vazio');
+        alert('Erro: Caso clínico sem etapas (game_flow vazio).');
+        return;
+    }
+
+    console.log('✅ [SIMULATOR] Validações OK - Caso:', clinicalCase.title);
+    console.log('📊 [SIMULATOR] Total de steps:', clinicalCase.game_flow.length);
 
     // Resetar estado do jogo
     simulationState = {
@@ -4362,17 +4384,52 @@ async function startAdvancedSimulator(clinicalCase) {
  * @param {number} stepIndex - Índice da etapa a ser renderizada
  */
 function renderSimulationStep(stepIndex) {
+    console.log(`🎬 [RENDER] Renderizando step ${stepIndex}...`);
+
+    // ===== VALIDAÇÕES DEFENSIVAS =====
+    if (!simulationState || !simulationState.caseData) {
+        console.error('❌ [RENDER] simulationState ou caseData não inicializado');
+        alert('Erro interno: Estado do jogo corrompido.');
+        closeSimulation();
+        return;
+    }
+
+    if (!simulationState.caseData.game_flow || !Array.isArray(simulationState.caseData.game_flow)) {
+        console.error('❌ [RENDER] game_flow inválido');
+        alert('Erro interno: Estrutura game_flow corrompida.');
+        closeSimulation();
+        return;
+    }
+
     const step = simulationState.caseData.game_flow[stepIndex];
 
     if (!step) {
-        console.error('Etapa não encontrada:', stepIndex);
+        console.error('❌ [RENDER] Etapa não encontrada no índice:', stepIndex);
+        console.error('   Total de steps disponíveis:', simulationState.caseData.game_flow.length);
+        alert(`Erro: Etapa ${stepIndex} não existe no caso clínico.`);
+        closeSimulation();
         return;
     }
+
+    // Validar estrutura do step
+    if (!step.monitor || !step.options || !Array.isArray(step.options)) {
+        console.error('❌ [RENDER] Step com estrutura inválida:', step);
+        alert('Erro: Etapa do caso clínico com dados corrompidos.');
+        closeSimulation();
+        return;
+    }
+
+    console.log('✅ [RENDER] Step válido:', step.title || `Step ${stepIndex}`);
+    console.log('📊 [RENDER] Estrutura do step.options:', JSON.stringify(step.options, null, 2));
+    console.log(`📊 [RENDER] Total de opções: ${step.options.length}`);
 
     simulationState.currentStepIndex = stepIndex;
 
     const container = document.getElementById('simulation-game-body');
-    if (!container) return;
+    if (!container) {
+        console.error('❌ [RENDER] Container #simulation-game-body não encontrado no DOM');
+        return;
+    }
 
     // Badge de progresso
     const totalSteps = simulationState.caseData.game_flow.length;
@@ -4426,12 +4483,20 @@ function renderSimulationStep(stepIndex) {
 
         <!-- Opções de Resposta -->
         <div class="sim-options-grid" id="sim-options-container">
-            ${step.options.map((option, index) => `
-                <button class="sim-option-btn" data-option-id="${option.id}" onclick="handleOptionClick('${option.id}', ${stepIndex})">
-                    <span class="sim-option-letter">${option.id.toUpperCase()}</span>
-                    <span class="sim-option-text">${option.text}</span>
-                </button>
-            `).join('')}
+            ${step.options.map((option, index) => {
+                // Fallback: Se option.id não existir, usa letra baseada no índice (a, b, c, d)
+                const optionId = option.id || String.fromCharCode(97 + index); // 97 = 'a'
+                const optionLetter = optionId.toString().toUpperCase();
+
+                console.log(`   Opção ${index}: id="${optionId}", text="${option.text?.substring(0, 30)}..."`);
+
+                return `
+                    <button class="sim-option-btn" data-option-id="${optionId}" onclick="handleOptionClick('${optionId}', ${stepIndex})">
+                        <span class="sim-option-letter">${optionLetter}</span>
+                        <span class="sim-option-text">${option.text || 'Sem texto'}</span>
+                    </button>
+                `;
+            }).join('')}
         </div>
 
         <!-- Área de Feedback (Inicialmente oculta) -->
@@ -4445,10 +4510,34 @@ function renderSimulationStep(stepIndex) {
  * @param {number} stepIndex - Índice da etapa atual
  */
 function handleOptionClick(optionId, stepIndex) {
+    console.log(`🖱️ [CLICK] Opção clicada: ${optionId} no step ${stepIndex}`);
+
+    // ===== VALIDAÇÕES DEFENSIVAS =====
+    if (!simulationState || !simulationState.caseData || !simulationState.caseData.game_flow) {
+        console.error('❌ [CLICK] Estado do jogo inválido');
+        return;
+    }
+
     const step = simulationState.caseData.game_flow[stepIndex];
+
+    if (!step) {
+        console.error('❌ [CLICK] Step não encontrado:', stepIndex);
+        return;
+    }
+
+    if (!step.options || !Array.isArray(step.options)) {
+        console.error('❌ [CLICK] Opções inválidas no step');
+        return;
+    }
+
     const option = step.options.find(opt => opt.id === optionId);
 
-    if (!option) return;
+    if (!option) {
+        console.error('❌ [CLICK] Opção não encontrada:', optionId);
+        return;
+    }
+
+    console.log(`✅ [CLICK] Opção válida:`, option.text.substring(0, 50) + '...');
 
     // Registrar tentativa
     simulationState.attempts.push({
@@ -4490,33 +4579,37 @@ function handleOptionClick(optionId, stepIndex) {
     // Mostrar feedback
     showFeedback(option);
 
-    // Determinar próximo passo
-    if (option.correct && option.next_step !== null && option.next_step !== undefined) {
-        // Há próxima etapa - avançar após 3 segundos
+    // ===== NOVA LÓGICA: SEMPRE AVANÇAR (BRANCHING) =====
+    // Cada opção (certa ou errada) tem seu próprio next_step
+    // Erros levam a consequências, acertos levam ao caminho correto
+
+    if (option.correct) {
+        console.log('✅ [CLICK] Resposta CORRETA. Pontos:', option.points);
+    } else {
+        console.log('❌ [CLICK] Resposta INCORRETA. Pontos:', option.points, '| Mostrando consequências...');
+    }
+
+    // Verificar se há próximo passo
+    if (option.next_step !== null && option.next_step !== undefined) {
+        // Há próxima etapa (consequência ou continuação normal)
         setTimeout(() => {
             const nextStepIndex = simulationState.caseData.game_flow.findIndex(s => s.step_id === option.next_step);
+
             if (nextStepIndex !== -1) {
+                console.log(`➡️ [CLICK] Avançando para step ${option.next_step} (índice ${nextStepIndex})`);
                 renderSimulationStep(nextStepIndex);
             } else {
-                // Fim do jogo
+                console.error('❌ [CLICK] Step não encontrado:', option.next_step);
+                console.error('   Steps disponíveis:', simulationState.caseData.game_flow.map(s => s.step_id));
                 showGameOver();
             }
-        }, 3000);
-    } else if (option.correct && (option.next_step === null || option.next_step === undefined)) {
-        // Fim do jogo - acertou a última questão
+        }, 3500); // 3.5s para ler o feedback
+    } else {
+        // Fim do jogo (next_step é null)
+        console.log('🏁 [CLICK] Fim da simulação (next_step = null)');
         setTimeout(() => {
             showGameOver();
-        }, 3000);
-    } else {
-        // Resposta incorreta - permitir tentar novamente após 2 segundos
-        setTimeout(() => {
-            document.querySelectorAll('.sim-option-btn').forEach(btn => {
-                if (!btn.classList.contains('correct') && !btn.classList.contains('incorrect')) {
-                    btn.disabled = false;
-                    btn.style.pointerEvents = 'auto';
-                }
-            });
-        }, 2500);
+        }, 3500);
     }
 }
 
@@ -4550,7 +4643,9 @@ function showFeedback(option) {
 /**
  * Mostra a tela de fim de jogo
  */
-function showGameOver() {
+async function showGameOver() {
+    console.log('🏁 [GAMEOVER] Finalizando simulação...');
+
     const container = document.getElementById('simulation-game-body');
     if (!container) return;
 
@@ -4585,6 +4680,32 @@ function showGameOver() {
         performanceLevel = 'PRECISA REVISAR';
         performanceColor = '#e74c3c';
         performanceIcon = 'fa-book';
+    }
+
+    // ===== SALVAR RESULTADO NO BANCO =====
+    try {
+        const simulationData = {
+            case_id: simulationState.caseData.id,
+            case_title: simulationState.caseData.title,
+            difficulty: simulationState.caseData.difficulty,
+            total_score: simulationState.totalScore,
+            total_steps: simulationState.caseData.game_flow.length,
+            attempts: simulationState.attempts,
+            duration_seconds: elapsedTime,
+            completed: true
+        };
+
+        console.log('💾 [GAMEOVER] Salvando resultado:', simulationData);
+
+        const result = await window.SIAV.saveSimulationLog(simulationData);
+
+        if (result.success) {
+            console.log('✅ [GAMEOVER] Resultado salvo! ID:', result.id);
+        } else {
+            console.warn('⚠️ [GAMEOVER] Não foi possível salvar:', result.error);
+        }
+    } catch (err) {
+        console.error('❌ [GAMEOVER] Erro ao salvar resultado:', err);
     }
 
     container.innerHTML = `
@@ -4622,10 +4743,13 @@ function showGameOver() {
 
             <div class="sim-game-over-actions">
                 <button onclick="closeSimulation()" class="secondary-btn" style="flex: 1;">
-                    <i class="fas fa-arrow-left"></i> Voltar ao Menu
+                    <i class="fas fa-arrow-left"></i> Voltar
                 </button>
-                <button onclick="retryCase()" class="primary-btn" style="flex: 1;">
-                    <i class="fas fa-redo"></i> Tentar Novamente
+                <button onclick="retryCase()" class="secondary-btn" style="flex: 1;">
+                    <i class="fas fa-redo"></i> Repetir
+                </button>
+                <button onclick="startNewCase()" class="primary-btn" style="flex: 1; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <i class="fas fa-play-circle"></i> Novo Caso
                 </button>
             </div>
         </div>
@@ -4663,6 +4787,58 @@ function retryCase() {
         setTimeout(() => {
             startAdvancedSimulator(caseData);
         }, 300);
+    }
+}
+
+/**
+ * Inicia um novo caso clínico (diferente do atual)
+ */
+async function startNewCase() {
+    console.log('🆕 [NEWCASE] Buscando novo caso clínico...');
+
+    try {
+        // Pegar ID do caso atual para excluir
+        const currentCaseId = simulationState.caseData?.id || null;
+
+        // Fechar simulação atual
+        closeSimulation();
+
+        // Mostrar loading no modal
+        const modal = document.createElement('div');
+        modal.className = 'modal show';
+        modal.id = 'simulation-game-modal';
+        modal.style.zIndex = '10000';
+        modal.innerHTML = `
+            <div class="modal-content sim-game-container" style="text-align: center; padding: 60px 20px;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 3em; color: var(--primary); margin-bottom: 20px;"></i>
+                <h2>Carregando Novo Caso Clínico...</h2>
+                <p style="color: var(--secondary);">Buscando um caso diferente para você</p>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Buscar novo caso (excluindo o atual)
+        console.log('🚫 [NEWCASE] Excluindo caso anterior:', currentCaseId);
+        const newCase = await window.SIAV.fetchRandomClinicalCase(currentCaseId);
+
+        console.log('✅ [NEWCASE] Novo caso carregado:', newCase.title);
+
+        // Remover modal de loading
+        modal.remove();
+
+        // Iniciar novo simulador com delay
+        setTimeout(() => {
+            startAdvancedSimulator(newCase);
+        }, 300);
+
+    } catch (err) {
+        console.error('❌ [NEWCASE] Erro ao buscar novo caso:', err);
+
+        // Fechar modal de loading se existir
+        const modal = document.getElementById('simulation-game-modal');
+        if (modal) modal.remove();
+
+        alert('❌ Erro ao carregar novo caso clínico\n\n' + err.message);
     }
 }
 
@@ -4705,6 +4881,16 @@ function resetSimulatorCard() {
         simulatorCard.style.pointerEvents = 'auto';
     }
 }
+
+// =============================================
+// EXPOSIÇÃO DE FUNÇÕES DO SIMULADOR NO ESCOPO GLOBAL
+// (Necessário para onclick inline no HTML)
+// =============================================
+window.handleOptionClick = handleOptionClick;
+window.closeSimulation = closeSimulation;
+window.retryCase = retryCase;
+window.startNewCase = startNewCase;
+window.startAdvancedSimulator = startAdvancedSimulator;
 
 function createMetronomeSound() {
     if (!audioContext) {
@@ -4955,14 +5141,24 @@ if (submitBtn) {
     });
 
     document.getElementById('quiz-mode-simulator')?.addEventListener('click', async () => {
+        console.log('🎮 [SIAV] Card do Simulador Avançado clicado');
+
         // Verificar se está online
         if (!navigator.onLine) {
+            console.warn('⚠️ [SIAV] Usuário está OFFLINE');
             alert('⚠️ Conexão com a internet necessária para o Simulador Avançado\n\nEste modo requer acesso online ao banco de casos clínicos.');
             return;
         }
 
+        console.log('✅ [SIAV] Usuário está ONLINE');
+
         // Verificar permissão (se necessário)
-        if (!checkAccess('quiz_simulations')) return;
+        if (!checkAccess('quiz_simulations')) {
+            console.warn('⚠️ [SIAV] Acesso negado para quiz_simulations');
+            return;
+        }
+
+        console.log('✅ [SIAV] Permissão concedida');
 
         // Mostrar loading
         const simulatorCard = document.getElementById('quiz-mode-simulator');
@@ -4970,22 +5166,55 @@ if (submitBtn) {
         simulatorCard.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Carregando caso clínico...</div>';
         simulatorCard.style.pointerEvents = 'none';
 
+        console.log('⏳ [SIAV] Loading exibido no card');
+
         try {
+            console.log('🔄 [SIAV] Chamando window.SIAV.fetchRandomClinicalCase()...');
+
             // Buscar caso clínico do Supabase
             const clinicalCase = await window.SIAV.fetchRandomClinicalCase();
 
-            console.log('Caso clínico carregado:', clinicalCase);
+            console.log('✅ [SIAV] Caso clínico retornado com sucesso:', clinicalCase);
+            console.log('📋 [SIAV] Título:', clinicalCase.title);
+            console.log('🎮 [SIAV] Game Flow Steps:', clinicalCase.game_flow?.length || 0);
+
+            // IMPORTANTE: Restaurar o card ANTES de abrir o modal
+            simulatorCard.innerHTML = originalHTML;
+            simulatorCard.style.pointerEvents = 'auto';
+
+            console.log('✅ [SIAV] Card restaurado');
 
             // Iniciar o simulador avançado com o caso
+            console.log('🚀 [SIAV] Iniciando startAdvancedSimulator()...');
             await startAdvancedSimulator(clinicalCase);
 
+            console.log('✅ [SIAV] Simulador iniciado com sucesso!');
+
         } catch (error) {
-            console.error('Erro ao carregar caso clínico:', error);
-            alert('❌ Erro ao carregar o caso clínico\n\n' + error.message + '\n\nVerifique sua conexão com a internet.');
+            console.error('💥 [SIAV] ERRO ao carregar caso clínico:', error);
+            console.error('📍 [SIAV] Stack:', error.stack);
+
+            // Mensagem de erro amigável
+            let errorMessage = '❌ Erro ao carregar o caso clínico\n\n';
+            errorMessage += error.message || 'Erro desconhecido';
+            errorMessage += '\n\n';
+
+            // Adicionar dicas baseadas no erro
+            if (error.message.includes('RLS') || error.message.includes('policy')) {
+                errorMessage += '💡 DICA: Execute o SQL de configuração RLS comentado em database.js';
+            } else if (error.message.includes('Nenhum caso')) {
+                errorMessage += '💡 DICA: Verifique se há dados na tabela clinical_cases no Supabase';
+            } else {
+                errorMessage += '💡 DICA: Verifique sua conexão com a internet e as credenciais do Supabase';
+            }
+
+            alert(errorMessage);
 
             // Restaurar o card
             simulatorCard.innerHTML = originalHTML;
             simulatorCard.style.pointerEvents = 'auto';
+
+            console.log('🔄 [SIAV] Card restaurado após erro');
         }
     });
 

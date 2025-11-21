@@ -17,7 +17,7 @@ import { state, resetPCRState, addTimelineEvent } from './config/state.js';
 import { PLANS, TIMINGS, BPM } from './config/constants.js';
 
 import { handleLogin, logout, checkSession, onAuthStateChange } from './services/auth.js';
-import { loadUserProfile, saveUserProfile, savePCRLog, loadPCRLogs, loadUserStats, fetchRandomClinicalCase } from './services/database.js';
+import { loadUserProfile, saveUserProfile, savePCRLog, loadPCRLogs, loadUserStats, fetchRandomClinicalCase, saveSimulationLog, loadSimulationLogs } from './services/database.js';
 import { setItem, getItem, saveSettings, loadSettings, saveOfflineLog, getOfflineLogs, markLogSynced } from './services/storage.js';
 
 import { formatTime, formatDate, formatDateTime, calculatePediatricDose } from './utils/formatters.js';
@@ -149,6 +149,8 @@ window.SIAV = {
   loadPCRLogs,
   loadUserStats,
   fetchRandomClinicalCase,
+  saveSimulationLog,
+  loadSimulationLogs,
 
   // Storage
   setItem,

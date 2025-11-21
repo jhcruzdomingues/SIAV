@@ -356,37 +356,203 @@ export async function loadUserStats() {
 }
 
 /**
- * Busca um caso clínico aleatório do Supabase (Simulador Avançado)
- * @returns {Promise<Object>} Caso clínico com todos os dados
- * @throws {Error} Se houver erro de conexão ou nenhum caso encontrado
+ * Salva log de simulação clínica
+ * @param {object} simulationData - Dados da simulação
+ * @returns {Promise<{success: boolean, id: string, error: string}>}
  */
-export async function fetchRandomClinicalCase() {
+export async function saveSimulationLog(simulationData) {
   try {
-    // Buscar todos os casos clínicos da tabela
-    const { data, error } = await supabase
-      .from('clinical_cases')
-      .select('*');
+    console.log('💾 [DB] Salvando log de simulação...');
 
-    // Verificar erros do Supabase
+    // Verificar autenticacao (opcional para simulador)
+    if (!state.user) {
+      console.warn('⚠️ [DB] Usuário não autenticado - log não será salvo');
+      // Retornar sucesso mesmo sem salvar (modo offline/anônimo)
+      return {
+        success: true,
+        id: null,
+        error: null
+      };
+    }
+
+    // Validacao de entrada
+    if (!simulationData || typeof simulationData !== 'object') {
+      return {
+        success: false,
+        id: null,
+        error: 'Dados da simulação são obrigatórios'
+      };
+    }
+
+    const { data, error } = await supabase
+      .from('simulation_logs')
+      .insert({
+        user_id: state.user.id,
+        case_id: simulationData.case_id,
+        case_title: simulationData.case_title,
+        difficulty: simulationData.difficulty,
+        total_score: simulationData.total_score,
+        total_steps: simulationData.total_steps,
+        attempts: simulationData.attempts,
+        duration_seconds: simulationData.duration_seconds,
+        completed: simulationData.completed !== undefined ? simulationData.completed : true,
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
     if (error) {
-      console.error('Erro ao buscar casos clínicos:', error);
+      console.error('❌ [DB] Erro ao salvar log:', error);
+      return {
+        success: false,
+        id: null,
+        error: error.message
+      };
+    }
+
+    console.log('✅ [DB] Log salvo com sucesso! ID:', data.id);
+
+    return {
+      success: true,
+      id: data.id,
+      error: null
+    };
+  } catch (err) {
+    console.error('💥 [DB] Erro crítico ao salvar log:', err);
+    return {
+      success: false,
+      id: null,
+      error: err.message || 'Erro desconhecido ao salvar log'
+    };
+  }
+}
+
+/**
+ * Carrega histórico de simulações do usuário
+ * @param {number} limit - Número máximo de registros
+ * @returns {Promise<Array>}
+ */
+export async function loadSimulationLogs(limit = 50) {
+  try {
+    if (!state.user) {
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from('simulation_logs')
+      .select('*')
+      .eq('user_id', state.user.id)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Erro ao carregar logs de simulação:', error);
+      return [];
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error('Erro no loadSimulationLogs:', err);
+    return [];
+  }
+}
+
+/**
+ * =============================================
+ * IMPORTANTE: DEBUG RLS (Row Level Security)
+ * =============================================
+ * Se você está recebendo erro "Nenhum caso encontrado" mesmo tendo dados no banco,
+ * execute este SQL no Supabase > SQL Editor:
+ *
+ * alter table clinical_cases enable row level security;
+ * create policy "Public Read" on clinical_cases for select using (true);
+ * =============================================
+ */
+
+/**
+ * Busca um caso clínico aleatório do Supabase (Simulador Avançado)
+ * @param {string} excludeCaseId - ID do caso a ser excluído (opcional)
+ * @returns {Promise<Object>} Caso clínico com todos os dados e game_flow válido
+ * @throws {Error} Se houver erro de conexão, RLS ou nenhum caso encontrado
+ */
+export async function fetchRandomClinicalCase(excludeCaseId = null) {
+  try {
+    console.log('🔍 [SIAV] Iniciando busca de casos clínicos...');
+    if (excludeCaseId) {
+      console.log('🚫 [SIAV] Excluindo caso:', excludeCaseId);
+    }
+
+    // Buscar casos clínicos com game_flow válido (não vazio)
+    let query = supabase
+      .from('clinical_cases')
+      .select('*')
+      .not('game_flow', 'is', null);
+
+    // Excluir caso específico se fornecido
+    if (excludeCaseId) {
+      query = query.neq('id', excludeCaseId);
+    }
+
+    const { data, error } = await query.limit(20); // Buscar até 20 casos para aleatoriedade
+
+    // Verificar erros do Supabase (incluindo RLS)
+    if (error) {
+      console.error('❌ [SIAV] Erro do Supabase:', error);
+      console.error('❌ [SIAV] Código do erro:', error.code);
+      console.error('❌ [SIAV] Mensagem:', error.message);
+
+      // Verificar se é erro de permissão RLS
+      if (error.code === 'PGRST301' || error.message.includes('policy')) {
+        throw new Error('⚠️ Erro de Permissão RLS. Execute o SQL de configuração comentado em database.js');
+      }
+
       throw new Error('Erro ao buscar caso clínico: ' + error.message);
     }
 
+    console.log('✅ [SIAV] Dados recebidos do Supabase:', data);
+    console.log('📊 [SIAV] Total de casos encontrados:', data?.length || 0);
+
     // Verificar se há dados
     if (!data || data.length === 0) {
-      throw new Error('Nenhum caso clínico encontrado no banco de dados');
+      console.error('❌ [SIAV] Nenhum caso clínico encontrado!');
+      console.error('⚠️ [SIAV] Possíveis causas:');
+      console.error('   1. Tabela clinical_cases está vazia');
+      console.error('   2. Políticas RLS estão bloqueando o acesso');
+      console.error('   3. Coluna game_flow está null em todos os registros');
+      throw new Error('Nenhum caso clínico encontrado. Verifique as Políticas RLS no Supabase.');
     }
 
-    // Selecionar um caso aleatório
-    const randomIndex = Math.floor(Math.random() * data.length);
-    const selectedCase = data[randomIndex];
+    // Filtrar casos que têm game_flow válido (array com pelo menos 1 step)
+    const validCases = data.filter(c => {
+      const hasGameFlow = c.game_flow && Array.isArray(c.game_flow) && c.game_flow.length > 0;
+      if (!hasGameFlow) {
+        console.warn('⚠️ [SIAV] Caso sem game_flow válido:', c.title);
+      }
+      return hasGameFlow;
+    });
 
-    console.log('Caso clínico carregado:', selectedCase.title);
+    console.log('✅ [SIAV] Casos válidos com game_flow:', validCases.length);
+
+    if (validCases.length === 0) {
+      throw new Error('Nenhum caso com game_flow válido encontrado. Verifique os dados no Supabase.');
+    }
+
+    // Selecionar um caso aleatório dos casos válidos
+    // Usar timestamp para melhorar aleatoriedade
+    const randomIndex = Math.floor((Math.random() * Date.now()) % validCases.length);
+    const selectedCase = validCases[randomIndex];
+
+    console.log('🎯 [SIAV] Caso selecionado:', selectedCase.title);
+    console.log('📋 [SIAV] Dificuldade:', selectedCase.difficulty);
+    console.log('🎮 [SIAV] Steps no game_flow:', selectedCase.game_flow.length);
+    console.log('🎲 [SIAV] Índice sorteado:', randomIndex, 'de', validCases.length, 'casos disponíveis');
+    console.log('📦 [SIAV] Dados completos do caso:', selectedCase);
+
     return selectedCase;
 
   } catch (err) {
-    console.error('Erro no fetchRandomClinicalCase:', err);
+    console.error('💥 [SIAV] ERRO CRÍTICO no fetchRandomClinicalCase:', err);
+    console.error('📍 [SIAV] Stack trace:', err.stack);
     throw err; // Propagar erro para ser tratado na UI
   }
 }
