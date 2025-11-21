@@ -389,6 +389,128 @@ async function loadUserFromSession(session) {
     }
 }
 
+// =============================================
+// VERIFICAÇÃO E MONITORAMENTO DE AUTENTICAÇÃO
+// =============================================
+
+/**
+ * Verifica o estado atual de autenticação e atualiza state.currentUser
+ * Garante que isLoggedIn seja definido corretamente
+ */
+async function checkAuthStatus() {
+    try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+            console.error('Erro ao verificar sessão:', error);
+            resetUserState();
+            return;
+        }
+
+        if (session && session.user) {
+            const user = session.user;
+
+            // Define explicitamente o estado de login
+            state.currentUser.isLoggedIn = true;
+            state.currentUser.id = user.id;
+            state.currentUser.email = user.email;
+            state.currentUser.token = session.access_token;
+
+            // Busca perfil do banco de dados
+            await fetchUserProfile(user.id, user.email);
+
+            console.log(`✅ Sessão verificada: ${user.email} | Plano: ${state.currentUser.plan.toUpperCase()} | isLoggedIn: ${state.currentUser.isLoggedIn}`);
+
+            // Atualiza interface
+            updateGreetingsAndHeader();
+            updateDashboard();
+
+        } else {
+            // Sem sessão - reseta estado do usuário
+            resetUserState();
+            console.log('ℹ️ Nenhuma sessão ativa encontrada');
+        }
+
+    } catch (error) {
+        console.error('Erro em checkAuthStatus:', error);
+        resetUserState();
+    }
+}
+
+/**
+ * Reseta o estado do usuário para valores padrão
+ */
+function resetUserState() {
+    state.currentUser.isLoggedIn = false;
+    state.currentUser.id = null;
+    state.currentUser.email = null;
+    state.currentUser.token = null;
+    state.currentUser.name = DEFAULT_USER_DATA.name;
+    state.currentUser.profession = DEFAULT_USER_DATA.profession;
+    state.currentUser.plan = DEFAULT_USER_DATA.plan;
+    state.currentUser.councilRegister = null;
+    state.currentUser.phone = null;
+    state.currentUser.birthDate = null;
+
+    console.log('[DEBUG] Estado do usuário resetado');
+}
+
+// =============================================
+// LISTENER DE MUDANÇAS DE AUTENTICAÇÃO
+// =============================================
+
+/**
+ * Configura o listener para detectar mudanças no estado de autenticação
+ */
+supabase.auth.onAuthStateChange(async (event, session) => {
+    console.log(`🔐 Auth Event: ${event}`, session ? `User: ${session.user.email}` : 'No session');
+
+    switch (event) {
+        case 'SIGNED_IN':
+            // Usuário fez login
+            if (session && session.user) {
+                const user = session.user;
+
+                state.currentUser.isLoggedIn = true;
+                state.currentUser.id = user.id;
+                state.currentUser.email = user.email;
+                state.currentUser.token = session.access_token;
+
+                await fetchUserProfile(user.id, user.email);
+
+                console.log(`✅ Login detectado: ${user.email} (${state.currentUser.plan.toUpperCase()})`);
+
+                updateGreetingsAndHeader();
+                updateDashboard();
+            }
+            break;
+
+        case 'SIGNED_OUT':
+            // Usuário fez logout
+            resetUserState();
+            console.log('👋 Logout detectado');
+
+            updateGreetingsAndHeader();
+            updateDashboard();
+            break;
+
+        case 'TOKEN_REFRESHED':
+            // Token foi atualizado
+            if (session) {
+                state.currentUser.token = session.access_token;
+                console.log('🔄 Token renovado');
+            }
+            break;
+
+        case 'USER_UPDATED':
+            // Dados do usuário foram atualizados
+            if (session && session.user) {
+                await fetchUserProfile(session.user.id, session.user.email);
+                console.log('📝 Perfil atualizado');
+            }
+            break;
+    }
+});
 
 function saveState() {
     const stateToSave = {
@@ -407,15 +529,15 @@ async function loadState() {
         const savedState = localStorage.getItem('siavState');
         if (savedState) {
             const parsedState = JSON.parse(savedState);
-            
+
             state.quizResults = parsedState.quizResults || [];
         }
-        
-        const { data: { session } } = await supabase.auth.getSession();
-        await loadUserFromSession(session);
-        
+
+        // Verifica autenticação ao carregar o app
+        await checkAuthStatus();
+
         console.log('✅ Estado do App e Sessão Supabase carregados.');
-        
+
     } catch (e) {
         console.error('Erro ao carregar estado do Local Storage ou Supabase', e);
     }
@@ -2749,62 +2871,64 @@ function renderPatientLog() {
     const logList = document.getElementById('patient-log-list');
     if (!logList) return;
     logList.innerHTML = '<p style="text-align: center;">Carregando Histórico Online...</p>';
-    import('./src/services/permissions.js').then(({ isAuthenticated, canAccess }) => {
-        if (!isAuthenticated()) {
-            logList.innerHTML = '<p style="text-align: center; color: var(--danger); font-weight: 700;">Faça login para acessar o histórico.</p>';
+
+    // Verificação local de autenticação
+    if (!state.currentUser.isLoggedIn) {
+        logList.innerHTML = '<p style="text-align: center; color: var(--danger); font-weight: 700;">Faça login para acessar o histórico.</p>';
+        return;
+    }
+
+    // Verificação local de permissão
+    if (!checkAccess('log_history', false)) {
+        logList.innerHTML = '<p style="text-align: center; color: var(--danger); font-weight: 700;">Bloqueado: Requer Plano Profissional.</p>';
+        return;
+    }
+
+    // Permissão OK, renderiza normalmente
+    fetchPcrLogs().then(() => {
+        if (state.patientLog.length === 0) {
+            logList.innerHTML = '<p style="text-align: center; color: #666;">Nenhum atendimento salvo no seu histórico online.</p>';
             return;
         }
-        if (!canAccess('log_history')) {
-            logList.innerHTML = '<p style="text-align: center; color: var(--danger); font-weight: 700;">Bloqueado: Requer Plano Profissional.</p>';
-            return;
-        }
-        // Permissão OK, renderiza normalmente
-        fetchPcrLogs().then(() => {
-            if (state.patientLog.length === 0) {
-                logList.innerHTML = '<p style="text-align: center; color: #666;">Nenhum atendimento salvo no seu histórico online.</p>';
-                return;
-            }
-            logList.innerHTML = '';
-            state.patientLog.forEach(logItem => {
-                const itemElement = document.createElement('div');
-                itemElement.className = 'log-item';
-                itemElement.setAttribute('data-log-id', logItem.id);
-                const patientName = logItem.patientName && logItem.patientName !== 'N/I'
-                    ? logItem.patientName
-                    : `Paciente N/I`;
-                const dateString = logItem.time instanceof Date ? logItem.time.toLocaleDateString('pt-BR') : 'N/A';
-                const timeString = logItem.time instanceof Date ? logItem.time.toLocaleTimeString('pt-BR') : 'N/A';
-                const shockCount = logItem.shocks || 0;
-                itemElement.innerHTML = `
-                    <div class="log-summary">
-                        <span>${patientName}</span>
-                        <span style="color: var(--primary);">${logItem.duration}</span>
-                    </div>
-                    <div class="log-details">
-                        <span class="log-date">Data: ${dateString} ${timeString}</span>
-                        <span class="log-duration">Choques: ${shockCount}</span>
-                        <button class="delete-log-btn" data-id="${logItem.id}">🗑️ Excluir</button>
-                    </div>
-                `;
-                logList.appendChild(itemElement);
+        logList.innerHTML = '';
+        state.patientLog.forEach(logItem => {
+            const itemElement = document.createElement('div');
+            itemElement.className = 'log-item';
+            itemElement.setAttribute('data-log-id', logItem.id);
+            const patientName = logItem.patientName && logItem.patientName !== 'N/I'
+                ? logItem.patientName
+                : `Paciente N/I`;
+            const dateString = logItem.time instanceof Date ? logItem.time.toLocaleDateString('pt-BR') : 'N/A';
+            const timeString = logItem.time instanceof Date ? logItem.time.toLocaleTimeString('pt-BR') : 'N/A';
+            const shockCount = logItem.shocks || 0;
+            itemElement.innerHTML = `
+                <div class="log-summary">
+                    <span>${patientName}</span>
+                    <span style="color: var(--primary);">${logItem.duration}</span>
+                </div>
+                <div class="log-details">
+                    <span class="log-date">Data: ${dateString} ${timeString}</span>
+                    <span class="log-duration">Choques: ${shockCount}</span>
+                    <button class="delete-log-btn" data-id="${logItem.id}">🗑️ Excluir</button>
+                </div>
+            `;
+            logList.appendChild(itemElement);
+        });
+        document.querySelectorAll('.delete-log-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const logId = this.getAttribute('data-id');
+                deleteLogEntry(logId);
             });
-            document.querySelectorAll('.delete-log-btn').forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const logId = this.getAttribute('data-id');
-                    deleteLogEntry(logId);
-                });
-            });
-            document.querySelectorAll('.log-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    const logId = this.getAttribute('data-log-id');
-                    viewLogDetail(logId);
-                });
+        });
+        document.querySelectorAll('.log-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const logId = this.getAttribute('data-log-id');
+                viewLogDetail(logId);
             });
         });
     }).catch(() => {
-        logList.innerHTML = '<p style="text-align: center; color: var(--danger); font-weight: 700;">Erro ao verificar permissões.</p>';
-        return;
+        logList.innerHTML = '<p style="text-align: center; color: var(--danger); font-weight: 700;">Erro ao carregar histórico.</p>';
     });
 }
 
