@@ -3637,7 +3637,7 @@ function showProfileModal() {
     const logoutBtn = document.getElementById('logout-btn');
     const profileHeaderTitle = document.getElementById('profile-header-title');
     const profileLoggedStatus = document.getElementById('profile-logged-status');
-    const profilePlanInfo = document.getElementById('profile-plan-info');
+    const sidebarPlanCard = document.getElementById('sidebar-plan-card');
 
     console.log('isLogged:', isLogged);
     console.log('plan:', state.currentUser.plan);
@@ -3680,28 +3680,10 @@ function showProfileModal() {
             console.error('❌ profileLoggedStatus NÃO encontrado!');
         }
 
-        // Mostrar card informativo do plano
-        if (profilePlanInfo) {
-            console.log('✅ Mostrando card de plano');
-            profilePlanInfo.style.display = 'flex';
-
-            // Atualizar informações do plano
-            const planName = document.getElementById('profile-plan-name');
-            const planCard = profilePlanInfo;
-
-            if (planName) {
-                const plan = state.currentUser.plan || 'free';
-                const planNames = {
-                    'free': 'Plano Gratuito',
-                    'student': 'Plano Estudante',
-                    'professional': 'Plano Profissional'
-                };
-                planName.textContent = planNames[plan] || 'Plano Gratuito';
-            }
-
-            // Atualizar classe do card conforme o plano
-            planCard.classList.remove('plan-free', 'plan-student', 'plan-professional');
-            planCard.classList.add(`plan-${state.currentUser.plan || 'free'}`);
+        // Mostrar card unificado de plano
+        if (sidebarPlanCard) {
+            console.log('✅ Mostrando card unificado de plano');
+            sidebarPlanCard.style.display = 'flex';
         }
 
         if (loginFields) loginFields.style.display = 'none';
@@ -3728,7 +3710,7 @@ function showProfileModal() {
         console.log('❌ Mostrando como NÃO LOGADO');
         if (profileHeaderTitle) profileHeaderTitle.textContent = 'Login / Cadastro';
         if (profileLoggedStatus) profileLoggedStatus.style.display = 'none';
-        if (profilePlanInfo) profilePlanInfo.style.display = 'none';
+        if (sidebarPlanCard) sidebarPlanCard.style.display = 'none';
         if (loginFields) loginFields.style.display = 'block';
         if (profileUpdateForm) profileUpdateForm.style.display = 'none';
         if (profileActions) profileActions.style.display = 'block';
@@ -3809,7 +3791,7 @@ function upgradePlan(newPlan) {
 function openPlansModal() {
     // Verificar se o modal existe, se não, carregar dinamicamente
     const modalContainer = document.getElementById('plans-modal-container');
-    
+
     if (!modalContainer || !modalContainer.innerHTML.trim()) {
         console.log('Modal de planos não carregado, carregando agora...');
         loadPlansModal().then(() => {
@@ -3831,6 +3813,9 @@ function openPlansModal() {
         }
     }
 }
+
+// Tornar a função global para acesso via onclick inline
+window.openPlansModal = openPlansModal;
 
 // Função para fechar modal de planos
 function closePlansModal() {
@@ -3854,11 +3839,11 @@ function openPlanSettings() {
 function updateGreetingsAndHeader() {
     const logoSubtitle = document.querySelector('.logo-subtitle');
     const homeGreeting = document.getElementById('home-greeting');
-    
+
     const prof = state.currentUser.profession || 'Profissional de Saúde';
-    
+
     if (logoSubtitle) {
-        logoSubtitle.textContent = state.currentUser.isLoggedIn 
+        logoSubtitle.textContent = state.currentUser.isLoggedIn
             ? `${state.currentUser.name} (${state.currentUser.plan.toUpperCase()})`
             : 'Sistema Inteligente de Assistência à Vida';
     }
@@ -3870,6 +3855,57 @@ function updateGreetingsAndHeader() {
             homeGreeting.textContent = `Olá, Profissional de Saúde!`;
         }
     }
+
+    // Atualiza o card unificado de plano na sidebar (modal de perfil)
+    updateSidebarPlan();
+}
+
+// Função para atualizar o card unificado de plano na sidebar (modal de perfil)
+// Atualiza o card unificado de plano na sidebar (modal de perfil)
+function updateSidebarPlan() {
+    const cardContainer = document.getElementById('sidebar-plan-card');
+    if (!cardContainer) return;
+
+    const plan = (state.currentUser?.plan || 'free').toLowerCase();
+    let cardClass = 'plan-card-unified ';
+    let icon = '', title = '', subtitle = '';
+
+    if (plan === 'professional') {
+        cardClass += 'plan-card-pro';
+        icon = '🏆';
+        title = 'Profissional';
+        subtitle = 'Membro VIP';
+    } else if (plan === 'student') {
+        cardClass += 'plan-card-student';
+        icon = '🎓';
+        title = 'Estudante';
+        subtitle = 'Acesso Acadêmico';
+    } else {
+        cardClass += 'plan-card-free';
+        icon = '💎';
+        title = 'Seja PRO';
+        subtitle = 'Desbloqueie recursos avançados';
+    }
+
+    cardContainer.className = cardClass;
+    cardContainer.innerHTML = `
+        <div class="card-content">
+            <span class="card-icon">${icon}</span>
+            <div class="card-info">
+                <span class="card-title">${title}</span>
+                <span class="card-subtitle">${subtitle}</span>
+            </div>
+        </div>
+    `;
+    cardContainer.onclick = () => {
+        if (typeof openPlansModal === 'function') {
+            openPlansModal();
+        } else if (window.openPlansModal) {
+            window.openPlansModal();
+        } else {
+            alert('Não foi possível abrir o modal de planos.');
+        }
+    };
 }
 
 async function updateDashboard() {
@@ -3882,6 +3918,7 @@ async function updateDashboard() {
     const dashboardDate = document.getElementById('dashboard-current-date');
     
     if (!dashboardScreen) return; 
+    updateSidebarPlan();
 
     // Atualiza data atual
     if (dashboardDate) {
@@ -4415,7 +4452,8 @@ if (submitBtn) {
             alert('Acesso ao log restrito ao Plano Profissional.');
         }
     });
-    document.getElementById('upgrade-plan-btn')?.addEventListener('click', startSubscriptionFlow); 
+    document.getElementById('upgrade-plan-btn')?.addEventListener('click', startSubscriptionFlow);
+    document.getElementById('btn-manage-plan')?.addEventListener('click', openPlanSettings);
 
     // Vínculos do Simulado
     document.getElementById('start-quiz-btn')?.addEventListener('click', startQuiz); 

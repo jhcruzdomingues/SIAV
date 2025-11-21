@@ -1,3 +1,65 @@
+/* === UNIFIED PLAN CARD (Champion App) === */
+.plan-card-unified {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-top: 15px;
+    text-decoration: none;
+    border: none;
+    color: white;
+}
+.plan-card-unified:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+.plan-card-pro {
+    background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
+    color: #222;
+    box-shadow: 0 4px 15px rgba(218, 165, 32, 0.4);
+}
+.plan-card-student {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+}
+.plan-card-free {
+    background: linear-gradient(135deg, #FF512F 0%, #DD2476 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(221, 36, 118, 0.4);
+    animation: pulse-soft 2s infinite;
+}
+@keyframes pulse-soft {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.08); }
+}
+.card-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+}
+.card-icon {
+    font-size: 1.5rem;
+}
+.card-info {
+    display: flex;
+    flex-direction: column;
+}
+.card-title {
+    font-weight: 800;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+}
+.card-subtitle {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    font-weight: normal;
+}
 .protocol-checklist {
     display: flex;
     flex-direction: column;
@@ -295,6 +357,12 @@ header {
     margin-bottom: 8px;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .header-btn {
     background: none;
     border: none;
@@ -302,6 +370,7 @@ header {
     font-size: 1.5em;
     cursor: pointer;
 }
+
 
 /* --- MAIN CONTENT & SCREENS --- */
 main {
