@@ -29,7 +29,6 @@
 </head>
 <body>
 
-    <div id="plans-modal-container"></div>
 
     <audio id="shock-sound" preload="none"></audio>
     <audio id="alert-sound" preload="none"></audio>
@@ -1479,9 +1478,6 @@
         </div>
     </div>
 
-    <div id="auth-modal-container"></div>
-    <link rel="stylesheet" href="auth-modal.css">
-    <script src="auth-modal.js" defer></script>
 
     <div id="profile-modal" class="modal">
         <div class="modal-content profile-modal-content">
@@ -1642,26 +1638,6 @@
     <link rel="modulepreload" href="src/config/state.js">
     <script type="module" src="src/main.js"></script>
 
-    <script>
-    async function loadPlansModal() {
-        if (document.getElementById('plans-modal')) return;
-
-        try {
-            const response = await fetch('plans-modal.html');
-            const html = await response.text();
-            document.getElementById('plans-modal-container').innerHTML = html;
-
-            const script = document.createElement('script');
-            script.src = 'plans-modal-optimized.js';
-            script.defer = true;
-            document.body.appendChild(script);
-        } catch (e) {
-            console.error('[SIAV] Erro ao carregar modal de planos:', e);
-        }
-    }
-
-    window.addEventListener('load', () => setTimeout(loadPlansModal, 3000));
-    </script>
 
     <script src="settings-integration.js?v=3" defer></script>
     <script src="sound-settings.js" defer></script>

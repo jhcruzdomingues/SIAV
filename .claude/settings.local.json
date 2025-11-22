@@ -12,7 +12,9 @@
       "Bash(node:*)",
       "Bash(cat:*)",
       "Bash(echo:*)",
-      "Bash(settings-integration.js)"
+      "Bash(settings-integration.js)",
+      "Bash(rm:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
