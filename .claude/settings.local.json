@@ -14,7 +14,8 @@
       "Bash(echo:*)",
       "Bash(settings-integration.js)",
       "Bash(rm:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
