@@ -281,9 +281,10 @@ function showCheckoutLoading() {
     if (modal) {
         const loading = document.createElement('div');
         loading.id = 'checkout-loading';
+        // SEGURO: HTML estático sem dados de usuário
         loading.innerHTML = `
-            <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-                        background: rgba(0,0,0,0.8); z-index: 99999; 
+            <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                        background: rgba(0,0,0,0.8); z-index: 99999;
                         display: flex; align-items: center; justify-content: center;">
                 <div style="background: white; padding: 40px; border-radius: 15px; text-align: center;">
                     <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: #009EE3; margin-bottom: 20px;"></i>
@@ -304,14 +305,17 @@ function hideCheckoutLoading() {
 }
 
 function getUserEmail() {
-    // Implementar: pegar email do usuário logado
-    // Pode vir do localStorage, Supabase, etc.
-    return localStorage.getItem('userEmail') || 'usuario@exemplo.com';
+    // Pegar email do usuário logado
+    // Retorna null se não houver email válido (sem fallback perigoso)
+    const email = localStorage.getItem('userEmail');
+    return email && email.trim() !== '' ? email : null;
 }
 
 function getUserName() {
-    // Implementar: pegar nome do usuário logado
-    return localStorage.getItem('userName') || 'Usuário SIAV';
+    // Pegar nome do usuário logado
+    // Retorna null se não houver nome válido (sem fallback perigoso)
+    const name = localStorage.getItem('userName');
+    return name && name.trim() !== '' ? name : null;
 }
 
 /**
@@ -347,7 +351,19 @@ function checkPaymentStatus() {
  */
 async function notifyPaymentStatus(paymentId, status) {
     try {
-        await fetch('/api/mercadopago/payment-status', {
+        // Validar parâmetros obrigatórios
+        if (!paymentId || !status) {
+            console.error('Erro: paymentId e status são obrigatórios');
+            return;
+        }
+
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+            console.error('Erro: userId não encontrado');
+            return;
+        }
+
+        const response = await fetch('/api/mercadopago/payment-status', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -355,9 +371,13 @@ async function notifyPaymentStatus(paymentId, status) {
             body: JSON.stringify({
                 paymentId,
                 status,
-                userId: localStorage.getItem('userId')
+                userId
             })
         });
+
+        if (!response.ok) {
+            console.error('Erro ao notificar status:', await response.text());
+        }
     } catch (error) {
         console.error('Erro ao notificar status:', error);
     }
