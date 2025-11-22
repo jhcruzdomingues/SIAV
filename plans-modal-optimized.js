@@ -79,12 +79,12 @@ function toggleBillingPeriod() {
     updatePlanPricing('profissional');
 
     // Animar toggle no mobile
-    const toggle = document.querySelector('.billing-toggle');
-    if (toggle) {
+    const toggleElement = document.querySelector('.billing-toggle');
+    if (toggleElement) {
         if (isAnnualBilling) {
-            toggle.classList.add('annual-selected');
+            toggleElement.classList.add('annual-selected');
         } else {
-            toggle.classList.remove('annual-selected');
+            toggleElement.classList.remove('annual-selected');
         }
     }
 
@@ -330,6 +330,7 @@ function showCheckoutLoading() {
         animation: fadeIn 0.3s ease;
     `;
 
+    // SEGURO: HTML estático sem dados de usuário
     loadingModal.innerHTML = `
         <div style="text-align: center; color: white;">
             <div style="font-size: 64px; margin-bottom: 24px; animation: pulse 1.5s infinite;">⏳</div>
@@ -393,13 +394,22 @@ function openPlansModal() {
  */
 function closePlansModal() {
     const modal = document.getElementById('plans-modal');
-    if (modal) {
-        modal.classList.remove('show');
-        document.body.style.overflow = 'auto';
-
-        // Track analytics
-        trackEvent('close_plans_modal');
+    if (!modal) {
+        console.warn('Modal de planos não encontrado');
+        return;
     }
+
+    modal.classList.remove('show');
+    document.body.style.overflow = 'auto';
+
+    // Limpar countdown ao fechar modal
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+    }
+
+    // Track analytics
+    trackEvent('close_plans_modal');
 }
 
 // ================================================
@@ -446,9 +456,11 @@ function startCountdown() {
  */
 function updateCountdownDisplay(timeString) {
     const countdownElement = document.getElementById('final-countdown');
-    if (countdownElement) {
-        countdownElement.textContent = timeString;
+    if (!countdownElement) {
+        console.warn('Elemento countdown não encontrado no DOM');
+        return;
     }
+    countdownElement.textContent = timeString;
 }
 
 /**
@@ -500,9 +512,9 @@ function initPlansModal() {
         priceToggle.addEventListener('change', toggleBillingPeriod);
 
         // Inicializar animação do toggle no mobile
-        const toggle = document.querySelector('.billing-toggle');
-        if (toggle && priceToggle.checked) {
-            toggle.classList.add('annual-selected');
+        const toggleElement = document.querySelector('.billing-toggle');
+        if (toggleElement && priceToggle.checked) {
+            toggleElement.classList.add('annual-selected');
         }
     }
 
