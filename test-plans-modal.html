@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIAV - Teste Modal de Planos</title>
+    <link rel="stylesheet" href="plans-modal.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .test-container {
+            text-align: center;
+            background: white;
+            padding: 60px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+        }
+
+        .test-container h1 {
+            font-size: 2rem;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+        }
+
+        .test-container p {
+            color: #666;
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .test-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 18px 36px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .test-btn:active {
+            transform: translateY(0);
+        }
+
+        .info-box {
+            background: #f5f7fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 32px;
+            text-align: left;
+        }
+
+        .info-box h3 {
+            color: #1a1a1a;
+            font-size: 1rem;
+            margin-bottom: 12px;
+        }
+
+        .info-box ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        .test-actions {
+            display: flex;
+            gap: 16px;
+            margin-top: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .test-btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 12px 24px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .test-btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🚀 Modal de Planos SIAV</h1>
+        <p>Teste a nova página de vendas otimizada para conversão com 4 planos e design profissional.</p>
+
+        <button class="test-btn" onclick="openPlansModal()">
+            ✨ Abrir Modal de Planos
+        </button>
+
+        <div class="test-actions">
+            <button class="test-btn-secondary" onclick="upgradePlan('estudante')">
+                Plano Estudante
+            </button>
+            <button class="test-btn-secondary" onclick="upgradePlan('profissional')">
+                Plano Profissional
+            </button>
+            <button class="test-btn-secondary" onclick="upgradePlan('vitalicio')">
+                Plano Vitalício
+            </button>
+        </div>
+
+        <div class="info-box">
+            <h3>📋 Funcionalidades Implementadas:</h3>
+            <ul>
+                <li>4 planos: Free, Estudante, Profissional, Vitalício</li>
+                <li>Toggle Mensal/Anual (20% OFF no anual)</li>
+                <li>Plano Profissional destacado (foco de conversão)</li>
+                <li>Design minimalista e moderno</li>
+                <li>Countdown de urgência funcional</li>
+                <li>Integração Mercado Pago (mock)</li>
+                <li>Social proof e garantias</li>
+                <li>Totalmente responsivo</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Modal de Planos -->
+    <div id="plans-modal" class="plans-modal">
+        <div class="plans-modal-content">
+            <!-- Botão Fechar -->
+            <button class="plans-close" onclick="closePlansModal()" aria-label="Fechar">&times;</button>
+
+            <!-- Header -->
+            <header class="plans-header">
+                <h2>Escolha o Plano Ideal para Você</h2>
+                <p class="plans-subheading">
+                    Domine <strong>Suporte Avançado de Vida</strong> com o melhor simulador do mercado
+                </p>
+
+                <!-- Toggle de Período de Cobrança -->
+                <div class="billing-toggle">
+                    <label for="price-toggle" class="billing-label">Mensal</label>
+                    <div class="billing-switch">
+                        <input type="checkbox" id="price-toggle" checked>
+                        <span class="billing-slider"></span>
+                    </div>
+                    <label for="price-toggle" class="billing-label billing-label-annual">
+                        Anual <span class="save-tag">Economize 20%</span>
+                    </label>
+                </div>
+
+                <!-- Social Proof -->
+                <div class="social-proof">
+                    <div class="trust-badges">
+                        ⭐⭐⭐⭐⭐ Mais de 5.000 usuários ativos
+                    </div>
+                    <div class="live-counter">
+                        <span class="pulse-dot"></span>
+                        <span>247 estudantes online agora</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Grid de Planos (4 Colunas) -->
+            <div class="plans-cards-grid">
+
+                <!-- PLANO FREE -->
+                <div class="plan-card" data-plan="free">
+                    <div class="plan-header">
+                        <h3 class="plan-name">Gratuito</h3>
+                        <p class="plan-description">Para conhecer o SIAV</p>
+                    </div>
+
+                    <div class="plan-pricing">
+                        <div class="plan-price">
+                            <span class="currency">R$</span>
+                            <span class="price-value">0</span>
+                            <span class="period">/mês</span>
+                        </div>
+                    </div>
+
+                    <ul class="plan-features">
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span>Tela de PCR interativa</span>
+                        </li>
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span>Quiz básico de fixação</span>
+                        </li>
+                        <li class="plan-feature disabled">
+                            <i class="icon">✗</i>
+                            <span>Simulador completo bloqueado</span>
+                        </li>
+                        <li class="plan-feature disabled">
+                            <i class="icon">✗</i>
+                            <span>Histórico de pacientes</span>
+                        </li>
+                        <li class="plan-feature disabled">
+                            <i class="icon">✗</i>
+                            <span>Certificado digital</span>
+                        </li>
+                    </ul>
+
+                    <button class="plan-cta cta-free" disabled>
+                        <span class="cta-text">Plano Atual</span>
+                        <span class="cta-subtext">Você já está aqui</span>
+                    </button>
+                </div>
+
+                <!-- PLANO ESTUDANTE -->
+                <div class="plan-card" data-plan="estudante">
+                    <div class="plan-header">
+                        <h3 class="plan-name">Estudante</h3>
+                        <p class="plan-description">Ideal para estudantes de medicina</p>
+                    </div>
+
+                    <div class="plan-pricing">
+                        <div class="plan-price">
+                            <span class="currency">R$</span>
+                            <span class="price-value" data-price-mensal="9.90" data-price-anual="7.92">7,92</span>
+                            <span class="period">/mês</span>
+                        </div>
+                        <p class="price-detail">
+                            <span class="annual-info">cobrado anualmente (R$ 95,04/ano)</span>
+                            <span class="monthly-info" style="display: none;">cobrado mensalmente</span>
+                        </p>
+                    </div>
+
+                    <ul class="plan-features">
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span>Quiz completo com explicações</span>
+                        </li>
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span>Estudo aprofundado de casos</span>
+                        </li>
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span>Histórico limitado (1 paciente)</span>
+                        </li>
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span>Certificado digital de conclusão</span>
+                        </li>
+                        <li class="plan-feature disabled">
+                            <i class="icon">✗</i>
+                            <span>Simulador Game Engine completo</span>
+                        </li>
+                    </ul>
+
+                    <button
+                        class="plan-cta cta-student"
+                        onclick="selectPlan('estudante')"
+                        data-plan-id="estudante"
+                        data-price-mensal="990"
+                        data-price-anual="9504">
+                        <span class="cta-text">Começar Agora</span>
+                        <span class="cta-subtext">Acesso imediato</span>
+                    </button>
+
+                    <div class="plan-footer-triggers">
+                        <span class="trigger-item">🎓 Perfeito para provas</span>
+                    </div>
+                </div>
+
+                <!-- PLANO PROFISSIONAL (HIGHLIGHTED) -->
+                <div class="plan-card highlighted" data-plan="profissional">
+                    <div class="recommended-ribbon">Mais Popular</div>
+
+                    <div class="plan-header">
+                        <h3 class="plan-name">Profissional</h3>
+                        <p class="plan-description">Para profissionais e residentes</p>
+                    </div>
+
+                    <div class="plan-pricing">
+                        <div class="plan-price">
+                            <span class="currency">R$</span>
+                            <span class="price-value" data-price-mensal="19.90" data-price-anual="15.92">15,92</span>
+                            <span class="period">/mês</span>
+                        </div>
+                        <p class="price-detail">
+                            <span class="annual-info">cobrado anualmente (R$ 191,04/ano)</span>
+                            <span class="monthly-info" style="display: none;">cobrado mensalmente</span>
+                        </p>
+                        <div class="savings-badge">
+                            <span class="annual-savings">💰 Economize R$ 47,76/ano</span>
+                            <span class="monthly-savings" style="display: none;">ou economize 20% no plano anual</span>
+                        </div>
+                    </div>
+
+                    <ul class="plan-features">
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span><strong>Simulador Game Engine completo</strong></span>
+                        </li>
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span><strong>Logs ilimitados de pacientes</strong></span>
+                        </li>
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span>Dashboard avançado com métricas</span>
+                        </li>
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span>Exportação de relatórios em PDF</span>
+                        </li>
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span>Todos os benefícios do Estudante</span>
+                        </li>
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span>Suporte prioritário por email</span>
+                        </li>
+                    </ul>
+
+                    <button
+                        class="plan-cta cta-professional pulsing-cta"
+                        onclick="selectPlan('profissional')"
+                        data-plan-id="profissional"
+                        data-price-mensal="1990"
+                        data-price-anual="19104">
+                        <span class="cta-text">Assinar Agora</span>
+                        <span class="cta-subtext">✨ Melhor custo-benefício</span>
+                    </button>
+
+                    <div class="plan-footer-triggers">
+                        <span class="trigger-item">🔥 Escolhido por 78% dos usuários</span>
+                    </div>
+
+                    <div class="scarcity-alert">
+                        ⚠️ Apenas 12 vagas com desconto anual hoje!
+                    </div>
+                </div>
+
+                <!-- PLANO VITALÍCIO (ÂNCORA DE PREÇO) -->
+                <div class="plan-card premium-plan" data-plan="vitalicio">
+                    <div class="plan-badge">💎 Oferta Especial</div>
+
+                    <div class="plan-header">
+                        <h3 class="plan-name">Vitalício</h3>
+                        <p class="plan-description">Acesso ilimitado para sempre</p>
+                    </div>
+
+                    <div class="plan-pricing">
+                        <div class="price-comparison">
+                            <span class="old-price">R$ 1.199,00</span>
+                            <span class="discount-badge">-58% OFF</span>
+                        </div>
+                        <div class="plan-price">
+                            <span class="currency">R$</span>
+                            <span class="price-value">499</span>
+                            <span class="period">,90</span>
+                        </div>
+                        <p class="price-detail premium-detail">
+                            Pagamento único • Sem recorrência
+                        </p>
+                        <div class="roi-calculator">
+                            ✅ Se paga em 2 anos do plano anual
+                        </div>
+                    </div>
+
+                    <ul class="plan-features">
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span><strong>Todos os recursos Profissional</strong></span>
+                        </li>
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span><strong>Acesso vitalício garantido</strong></span>
+                        </li>
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span>Todas as atualizações futuras</span>
+                        </li>
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span>Novos módulos sem custo adicional</span>
+                        </li>
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span>Prioridade máxima no suporte</span>
+                        </li>
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span>Badge exclusivo de membro fundador</span>
+                        </li>
+                    </ul>
+
+                    <button
+                        class="plan-cta cta-lifetime pulsing-cta"
+                        onclick="selectPlan('vitalicio')"
+                        data-plan-id="vitalicio"
+                        data-price-mensal="49990"
+                        data-price-anual="49990">
+                        <span class="cta-text">Garantir Acesso Vitalício</span>
+                        <span class="cta-subtext">🎁 Investimento único</span>
+                    </button>
+
+                    <div class="plan-footer-triggers premium-triggers">
+                        <span class="trigger-item">⚡ Apenas 8 licenças disponíveis</span>
+                    </div>
+
+                    <div class="limited-offer">
+                        🔥 Oferta limitada: Esta promoção encerra em breve
+                    </div>
+
+                    <div class="authority-proof">
+                        "Melhor investimento que já fiz na minha carreira médica"<br>
+                        <strong>- Dr. Carlos Silva, Cardiologista</strong>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Seção de Garantia -->
+            <section class="risk-reversal-section">
+                <h3>Garantia Incondicional de 30 Dias</h3>
+                <div class="guarantees-grid">
+                    <div class="guarantee-item">
+                        <div class="guarantee-icon">🛡️</div>
+                        <strong>Risco Zero</strong>
+                        <p>Se não gostar, devolvemos 100% do seu dinheiro</p>
+                    </div>
+                    <div class="guarantee-item">
+                        <div class="guarantee-icon">⚡</div>
+                        <strong>Acesso Imediato</strong>
+                        <p>Comece a treinar em menos de 2 minutos</p>
+                    </div>
+                    <div class="guarantee-item">
+                        <div class="guarantee-icon">🔒</div>
+                        <strong>Pagamento Seguro</strong>
+                        <p>Criptografia SSL e proteção Mercado Pago</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Seção de Depoimentos -->
+            <section class="testimonials-section">
+                <h3>O Que Nossos Usuários Dizem</h3>
+                <div class="testimonials-carousel">
+                    <div class="testimonial-card">
+                        <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+                        <p>"O simulador SIAV me preparou perfeitamente para as emergências reais. Passei na residência!"</p>
+                        <div class="testimonial-author">
+                            <strong>Ana Paula Rodrigues</strong>
+                            <span>Estudante de Medicina - USP</span>
+                        </div>
+                    </div>
+                    <div class="testimonial-card">
+                        <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+                        <p>"Como residente, uso diariamente para revisar protocolos. Vale cada centavo do plano profissional."</p>
+                        <div class="testimonial-author">
+                            <strong>Dr. Ricardo Mendes</strong>
+                            <span>Residente de Emergência - UNIFESP</span>
+                        </div>
+                    </div>
+                    <div class="testimonial-card">
+                        <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+                        <p>"O plano vitalício foi o melhor investimento. Uso há 3 anos e continua se pagando."</p>
+                        <div class="testimonial-author">
+                            <strong>Dra. Juliana Costa</strong>
+                            <span>Cardiologista - Hospital Sírio-Libanês</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CTA Final -->
+            <div class="final-cta-bar">
+                <div class="fomo-text">
+                    <span>⏰ Oferta especial termina em:</span>
+                    <span id="final-countdown">23:45:12</span>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="plans-footer">
+                <p>
+                    <strong>SIAV</strong> - Sistema Interativo de Aprendizagem Vitalícia<br>
+                    Treinamento profissional para salvar vidas
+                </p>
+            </footer>
+        </div>
+    </div>
+
+    <script src="plans-modal-optimized.js"></script>
+</body>
+</html>

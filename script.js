@@ -3835,29 +3835,16 @@ function upgradePlan(newPlan) {
 }
 
 // Função para abrir modal de planos
+// NOTA: Esta função foi substituída pela do plans-modal-optimized.js
+// Mantemos aqui apenas como fallback, mas a principal está no arquivo dedicado
 function openPlansModal() {
-    // Verificar se o modal existe, se não, carregar dinamicamente
-    const modalContainer = document.getElementById('plans-modal-container');
-
-    if (!modalContainer || !modalContainer.innerHTML.trim()) {
-        console.log('Modal de planos não carregado, carregando agora...');
-        loadPlansModal().then(() => {
-            // Após carregar, abrir o modal
-            setTimeout(() => {
-                const modal = document.getElementById('plans-modal');
-                if (modal) {
-                    modal.classList.add('show');
-                    document.body.style.overflow = 'hidden';
-                }
-            }, 100);
-        });
+    const modal = document.getElementById('plans-modal');
+    if (modal) {
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+        console.log('✅ Modal de planos aberto');
     } else {
-        // Modal já existe, apenas mostrar
-        const modal = document.getElementById('plans-modal');
-        if (modal) {
-            modal.classList.add('show');
-            document.body.style.overflow = 'hidden';
-        }
+        console.error('❌ Elemento #plans-modal não encontrado no DOM');
     }
 }
 
