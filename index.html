@@ -7,37 +7,28 @@
     <meta name="theme-color" content="#e74c3c">
     <title>SIAV - Sistema Inteligente de Assistência à Vida</title>
     
-    <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
-    
-    <!-- iOS PWA Support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SIAV">
-    
-    <link rel="stylesheet" href="style.css?v=3">
-    <link rel="stylesheet" href="shock-styles.css?v=2">
-    <link rel="stylesheet" href="sound-settings-styles.css?v=2">
-    <link rel="stylesheet" href="settings-menu-styles.css?v=2">
-    <link rel="stylesheet" href="profile-plan-styles.css?v=1">
-    <link rel="stylesheet" href="plans-modal.css?v=2">
 
-        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-        <script>
-            // Diagnóstico: Verificar se o objeto Supabase está disponível
-            window.addEventListener('DOMContentLoaded', function() {
-                console.log('window.supabase:', window.supabase);
-            });
-        </script>
-    <script src="https://sdk.mercadopago.com/js/v2"></script>
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preload" href="style.css?v=3" as="style">
+    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="shock-styles.css?v=2" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="sound-settings-styles.css?v=2" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="settings-menu-styles.css?v=2" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="profile-plan-styles.css?v=1" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="plans-modal.css?v=2" media="print" onload="this.media='all'">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://sdk.mercadopago.com/js/v2" defer></script>
+
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"></noscript>
 </head>
 <body>
 
-    <!-- ================================================
-         MODAL DE PLANOS OTIMIZADO - Carregado Dinamicamente
-         ================================================ -->
     <div id="plans-modal-container"></div>
 
     <audio id="shock-sound" preload="none"></audio>
@@ -100,7 +91,6 @@
             </section>
             
             <section id="pcr-screen" class="screen">
-                <!-- Header com Timer e Info do Paciente -->
                 <div class="pcr-header">
                     <div class="pcr-timer-box">
                         <span id="pcr-timer">00:00</span>
@@ -117,12 +107,10 @@
                     </div>
                 </div>
 
-                <!-- Badge de Ciclo -->
                 <div id="floating-cycle-badge" class="floating-cycle-badge">
                     <span id="cycle-info">Ciclo 0</span>
                 </div>
 
-                <!-- Card de Guia do Protocolo -->
                 <div id="protocol-hint-box" class="protocol-hint-box improved-panel">
                     <div class="protocol-panel-mobile improved-panel-mobile">
                         <div class="protocol-panel-header improved-panel-header">
@@ -134,7 +122,6 @@
                         </div>
                         <div class="protocol-panel-body improved-panel-body">
                             <div id="protocol-alerts-panel" class="protocol-alerts-panel improved-alerts-panel">
-                                <!-- Exemplo de dica rápida -->
                                 <div class="alert-tip" id="alert-tip" style="display:none;"><i class="fas fa-lightbulb"></i> Lembre-se: registre o tempo de início!</div>
                             </div>
                             <div id="hint-details" class="protocol-details"></div>
@@ -147,8 +134,7 @@
                         </div>
                     </div>
                 </div>
-                
-                <!-- Ação Principal: Compressões -->
+
                 <button id="compressions-btn" class="btn-compressions" aria-label="Iniciar compressões torácicas">
                     <div class="btn-compressions-icon">
                         <i class="fas fa-compress-arrows-alt"></i>
@@ -158,13 +144,11 @@
                         <small><i class="fas fa-sync-alt"></i> Ciclo 30:2 • <i class="fas fa-heartbeat"></i> 100-120 bpm</small>
                     </div>
                 </button>
-                
-                <!-- Checar Ritmo -->
+
                 <button id="rhythm-conduta-btn" class="btn-check-rhythm" aria-label="Checar ritmo cardíaco do paciente">
                     <i class="fas fa-heart-pulse"></i> CHECAR RITMO
                 </button>
 
-                <!-- Metrônomo -->
                 <div class="metronome-section">
                     <button id="bpm-minus" class="btn-bpm">−</button>
                     <button id="metro-btn" class="btn-metronome" aria-label="Alternar metrônomo">
@@ -176,8 +160,7 @@
                     </button>
                     <button id="bpm-plus" class="btn-bpm">+</button>
                 </div>
-                
-                <!-- Ações Secundárias -->
+
                 <div class="pcr-actions-grid">
                     <button id="med-btn" class="btn-action btn-drug">
                         <i class="fas fa-syringe"></i>
@@ -196,13 +179,11 @@
                         <span>5H's & 5T's</span>
                     </button>
                 </div>
-                
-                <!-- RCE Obtido -->
+
                 <button id="rosc-btn" class="btn-rosc" aria-label="Registrar retorno da circulação espontânea">
                     <i class="fas fa-heart-circle-check"></i> RCE OBTIDO (PULSO +)
                 </button>
 
-                <!-- Timeline -->
                 <div class="timeline-container">
                     <h3><i class="fas fa-clock-rotate-left"></i> Linha do Tempo</h3>
                     <div id="timeline-events" class="timeline-events">
@@ -213,7 +194,6 @@
                     </div>
                 </div>
 
-                <!-- Finalizar -->
                 <button id="finish-pcr-btn" class="btn-finish">FINALIZAR ATENDIMENTO</button>
             </section>
             
@@ -450,10 +430,7 @@
                 <h2>Configurar Simulado</h2>
                 <p class="section-description">Escolha o modo de treinamento desejado.</p>
 
-                <!-- Cards de Seleção de Modo -->
                 <div id="quiz-mode-selection" class="quiz-mode-selection">
-
-                    <!-- Card A: Banco de Questões (Offline) -->
                     <div class="quiz-mode-card quiz-mode-card-questions" id="quiz-mode-questions">
                         <div class="quiz-mode-card-icon">
                             <i class="fas fa-book"></i>
@@ -467,7 +444,6 @@
                         </div>
                     </div>
 
-                    <!-- Card B: Simulador Avançado (Online) -->
                     <div class="quiz-mode-card quiz-mode-card-simulator" id="quiz-mode-simulator">
                         <div class="quiz-mode-card-icon">
                             <i class="fas fa-cloud"></i>
@@ -585,7 +561,6 @@
                                 <i class="fas fa-user-plus"></i> Cadastro
                             </button>
                         </div>
-                        <!-- MODAL DE LOGIN -->
                         <div id="login-modal" class="modal" style="display:none;">
                             <div class="modal-content">
                                 <h3>Login</h3>
@@ -603,7 +578,6 @@
                                 <button type="button" class="close-btn" onclick="document.getElementById('login-modal').style.display='none'">Fechar</button>
                             </div>
                         </div>
-                        <!-- MODAL DE CADASTRO -->
                         <div id="register-modal" class="modal" style="display:none;">
                             <div class="modal-content">
                                 <h3>Cadastro</h3>
@@ -921,7 +895,6 @@
 
         </main>
 
-        <!-- TOASTS ACCESSÍVEIS: Mensagens não-bloqueantes (anúncios para leitores de tela) -->
         <div id="toast-container" aria-live="polite" aria-atomic="true" class="toast-container"></div>
 
         <footer>
@@ -1199,7 +1172,6 @@
         </div>
     </div>
 
-    <!-- MODAL DE MENU DE CONFIGURAÇÕES -->
     <div id="settings-menu-modal" class="modal">
         <div class="modal-content settings-modal-content">
             <div class="settings-header">
@@ -1291,7 +1263,6 @@
         </div>
     </div>
 
-    <!-- MODAL DE TEMA -->
     <div id="theme-settings-modal" class="modal">
         <div class="modal-content">
             <h3>🎨 Aparência</h3>
@@ -1342,10 +1313,8 @@
         </div>
     </div>
 
-    <!-- MODAL DE CONFIGURAÇÃO DE SONS -->
     <div id="sound-settings-modal" class="modal large-modal">
         <div class="modal-content">
-            <!-- Cabeçalho -->
             <div class="sound-settings-header">
                 <h3><i class="fas fa-volume-up"></i> Configurações de Sons</h3>
                 <p>Personalize os sons e alertas do SIAV</p>
@@ -1354,9 +1323,7 @@
                 </button>
             </div>
 
-            <!-- Conteúdo -->
             <div class="sound-settings-content">
-                <!-- Toggle de Sons -->
                 <div class="sound-setting-group">
                     <div class="setting-row">
                         <label class="setting-label">
@@ -1369,7 +1336,6 @@
                     </div>
                 </div>
 
-                <!-- Controle de Volume -->
                 <div class="sound-setting-group">
                     <h4><i class="fas fa-sliders-h"></i> Volume Global</h4>
                     <p class="sound-description">Ajuste o volume de todos os sons do aplicativo</p>
@@ -1383,7 +1349,6 @@
 
                 <div class="sound-settings-divider"></div>
 
-                <!-- Configuração de Som de Choque -->
                 <div class="sound-setting-group">
                     <h4><i class="fas fa-bolt"></i> Som de Desfibrilação</h4>
                     <p class="sound-description">Alerta sonoro ao aplicar choque elétrico</p>
@@ -1412,7 +1377,6 @@
                     </div>
                 </div>
 
-                <!-- Configuração de Som de Alerta -->
                 <div class="sound-setting-group">
                     <h4><i class="fas fa-bell"></i> Som de Checagem de Ritmo</h4>
                     <p class="sound-description">Lembrete a cada 2 minutos para verificar ritmo cardíaco</p>
@@ -1443,7 +1407,6 @@
                     </div>
                 </div>
 
-                <!-- Configuração de Som de Medicação -->
                 <div class="sound-setting-group">
                     <h4><i class="fas fa-syringe"></i> Som de Medicação</h4>
                     <p class="sound-description">Confirmação sonora ao registrar medicamentos</p>
@@ -1472,7 +1435,6 @@
                     </div>
                 </div>
 
-                <!-- Configuração de Som de Metrônomo -->
                 <div class="sound-setting-group">
                     <h4><i class="fas fa-heartbeat"></i> Som do Metrônomo</h4>
                     <p class="sound-description">Ritmo das compressões torácicas (100-120 bpm)</p>
@@ -1503,7 +1465,6 @@
                 </div>
             </div>
 
-            <!-- Footer com Ações -->
             <div class="sound-settings-footer">
                 <button class="btn-back" onclick="backToSettingsMenu()">
                     <i class="fas fa-arrow-left"></i> Voltar
@@ -1518,7 +1479,6 @@
         </div>
     </div>
 
-    <!-- Modal de Autenticação (Login/Cadastro) -->
     <div id="auth-modal-container"></div>
     <link rel="stylesheet" href="auth-modal.css">
     <script src="auth-modal.js" defer></script>
@@ -1539,7 +1499,6 @@
             </div>
 
             <form id="login-form" class="profile-form">
-                <!-- Status de Login -->
                 <div id="profile-logged-status" class="profile-status-card" style="display: none;">
                     <div class="status-badge status-badge-success">
                         <i class="fas fa-check-circle"></i>
@@ -1553,7 +1512,6 @@
                     </div>
                 </div>
 
-                <!-- Unified Plan Card (Clickable Card) -->
                 <div id="sidebar-plan-card" class="plan-card-unified"></div>
 
                 <div id="login-form-fields" class="login-section">
@@ -1679,43 +1637,32 @@
     </div>
 
 
-    <!-- Carregar modal de autenticação -->
-    <!-- Modal de autenticação agora é gerenciado pelo sistema principal (script.js/src/) -->
-
-    <!-- ===== NOVO SISTEMA MODULAR (ES6) ===== -->
+    <link rel="modulepreload" href="src/main.js">
+    <link rel="modulepreload" href="src/config/supabase.js">
+    <link rel="modulepreload" href="src/config/state.js">
     <script type="module" src="src/main.js"></script>
 
-    <!-- ===== CARREGAR MODAL DE PLANOS DINAMICAMENTE ===== -->
     <script>
-    // Carrega modal de planos otimizado sob demanda
     async function loadPlansModal() {
-        if (document.getElementById('plans-modal')) return; // Já carregado
-        
+        if (document.getElementById('plans-modal')) return;
+
         try {
             const response = await fetch('plans-modal.html');
             const html = await response.text();
             document.getElementById('plans-modal-container').innerHTML = html;
-            
-            // Carrega o script otimizado
+
             const script = document.createElement('script');
             script.src = 'plans-modal-optimized.js';
             script.defer = true;
             document.body.appendChild(script);
-            
-            console.log('✅ Modal de planos otimizado carregado');
         } catch (e) {
-            console.error('Erro ao carregar modal de planos:', e);
+            console.error('[SIAV] Erro ao carregar modal de planos:', e);
         }
     }
-    
-    // Pré-carregar quando necessário
-    window.addEventListener('load', () => {
-        // Pré-carregar após 3 segundos de página carregada
-        setTimeout(loadPlansModal, 3000);
-    });
+
+    window.addEventListener('load', () => setTimeout(loadPlansModal, 3000));
     </script>
 
-    <!-- ===== CÓDIGO LEGADO (Otimizado) ===== -->
     <script src="settings-integration.js?v=3" defer></script>
     <script src="sound-settings.js" defer></script>
     <script src="mercadopago-config.js" defer></script>

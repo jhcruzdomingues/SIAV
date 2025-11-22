@@ -1,3 +1,31 @@
+/* ============================================
+   SIAV v2.0 - PERFORMANCE OPTIMIZATIONS
+   ============================================ */
+
+/* Global Performance Rules */
+* {
+    box-sizing: border-box;
+}
+
+/* Optimize animations and transitions */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* GPU Acceleration for common animated elements */
+.modal, .toast, .btn-compressions, .floating-cycle-badge {
+    will-change: transform, opacity;
+}
+
+/* Contain paint for performance */
+.card, .modal-content, .dashboard-section {
+    contain: layout style paint;
+}
+
 /* === UNIFIED PLAN CARD (Champion App) === */
 .plan-card-unified {
     width: 100%;
@@ -2459,7 +2487,7 @@ body[data-theme="dark"] .max-plan-message p {
 }
 
 
-/* --- MODALS --- */
+/* --- MODALS (OTIMIZADO - Bug Fix: Pointer Events) --- */
 .modal {
     display: none;
     position: fixed;
@@ -2471,12 +2499,19 @@ body[data-theme="dark"] .max-plan-message p {
     overflow: auto;
     background-color: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(3px);
+    /* CRITICAL FIX: Prevent click blocking when hidden */
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .modal.show {
     display: flex;
     align-items: center;
     justify-content: center;
+    /* Re-enable pointer events when visible */
+    pointer-events: auto;
+    opacity: 1;
 }
 
 .modal-content {
