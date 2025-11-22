@@ -3,6 +3,8 @@
 // Versão: 3.0 - Alta Conversão
 // ================================================
 
+console.log('🚀 SCRIPT plans-modal-optimized.js CARREGADO!');
+
 // ================================================
 // CONFIGURAÇÃO DE PREÇOS
 // ================================================
@@ -14,14 +16,14 @@ const PRICING_CONFIG = {
             priceInCents: 990,
             display: '9,90',
             period: '/mês',
-            detail: 'cobrado mensalmente'
+            detail: 'R$ 9,90 cobrado mensalmente'
         },
         annual: {
             price: 95.04,
             priceInCents: 9504,
             display: '7,92',
             period: '/mês',
-            detail: 'cobrado anualmente (R$ 95,04/ano)',
+            detail: 'R$ 95,04 cobrado anualmente',
             savings: 'R$ 23,76',
             totalAnnual: 'R$ 95,04'
         }
@@ -32,14 +34,14 @@ const PRICING_CONFIG = {
             priceInCents: 1990,
             display: '19,90',
             period: '/mês',
-            detail: 'cobrado mensalmente'
+            detail: 'R$ 19,90 cobrado mensalmente'
         },
         annual: {
             price: 191.04,
             priceInCents: 19104,
             display: '15,92',
             period: '/mês',
-            detail: 'cobrado anualmente (R$ 191,04/ano)',
+            detail: 'R$ 191,04 cobrado anualmente',
             savings: 'R$ 47,76',
             totalAnnual: 'R$ 191,04'
         }
@@ -50,7 +52,7 @@ const PRICING_CONFIG = {
             priceInCents: 49990,
             display: '499',
             period: ',90',
-            detail: 'Pagamento único • Sem recorrência'
+            detail: 'Pagamento único • Sem mensalidades'
         }
     }
 };
@@ -59,7 +61,7 @@ const PRICING_CONFIG = {
 // ESTADO GLOBAL
 // ================================================
 
-let isAnnualBilling = true; // Padrão: Anual (checked)
+let isAnnualBilling = false; // Padrão: Mensal (para mostrar preços mensais primeiro)
 
 // ================================================
 // FUNÇÕES DE TOGGLE DE PERÍODO
@@ -68,25 +70,39 @@ let isAnnualBilling = true; // Padrão: Anual (checked)
 /**
  * Alterna entre período mensal e anual
  */
-function toggleBillingPeriod() {
-    const toggle = document.getElementById('price-toggle');
-    if (!toggle) return;
+function toggleBillingPeriod(period) {
+    console.log(`🔄 toggleBillingPeriod chamado com período: "${period}"`);
+    console.log(`   Estado anterior: ${isAnnualBilling ? 'Anual' : 'Mensal'}`);
 
-    isAnnualBilling = toggle.checked;
+    // Se period não for fornecido, toggle entre os dois
+    if (!period) {
+        isAnnualBilling = !isAnnualBilling;
+    } else {
+        isAnnualBilling = period === 'annual';
+    }
+
+    console.log(`   Novo estado: ${isAnnualBilling ? 'Anual' : 'Mensal'}`);
+
+    // Atualizar estado visual dos botões IMEDIATAMENTE
+    const buttons = document.querySelectorAll('.billing-label');
+    console.log(`   Atualizando ${buttons.length} botões...`);
+    buttons.forEach(btn => {
+        const btnPeriod = btn.getAttribute('data-period');
+        if (btnPeriod === 'annual' && isAnnualBilling) {
+            btn.classList.add('active');
+            console.log(`     ✓ Botão "annual" ativado`);
+        } else if (btnPeriod === 'monthly' && !isAnnualBilling) {
+            btn.classList.add('active');
+            console.log(`     ✓ Botão "monthly" ativado`);
+        } else {
+            btn.classList.remove('active');
+            console.log(`     ○ Botão "${btnPeriod}" desativado`);
+        }
+    });
 
     // Atualizar preços de todos os planos recorrentes
     updatePlanPricing('estudante');
     updatePlanPricing('profissional');
-
-    // Animar toggle no mobile
-    const toggle = document.querySelector('.billing-toggle');
-    if (toggle) {
-        if (isAnnualBilling) {
-            toggle.classList.add('annual-selected');
-        } else {
-            toggle.classList.remove('annual-selected');
-        }
-    }
 
     // Analytics tracking
     trackEvent('toggle_billing', {
@@ -99,26 +115,43 @@ function toggleBillingPeriod() {
  * @param {string} planId - ID do plano (estudante ou profissional)
  */
 function updatePlanPricing(planId) {
+    console.log(`💰 Atualizando preço do plano: "${planId}"`);
+
     const config = PRICING_CONFIG[planId];
-    if (!config) return;
+    if (!config) {
+        console.warn(`   ⚠️  Configuração não encontrada para plano: "${planId}"`);
+        return;
+    }
 
     const billingType = isAnnualBilling ? 'annual' : 'monthly';
     const pricingData = config[billingType];
+    console.log(`   Tipo de cobrança: ${billingType}`);
+    console.log(`   Preço a exibir: R$ ${pricingData.display}`);
 
     // Selecionar o card do plano
     const card = document.querySelector(`.plan-card[data-plan="${planId}"]`);
-    if (!card) return;
+    if (!card) {
+        console.warn(`   ⚠️  Card não encontrado para plano: "${planId}"`);
+        return;
+    }
+    console.log(`   ✓ Card encontrado`);
 
     // Atualizar o valor do preço
     const priceValueElement = card.querySelector('.price-value');
     if (priceValueElement) {
+        console.log(`   ✓ Atualizando preço: "${priceValueElement.textContent}" → "${pricingData.display}"`);
         priceValueElement.textContent = pricingData.display;
+    } else {
+        console.warn(`   ⚠️  Elemento .price-value não encontrado`);
     }
 
     // Atualizar o período
     const periodElement = card.querySelector('.period');
     if (periodElement) {
+        console.log(`   ✓ Atualizando período: "${periodElement.textContent}" → "${pricingData.period}"`);
         periodElement.textContent = pricingData.period;
+    } else {
+        console.warn(`   ⚠️  Elemento .period não encontrado`);
     }
 
     // Atualizar os detalhes (cobrado mensalmente/anualmente)
@@ -146,14 +179,14 @@ function updatePlanPricing(planId) {
     if (isAnnualBilling) {
         if (annualSavings && pricingData.savings) {
             annualSavings.style.display = 'inline';
-            annualSavings.textContent = `💰 Economize ${pricingData.savings}/ano`;
+            annualSavings.textContent = `Economize ${pricingData.savings}/ano`;
         }
         if (monthlySavings) monthlySavings.style.display = 'none';
     } else {
         if (annualSavings) annualSavings.style.display = 'none';
         if (monthlySavings) {
             monthlySavings.style.display = 'inline';
-            monthlySavings.textContent = 'ou economize 20% no plano anual';
+            monthlySavings.textContent = 'Economize 20% no plano anual';
         }
     }
 
@@ -494,17 +527,38 @@ function trackEvent(eventName, eventParams = {}) {
  * Inicializa o modal de planos
  */
 function initPlansModal() {
-    // Event listener para o toggle de período
-    const priceToggle = document.getElementById('price-toggle');
-    if (priceToggle) {
-        priceToggle.addEventListener('change', toggleBillingPeriod);
+    console.log('🔄 Inicializando modal de planos...');
 
-        // Inicializar animação do toggle no mobile
-        const toggle = document.querySelector('.billing-toggle');
-        if (toggle && priceToggle.checked) {
-            toggle.classList.add('annual-selected');
-        }
-    }
+    // Event listeners para os botões de toggle
+    const billingButtons = document.querySelectorAll('.billing-label');
+    console.log(`📌 Encontrados ${billingButtons.length} botões de toggle`);
+
+    billingButtons.forEach((button, index) => {
+        const period = button.getAttribute('data-period');
+        console.log(`  - Botão ${index + 1}: período="${period}"`);
+
+        // Adicionar múltiplos event listeners para garantir que funciona
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log(`🔘 CLICK EVENT DISPARADO! Botão: ${period}`);
+            const clickedPeriod = this.getAttribute('data-period');
+            toggleBillingPeriod(clickedPeriod);
+        }, true);
+
+        // Adicionar também touchstart para mobile
+        button.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            console.log(`👆 TOUCH EVENT DISPARADO! Botão: ${period}`);
+            const clickedPeriod = this.getAttribute('data-period');
+            toggleBillingPeriod(clickedPeriod);
+        }, { passive: false });
+
+        // Testar se o botão está clicável
+        button.style.pointerEvents = 'auto';
+        button.style.cursor = 'pointer';
+        console.log(`  - Botão configurado com cursor e pointer-events`);
+    });
 
     // Event listener para fechar modal ao clicar fora
     document.addEventListener('click', function(e) {
@@ -525,10 +579,13 @@ function initPlansModal() {
     });
 
     // Inicializar preços (garantir que estão corretos no carregamento)
-    if (isAnnualBilling) {
+    console.log(`💰 Estado inicial: ${isAnnualBilling ? 'Anual' : 'Mensal'}`);
+
+    // Aguardar um pouco para garantir que o DOM está pronto
+    setTimeout(() => {
         updatePlanPricing('estudante');
         updatePlanPricing('profissional');
-    }
+    }, 100);
 
     console.log('✅ Modal de planos inicializado com sucesso');
 }
@@ -551,6 +608,16 @@ window.toggleBillingPeriod = toggleBillingPeriod;
 window.selectPlan = selectPlan;
 window.initMercadoPagoCheckout = initMercadoPagoCheckout;
 // NOTA: upgradePlan e startSubscriptionFlow já estão no script.js
+
+// Função de teste para debug
+window.testToggle = function() {
+    console.log('🧪 TESTE MANUAL DO TOGGLE');
+    console.log('Estado atual:', isAnnualBilling ? 'Anual' : 'Mensal');
+    toggleBillingPeriod();
+    console.log('Novo estado:', isAnnualBilling ? 'Anual' : 'Mensal');
+};
+
+console.log('💡 Para testar manualmente, digite no console: testToggle()');
 
 // ================================================
 // FIM DO ARQUIVO
