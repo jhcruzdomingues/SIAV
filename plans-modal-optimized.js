@@ -1,56 +1,56 @@
 // ================================================
-// SIAV - MODAL DE PLANOS OTIMIZADO
-// Versão: 3.0 - Alta Conversão
+// SIAV - MODAL DE PLANOS OTIMIZADO V4.0
+// Estratégia de Conversão - Meta: R$ 2.000.000
 // ================================================
 
-console.log('🚀 SCRIPT plans-modal-optimized.js CARREGADO!');
+console.log('🚀 SCRIPT plans-modal-optimized.js V4.0 CARREGADO!');
 
 // ================================================
-// CONFIGURAÇÃO DE PREÇOS
+// CONFIGURAÇÃO DE PREÇOS V4.0
 // ================================================
 
 const PRICING_CONFIG = {
     estudante: {
         monthly: {
-            price: 9.90,
-            priceInCents: 990,
-            display: '9,90',
+            price: 24.90,
+            priceInCents: 2490,
+            display: '24,90',
             period: '/mês',
-            detail: 'R$ 9,90 cobrado mensalmente'
+            detail: 'cobrado mensalmente'
         },
         annual: {
-            price: 95.04,
-            priceInCents: 9504,
-            display: '7,92',
+            price: 239.04,
+            priceInCents: 23904,
+            display: '19,92',
             period: '/mês',
-            detail: 'R$ 95,04 cobrado anualmente',
-            savings: 'R$ 23,76',
-            totalAnnual: 'R$ 95,04'
+            detail: 'cobrado anualmente (R$ 239,04/ano)',
+            savings: 'R$ 59,76',
+            totalAnnual: 'R$ 239,04'
         }
     },
     profissional: {
         monthly: {
-            price: 19.90,
-            priceInCents: 1990,
-            display: '19,90',
+            price: 49.90,
+            priceInCents: 4990,
+            display: '49,90',
             period: '/mês',
-            detail: 'R$ 19,90 cobrado mensalmente'
+            detail: 'cobrado mensalmente'
         },
         annual: {
-            price: 191.04,
-            priceInCents: 19104,
-            display: '15,92',
+            price: 479.04,
+            priceInCents: 47904,
+            display: '39,92',
             period: '/mês',
-            detail: 'R$ 191,04 cobrado anualmente',
-            savings: 'R$ 47,76',
-            totalAnnual: 'R$ 191,04'
+            detail: 'cobrado anualmente (R$ 479,04/ano)',
+            savings: 'R$ 119,76',
+            totalAnnual: 'R$ 479,04'
         }
     },
     vitalicio: {
         lifetime: {
-            price: 499.90,
-            priceInCents: 49990,
-            display: '499',
+            price: 1199.90,
+            priceInCents: 119990,
+            display: '1.199',
             period: ',90',
             detail: 'Pagamento único • Sem mensalidades'
         }
@@ -61,7 +61,7 @@ const PRICING_CONFIG = {
 // ESTADO GLOBAL
 // ================================================
 
-let isAnnualBilling = false; // Padrão: Mensal (para mostrar preços mensais primeiro)
+let isAnnualBilling = true; // Padrão: Anual (para mostrar economia)
 
 // ================================================
 // FUNÇÕES DE TOGGLE DE PERÍODO
@@ -74,7 +74,6 @@ function toggleBillingPeriod(period) {
     console.log(`🔄 toggleBillingPeriod chamado com período: "${period}"`);
     console.log(`   Estado anterior: ${isAnnualBilling ? 'Anual' : 'Mensal'}`);
 
-    // Se period não for fornecido, toggle entre os dois
     if (!period) {
         isAnnualBilling = !isAnnualBilling;
     } else {
@@ -83,28 +82,24 @@ function toggleBillingPeriod(period) {
 
     console.log(`   Novo estado: ${isAnnualBilling ? 'Anual' : 'Mensal'}`);
 
-    // Atualizar estado visual dos botões IMEDIATAMENTE
+    // Atualizar estado visual dos botões
     const buttons = document.querySelectorAll('.billing-label');
-    console.log(`   Atualizando ${buttons.length} botões...`);
     buttons.forEach(btn => {
         const btnPeriod = btn.getAttribute('data-period');
         if (btnPeriod === 'annual' && isAnnualBilling) {
             btn.classList.add('active');
-            console.log(`     ✓ Botão "annual" ativado`);
         } else if (btnPeriod === 'monthly' && !isAnnualBilling) {
             btn.classList.add('active');
-            console.log(`     ✓ Botão "monthly" ativado`);
         } else {
             btn.classList.remove('active');
-            console.log(`     ○ Botão "${btnPeriod}" desativado`);
         }
     });
 
-    // Atualizar preços de todos os planos recorrentes
+    // Atualizar preços
     updatePlanPricing('estudante');
     updatePlanPricing('profissional');
 
-    // Analytics tracking
+    // Analytics
     trackEvent('toggle_billing', {
         billing_type: isAnnualBilling ? 'yearly' : 'monthly'
     });
@@ -112,49 +107,32 @@ function toggleBillingPeriod(period) {
 
 /**
  * Atualiza os preços de um plano específico
- * @param {string} planId - ID do plano (estudante ou profissional)
  */
 function updatePlanPricing(planId) {
     console.log(`💰 Atualizando preço do plano: "${planId}"`);
 
     const config = PRICING_CONFIG[planId];
-    if (!config) {
-        console.warn(`   ⚠️  Configuração não encontrada para plano: "${planId}"`);
-        return;
-    }
+    if (!config) return;
 
     const billingType = isAnnualBilling ? 'annual' : 'monthly';
     const pricingData = config[billingType];
-    console.log(`   Tipo de cobrança: ${billingType}`);
-    console.log(`   Preço a exibir: R$ ${pricingData.display}`);
 
-    // Selecionar o card do plano
     const card = document.querySelector(`.plan-card[data-plan="${planId}"]`);
-    if (!card) {
-        console.warn(`   ⚠️  Card não encontrado para plano: "${planId}"`);
-        return;
-    }
-    console.log(`   ✓ Card encontrado`);
+    if (!card) return;
 
-    // Atualizar o valor do preço
+    // Atualizar preço
     const priceValueElement = card.querySelector('.price-value');
     if (priceValueElement) {
-        console.log(`   ✓ Atualizando preço: "${priceValueElement.textContent}" → "${pricingData.display}"`);
         priceValueElement.textContent = pricingData.display;
-    } else {
-        console.warn(`   ⚠️  Elemento .price-value não encontrado`);
     }
 
-    // Atualizar o período
+    // Atualizar período
     const periodElement = card.querySelector('.period');
     if (periodElement) {
-        console.log(`   ✓ Atualizando período: "${periodElement.textContent}" → "${pricingData.period}"`);
         periodElement.textContent = pricingData.period;
-    } else {
-        console.warn(`   ⚠️  Elemento .period não encontrado`);
     }
 
-    // Atualizar os detalhes (cobrado mensalmente/anualmente)
+    // Atualizar detalhes
     const annualInfo = card.querySelector('.annual-info');
     const monthlyInfo = card.querySelector('.monthly-info');
 
@@ -172,25 +150,25 @@ function updatePlanPricing(planId) {
         }
     }
 
-    // Atualizar badge de economia (apenas para plano anual)
+    // Atualizar badge de economia
     const annualSavings = card.querySelector('.annual-savings');
     const monthlySavings = card.querySelector('.monthly-savings');
 
     if (isAnnualBilling) {
         if (annualSavings && pricingData.savings) {
             annualSavings.style.display = 'inline';
-            annualSavings.textContent = `Economize ${pricingData.savings}/ano`;
+            annualSavings.textContent = `💰 Economize ${pricingData.savings}/ano`;
         }
         if (monthlySavings) monthlySavings.style.display = 'none';
     } else {
         if (annualSavings) annualSavings.style.display = 'none';
         if (monthlySavings) {
             monthlySavings.style.display = 'inline';
-            monthlySavings.textContent = 'Economize 20% no plano anual';
+            monthlySavings.textContent = 'ou economize 20% no plano anual';
         }
     }
 
-    // Atualizar atributos data do botão CTA
+    // Atualizar botão CTA
     const ctaButton = card.querySelector('.plan-cta');
     if (ctaButton) {
         const priceAttr = isAnnualBilling ? 'data-price-anual' : 'data-price-mensal';
@@ -204,7 +182,6 @@ function updatePlanPricing(planId) {
 
 /**
  * Processa a seleção de um plano
- * @param {string} planId - ID do plano selecionado
  */
 function selectPlan(planId) {
     if (planId === 'free') {
@@ -212,7 +189,7 @@ function selectPlan(planId) {
         return;
     }
 
-    // Determinar preço baseado no plano e período
+    // Determinar preço
     let pricingData;
     let priceInCents;
 
@@ -225,7 +202,7 @@ function selectPlan(planId) {
         priceInCents = pricingData.priceInCents;
     }
 
-    // Dados do plano para exibição
+    // Dados do plano
     const planNames = {
         estudante: 'Plano Estudante',
         profissional: 'Plano Profissional',
@@ -234,28 +211,29 @@ function selectPlan(planId) {
 
     const benefits = {
         estudante: [
+            'Acesso ao Simulador: 5 casos/dia',
             'Quiz completo com explicações',
             'Estudo aprofundado de casos',
-            'Histórico limitado (1 paciente)',
-            'Certificado digital de conclusão'
+            'Log de desempenho: 1 paciente',
+            'Certificado digital'
         ],
         profissional: [
-            'Simulador Game Engine completo',
+            'Simulador ILIMITADO',
             'Logs ilimitados de pacientes',
-            'Dashboard avançado com métricas',
-            'Exportação de relatórios em PDF',
+            'Dashboard avançado',
+            'Exportação de relatórios PDF',
             'Suporte prioritário'
         ],
         vitalicio: [
             'Todos os recursos Profissional',
             'Acesso vitalício garantido',
             'Todas as atualizações futuras',
-            'Novos módulos sem custo adicional',
+            'Acesso Beta Prioritário',
             'Badge exclusivo de membro fundador'
         ]
     };
 
-    // Construir mensagem de confirmação
+    // Mensagem de confirmação
     let confirmMsg = `✨ ${planNames[planId]}\n\n`;
 
     if (planId === 'vitalicio') {
@@ -263,10 +241,8 @@ function selectPlan(planId) {
         confirmMsg += `🎁 Pagamento único - Sem mensalidade!\n`;
     } else {
         if (isAnnualBilling) {
-            const monthlyPrice = pricingData.display;
-            const totalAnnual = pricingData.totalAnnual;
-            confirmMsg += `💰 Investimento: R$ ${monthlyPrice}/mês\n`;
-            confirmMsg += `📅 Cobrança anual: ${totalAnnual}\n`;
+            confirmMsg += `💰 Investimento: R$ ${pricingData.display}/mês\n`;
+            confirmMsg += `📅 Cobrança anual: ${pricingData.totalAnnual}\n`;
             confirmMsg += `🎁 Economia: ${pricingData.savings} por ano!\n`;
         } else {
             confirmMsg += `💰 Investimento: R$ ${pricingData.display}/mês\n`;
@@ -275,128 +251,75 @@ function selectPlan(planId) {
     }
 
     confirmMsg += `\n✅ Benefícios:\n- ${benefits[planId].join('\n- ')}`;
-    confirmMsg += `\n\n🛡️ Garantia de 30 dias\n🔒 Pagamento 100% seguro`;
+    confirmMsg += `\n\n🛡️ Garantia de 7 dias\n🔒 Pagamento 100% seguro`;
 
-    // Confirmar com o usuário
     if (confirm(confirmMsg)) {
-        // Track analytics
         trackEvent('select_plan', {
             plan: planId,
             period: planId === 'vitalicio' ? 'lifetime' : (isAnnualBilling ? 'yearly' : 'monthly'),
             price: priceInCents / 100
         });
 
-        // Iniciar checkout
         initMercadoPagoCheckout(planId, isAnnualBilling, priceInCents);
     }
 }
 
 // ================================================
-// INTEGRAÇÃO COM MERCADO PAGO (MOCK)
+// INTEGRAÇÃO COM MERCADO PAGO
 // ================================================
 
-/**
- * Inicializa o checkout do Mercado Pago
- * @param {string} planId - ID do plano
- * @param {boolean} isAnnual - Se é cobrança anual
- * @param {number} priceInCents - Preço em centavos
- */
 function initMercadoPagoCheckout(planId, isAnnual, priceInCents) {
-    // Obter informações do usuário
     const userEmail = localStorage.getItem('userEmail') || 'usuario@exemplo.com';
     const userName = localStorage.getItem('userName') || 'Usuário';
 
-    console.log('=== MOCK CHECKOUT MERCADO PAGO ===');
+    console.log('=== CHECKOUT MERCADO PAGO ===');
     console.log('Plano:', planId);
     console.log('Período:', isAnnual ? 'Anual' : 'Mensal');
-    console.log('Preço (centavos):', priceInCents);
     console.log('Preço (R$):', (priceInCents / 100).toFixed(2));
-    console.log('Usuário:', userName);
-    console.log('Email:', userEmail);
-    console.log('==================================');
 
-    // Fechar modal de planos
     closePlansModal();
-
-    // Mostrar loading
     showCheckoutLoading();
 
-    // Simular processamento
     setTimeout(() => {
         hideCheckoutLoading();
-
-        // MOCK: Em produção, aqui você integraria com a API do Mercado Pago
-        // Exemplo: window.location.href = checkoutUrl;
-
         showAlert(
             `✅ CHECKOUT SIMULADO\n\n` +
             `Plano: ${planId.toUpperCase()}\n` +
             `Valor: R$ ${(priceInCents / 100).toFixed(2)}\n\n` +
-            `Em produção, você seria redirecionado para o pagamento seguro do Mercado Pago.\n\n` +
-            `Integração de pagamento removida para demonstração.`,
+            `Em produção, você seria redirecionado para o pagamento seguro do Mercado Pago.`,
             'success'
         );
     }, 2000);
 }
 
 // ================================================
-// FUNÇÕES DE UI (LOADING, ALERTS, ETC)
+// FUNÇÕES DE UI
 // ================================================
 
-/**
- * Exibe modal de loading durante o checkout
- */
 function showCheckoutLoading() {
     const loadingModal = document.createElement('div');
     loadingModal.id = 'checkout-loading-modal';
     loadingModal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.95);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 99999;
-        animation: fadeIn 0.3s ease;
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.95); display: flex;
+        align-items: center; justify-content: center; z-index: 99999;
     `;
-
     loadingModal.innerHTML = `
         <div style="text-align: center; color: white;">
-            <div style="font-size: 64px; margin-bottom: 24px; animation: pulse 1.5s infinite;">⏳</div>
-            <h2 style="margin-bottom: 12px; font-size: 2rem; font-weight: 700;">Preparando seu checkout...</h2>
-            <p style="font-size: 1.1rem; opacity: 0.9;">Redirecionando para pagamento seguro via Mercado Pago</p>
-            <div style="margin-top: 24px; display: flex; align-items: center; justify-content: center; gap: 12px;">
-                <div style="width: 12px; height: 12px; background: #27ae60; border-radius: 50%; animation: pulse 1s infinite;"></div>
-                <div style="width: 12px; height: 12px; background: #3498db; border-radius: 50%; animation: pulse 1s infinite 0.2s;"></div>
-                <div style="width: 12px; height: 12px; background: #f39c12; border-radius: 50%; animation: pulse 1s infinite 0.4s;"></div>
-            </div>
+            <div style="font-size: 64px; margin-bottom: 24px;">⏳</div>
+            <h2 style="margin-bottom: 12px; font-size: 2rem;">Preparando seu checkout...</h2>
+            <p style="font-size: 1.1rem;">Redirecionando para pagamento seguro</p>
         </div>
     `;
-
     document.body.appendChild(loadingModal);
 }
 
-/**
- * Remove modal de loading
- */
 function hideCheckoutLoading() {
     const loadingModal = document.getElementById('checkout-loading-modal');
-    if (loadingModal) {
-        loadingModal.remove();
-    }
+    if (loadingModal) loadingModal.remove();
 }
 
-/**
- * Exibe um alerta customizado
- * @param {string} message - Mensagem a exibir
- * @param {string} type - Tipo do alerta (info, success, error)
- */
 function showAlert(message, type = 'info') {
-    // Por enquanto, usar alert nativo
-    // Em produção, você pode criar um modal customizado
     alert(message);
 }
 
@@ -404,163 +327,115 @@ function showAlert(message, type = 'info') {
 // FUNÇÕES DE MODAL
 // ================================================
 
-/**
- * Abre o modal de planos
- */
 function openPlansModal() {
     const modal = document.getElementById('plans-modal');
     if (modal) {
         modal.classList.add('show');
         document.body.style.overflow = 'hidden';
-
-        // Track analytics
         trackEvent('open_plans_modal');
-
-        // Iniciar countdown
-        startCountdown();
     }
 }
 
-/**
- * Fecha o modal de planos
- */
 function closePlansModal() {
     const modal = document.getElementById('plans-modal');
     if (modal) {
         modal.classList.remove('show');
         document.body.style.overflow = 'auto';
-
-        // Track analytics
         trackEvent('close_plans_modal');
     }
 }
 
-// ================================================
-// COUNTDOWN TIMER
-// ================================================
-
-let countdownInterval = null;
-
 /**
- * Inicia o countdown de urgência
+ * NOVA FUNÇÃO V4.0: Exibe modal de upgrade com contexto de bloqueio
  */
-function startCountdown() {
-    // Definir tempo final (23 horas, 45 minutos, 12 segundos a partir de agora)
-    const endTime = new Date().getTime() + (23 * 60 * 60 + 45 * 60 + 12) * 1000;
+function showUpgradeModal(context = {}) {
+    console.log('💡 Abrindo modal de upgrade com contexto:', context);
 
-    // Limpar interval anterior se existir
-    if (countdownInterval) {
-        clearInterval(countdownInterval);
+    const modal = document.getElementById('plans-modal');
+    if (!modal) {
+        console.error('❌ Modal de planos não encontrada!');
+        return;
     }
 
-    // Atualizar a cada segundo
-    countdownInterval = setInterval(() => {
-        const now = new Date().getTime();
-        const distance = endTime - now;
+    // Exibir modal
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
 
-        if (distance < 0) {
-            clearInterval(countdownInterval);
-            updateCountdownDisplay('00:00:00');
-            return;
+    // Se houver contexto de bloqueio, adicionar mensagem de urgência
+    if (context.upgradeRequired) {
+        const header = modal.querySelector('.plans-header');
+        if (header) {
+            // Remover mensagem anterior se existir
+            const existingMsg = header.querySelector('.upgrade-urgency-message');
+            if (existingMsg) existingMsg.remove();
+
+            // Adicionar nova mensagem
+            const urgencyMsg = document.createElement('div');
+            urgencyMsg.className = 'upgrade-urgency-message';
+            urgencyMsg.style.cssText = `
+                background: #e74c3c; color: white; padding: 16px;
+                border-radius: 12px; margin: 16px 0; text-align: center;
+                font-weight: 600; font-size: 1.1rem; line-height: 1.5;
+                box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+            `;
+            urgencyMsg.innerHTML = `
+                🚫 ${context.message || 'Limite atingido!'}<br>
+                <span style="font-size: 0.95rem; font-weight: 500; opacity: 0.95;">
+                    Faça upgrade agora e continue treinando sem limites!
+                </span>
+            `;
+            header.appendChild(urgencyMsg);
         }
-
-        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-        const timeString = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-        updateCountdownDisplay(timeString);
-    }, 1000);
-}
-
-/**
- * Atualiza o display do countdown
- * @param {string} timeString - String formatada do tempo
- */
-function updateCountdownDisplay(timeString) {
-    const countdownElement = document.getElementById('final-countdown');
-    if (countdownElement) {
-        countdownElement.textContent = timeString;
     }
-}
 
-/**
- * Adiciona zero à esquerda se necessário
- * @param {number} num - Número a formatar
- * @returns {string} - Número formatado
- */
-function pad(num) {
-    return num < 10 ? '0' + num : num;
+    // Analytics
+    trackEvent('open_upgrade_modal', {
+        reason: context.reason || 'unknown',
+        current_plan: context.currentPlan || 'unknown'
+    });
 }
 
 // ================================================
-// ANALYTICS TRACKING
+// ANALYTICS
 // ================================================
 
-/**
- * Envia evento para Google Analytics
- * @param {string} eventName - Nome do evento
- * @param {Object} eventParams - Parâmetros do evento
- */
 function trackEvent(eventName, eventParams = {}) {
     if (typeof gtag !== 'undefined') {
         gtag('event', eventName, eventParams);
     }
-
-    // Log para debugging
     console.log('Analytics Event:', eventName, eventParams);
 }
-
-// ================================================
-// FUNÇÕES UTILITÁRIAS
-// ================================================
-
-// NOTA: As funções upgradePlan() e startSubscriptionFlow()
-// já existem no script.js principal, então não redefinimos aqui
-// para evitar conflitos
 
 // ================================================
 // INICIALIZAÇÃO
 // ================================================
 
-/**
- * Inicializa o modal de planos
- */
 function initPlansModal() {
-    console.log('🔄 Inicializando modal de planos...');
+    console.log('🔄 Inicializando modal de planos V4.0...');
 
-    // Event listeners para os botões de toggle
+    // Event listeners para toggle
     const billingButtons = document.querySelectorAll('.billing-label');
-    console.log(`📌 Encontrados ${billingButtons.length} botões de toggle`);
-
-    billingButtons.forEach((button, index) => {
+    billingButtons.forEach((button) => {
         const period = button.getAttribute('data-period');
-        console.log(`  - Botão ${index + 1}: período="${period}"`);
 
-        // Adicionar múltiplos event listeners para garantir que funciona
         button.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            console.log(`🔘 CLICK EVENT DISPARADO! Botão: ${period}`);
             const clickedPeriod = this.getAttribute('data-period');
             toggleBillingPeriod(clickedPeriod);
         }, true);
 
-        // Adicionar também touchstart para mobile
         button.addEventListener('touchstart', function(e) {
             e.preventDefault();
-            console.log(`👆 TOUCH EVENT DISPARADO! Botão: ${period}`);
             const clickedPeriod = this.getAttribute('data-period');
             toggleBillingPeriod(clickedPeriod);
         }, { passive: false });
 
-        // Testar se o botão está clicável
         button.style.pointerEvents = 'auto';
         button.style.cursor = 'pointer';
-        console.log(`  - Botão configurado com cursor e pointer-events`);
     });
 
-    // Event listener para fechar modal ao clicar fora
+    // Fechar ao clicar fora
     document.addEventListener('click', function(e) {
         const modal = document.getElementById('plans-modal');
         if (e.target === modal) {
@@ -568,7 +443,7 @@ function initPlansModal() {
         }
     });
 
-    // Event listener para fechar modal com ESC
+    // Fechar com ESC
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             const modal = document.getElementById('plans-modal');
@@ -578,19 +453,16 @@ function initPlansModal() {
         }
     });
 
-    // Inicializar preços (garantir que estão corretos no carregamento)
-    console.log(`💰 Estado inicial: ${isAnnualBilling ? 'Anual' : 'Mensal'}`);
-
-    // Aguardar um pouco para garantir que o DOM está pronto
+    // Inicializar preços
     setTimeout(() => {
         updatePlanPricing('estudante');
         updatePlanPricing('profissional');
     }, 100);
 
-    console.log('✅ Modal de planos inicializado com sucesso');
+    console.log('✅ Modal de planos V4.0 inicializado');
 }
 
-// Aguardar DOM estar pronto
+// Aguardar DOM
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initPlansModal);
 } else {
@@ -601,24 +473,11 @@ if (document.readyState === 'loading') {
 // EXPORTAR FUNÇÕES GLOBALMENTE
 // ================================================
 
-// Exportar funções globalmente (exceto as que já existem no script.js)
 window.openPlansModal = openPlansModal;
 window.closePlansModal = closePlansModal;
 window.toggleBillingPeriod = toggleBillingPeriod;
 window.selectPlan = selectPlan;
+window.showUpgradeModal = showUpgradeModal; // ⭐ NOVA FUNÇÃO V4.0
 window.initMercadoPagoCheckout = initMercadoPagoCheckout;
-// NOTA: upgradePlan e startSubscriptionFlow já estão no script.js
 
-// Função de teste para debug
-window.testToggle = function() {
-    console.log('🧪 TESTE MANUAL DO TOGGLE');
-    console.log('Estado atual:', isAnnualBilling ? 'Anual' : 'Mensal');
-    toggleBillingPeriod();
-    console.log('Novo estado:', isAnnualBilling ? 'Anual' : 'Mensal');
-};
-
-console.log('💡 Para testar manualmente, digite no console: testToggle()');
-
-// ================================================
-// FIM DO ARQUIVO
-// ================================================
+console.log('💰 SIAV Plans Modal V4.0 - Meta: R$ 2.000.000');

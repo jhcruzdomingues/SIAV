@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Limite de Uso - SIAV V4.1</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-box h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .stat:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        .log {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+        }
+
+        .plan-selector {
+            margin-bottom: 20px;
+        }
+
+        .plan-selector label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .plan-selector select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+        }
+
+        .plan-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste de Limite de Uso</h1>
+        <p class="subtitle">Sistema de Controle Diário - SIAV V4.1</p>
+
+        <div class="plan-selector">
+            <label for="plan-select">Selecionar Plano de Teste:</label>
+            <select id="plan-select" onchange="updateStats()">
+                <option value="free">Gratuito (1 uso/dia)</option>
+                <option value="estudante" selected>Estudante (10 usos/dia)</option>
+                <option value="profissional">Profissional (Ilimitado)</option>
+                <option value="vitalicio">Vitalício (Ilimitado)</option>
+            </select>
+        </div>
+
+        <div class="info-box">
+            <h3>📊 Estatísticas Atuais</h3>
+            <div class="stat">
+                <span class="stat-label">Plano Selecionado:</span>
+                <span class="stat-value" id="current-plan">Estudante</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Usos Hoje:</span>
+                <span class="stat-value" id="usage-count">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Limite Diário:</span>
+                <span class="stat-value" id="daily-limit">10</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Restantes:</span>
+                <span class="stat-value" id="remaining">10</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Data:</span>
+                <span class="stat-value" id="current-date">-</span>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-primary" onclick="simulateUsage()">
+                ▶️ Simular Uso
+            </button>
+            <button class="btn-danger" onclick="resetCounter()">
+                🔄 Resetar Contador
+            </button>
+            <button class="btn-success" onclick="testFreePlan()">
+                🔍 Testar Plano FREE (1 uso)
+            </button>
+            <button class="btn-warning" onclick="testStudentPlan()">
+                🔍 Testar Plano ESTUDANTE (10 usos)
+            </button>
+        </div>
+
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        const FREE_DAILY_LIMIT = 1;      // Plano gratuito: 1 caso/dia
+        const STUDENT_DAILY_LIMIT = 10;  // Plano estudante: 10 casos/dia
+        let logEntries = [];
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logEntries.unshift(`[${timestamp}] ${message}`);
+            if (logEntries.length > 10) logEntries.pop();
+
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML = logEntries.map(entry => `<div class="log-entry">${entry}</div>`).join('');
+        }
+
+        function getCurrentPlan() {
+            return document.getElementById('plan-select').value;
+        }
+
+        function getUsageData() {
+            const stored = localStorage.getItem('siav_daily_usage');
+            const today = new Date().toDateString();
+
+            if (!stored) {
+                return { date: today, count: 0 };
+            }
+
+            try {
+                const data = JSON.parse(stored);
+                if (data.date !== today) {
+                    return { date: today, count: 0 };
+                }
+                return data;
+            } catch (err) {
+                return { date: today, count: 0 };
+            }
+        }
+
+        function saveUsageData(data) {
+            localStorage.setItem('siav_daily_usage', JSON.stringify(data));
+        }
+
+        function updateStats() {
+            const plan = getCurrentPlan();
+            const usage = getUsageData();
+            const isUnlimited = plan === 'profissional' || plan === 'vitalicio';
+            const dailyLimit = plan === 'free' ? FREE_DAILY_LIMIT : STUDENT_DAILY_LIMIT;
+
+            document.getElementById('current-plan').textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
+            document.getElementById('usage-count').textContent = isUnlimited ? '∞' : usage.count;
+            document.getElementById('daily-limit').textContent = isUnlimited ? '∞' : dailyLimit;
+            document.getElementById('remaining').textContent = isUnlimited ? '∞' : Math.max(0, dailyLimit - usage.count);
+            document.getElementById('current-date').textContent = usage.date;
+
+            const remainingEl = document.getElementById('remaining');
+            const remaining = dailyLimit - usage.count;
+
+            if (!isUnlimited) {
+                if (remaining === 0) {
+                    remainingEl.style.color = '#e74c3c';
+                } else if (remaining === 1) {
+                    remainingEl.style.color = '#f39c12';
+                } else {
+                    remainingEl.style.color = '#27ae60';
+                }
+            } else {
+                remainingEl.style.color = '#667eea';
+            }
+        }
+
+        function simulateUsage() {
+            const plan = getCurrentPlan();
+
+            if (plan === 'profissional' || plan === 'vitalicio') {
+                log('✅ Uso permitido - Plano ilimitado');
+                alert('✅ Plano ilimitado - Acesso permitido sem restrições!');
+                return;
+            }
+
+            const dailyLimit = plan === 'free' ? FREE_DAILY_LIMIT : STUDENT_DAILY_LIMIT;
+            const usage = getUsageData();
+
+            if (usage.count >= dailyLimit) {
+                log('🚫 BLOQUEIO ATIVADO - Limite diário atingido!');
+                const message = plan === 'free'
+                    ? `🚫 LIMITE ATINGIDO!\n\nVocê atingiu o limite de ${dailyLimit} caso clínico diário do plano Gratuito.\n\nPratique mais intensamente com upgrade!`
+                    : `🚫 LIMITE ATINGIDO!\n\nVocê atingiu o limite de ${dailyLimit} casos clínicos diários do plano Estudante.\n\nFaça upgrade para continuar treinando sem limites!`;
+                alert(message);
+                return;
+            }
+
+            usage.count++;
+            saveUsageData(usage);
+
+            const remaining = dailyLimit - usage.count;
+
+            if (plan === 'free' && usage.count === dailyLimit) {
+                log(`⚠️ ALERTA - Você está usando seu único caso clínico diário!`);
+                alert(`⚠️ ATENÇÃO!\n\nVocê está usando seu único caso clínico diário.\n\nPratique mais intensamente com upgrade!`);
+            } else if (remaining === 1) {
+                log(`⚠️ ALERTA - Penúltimo uso! Resta apenas ${remaining} caso clínico`);
+                alert(`⚠️ ATENÇÃO!\n\nResta apenas ${remaining} caso clínico de cortesia.\n\nNão pare de treinar, faça upgrade!`);
+            } else if (remaining === 0) {
+                log(`🚫 ${dailyLimit}º uso detectado - BLOQUEIO no próximo!`);
+                alert(`✅ Uso permitido (último disponível)\n\n🚫 Próxima tentativa será BLOQUEADA!`);
+            } else {
+                log(`✅ Uso ${usage.count} de ${dailyLimit} - Restam ${remaining}`);
+            }
+
+            updateStats();
+        }
+
+        function resetCounter() {
+            const today = new Date().toDateString();
+            saveUsageData({ date: today, count: 0 });
+            log('🔄 Contador resetado para 0');
+            updateStats();
+        }
+
+        function setUsage(count) {
+            const plan = getCurrentPlan();
+            const dailyLimit = plan === 'free' ? FREE_DAILY_LIMIT : STUDENT_DAILY_LIMIT;
+            const today = new Date().toDateString();
+            saveUsageData({ date: today, count: count });
+            log(`📝 Contador ajustado para ${count}/${dailyLimit}`);
+            updateStats();
+        }
+
+        function testFreePlan() {
+            document.getElementById('plan-select').value = 'free';
+            resetCounter();
+            alert('🔍 TESTE PLANO GRATUITO\n\nPlano alterado para FREE (1 uso/dia)\nContador resetado.\n\nClique em "Simular Uso" para testar:');
+        }
+
+        function testStudentPlan() {
+            const plan = 'estudante';
+            document.getElementById('plan-select').value = plan;
+            const today = new Date().toDateString();
+            saveUsageData({ date: today, count: 9 });
+            updateStats();
+            alert('🔍 TESTE PLANO ESTUDANTE\n\nPlano alterado para ESTUDANTE (10 usos/dia)\nContador ajustado para 9/10.\n\nPróximo uso mostrará ALERTA de penúltimo uso.');
+        }
+
+        // Inicializar
+        updateStats();
+        log('🚀 Ferramenta de teste carregada');
+    </script>
+</body>
+</html>

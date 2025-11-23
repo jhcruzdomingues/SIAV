@@ -1603,6 +1603,206 @@ function cancelPatientSetup() {
     showScreen('home');
 }
 
+// ================================================
+// SISTEMA DE CONTROLE DE USO DIÁRIO - V4.1
+// Limites Otimizados: FREE = 1, ESTUDANTE = 10
+// ================================================
+
+const FREE_DAILY_LIMIT = 1;      // Plano gratuito: 1 caso/dia
+const STUDENT_DAILY_LIMIT = 10;  // Plano estudante: 10 casos/dia
+
+/**
+ * Verifica e incrementa o contador de uso do simulador
+ * @param {string} userPlan - Plano do usuário ('free', 'estudante', 'profissional', 'vitalicio')
+ * @returns {object} - {allowed: boolean, remaining: number, isWarning: boolean}
+ */
+function checkAndIncrementSimulationUse(userPlan) {
+    console.log('🔍 Verificando uso do simulador para plano:', userPlan);
+
+    // Planos ilimitados (profissional e vitalício)
+    if (userPlan === 'profissional' || userPlan === 'vitalicio') {
+        console.log('✅ Plano ilimitado - uso permitido');
+        return {
+            allowed: true,
+            remaining: null,
+            isWarning: false,
+            message: 'Acesso ilimitado'
+        };
+    }
+
+    // Determinar limite baseado no plano
+    const dailyLimit = userPlan === 'free' ? FREE_DAILY_LIMIT : STUDENT_DAILY_LIMIT;
+    console.log(`📋 Limite diário para plano ${userPlan}:`, dailyLimit);
+
+    // Planos com limite (free e estudante)
+    const today = new Date().toDateString();
+    const storageKey = 'siav_daily_usage';
+
+    let usageData;
+    try {
+        const stored = localStorage.getItem(storageKey);
+        usageData = stored ? JSON.parse(stored) : { date: today, count: 0 };
+    } catch (err) {
+        usageData = { date: today, count: 0 };
+    }
+
+    // Resetar contador se for um novo dia
+    if (usageData.date !== today) {
+        console.log('🔄 Novo dia detectado - resetando contador');
+        usageData.date = today;
+        usageData.count = 0;
+    }
+
+    // Verificar limite
+    const currentCount = usageData.count;
+    const remaining = dailyLimit - currentCount;
+
+    console.log(`📊 Uso atual: ${currentCount}/${dailyLimit} (restam ${remaining})`);
+
+    // Bloquear se atingiu o limite
+    if (currentCount >= dailyLimit) {
+        console.warn('🚫 LIMITE DIÁRIO ATINGIDO!');
+        return {
+            allowed: false,
+            remaining: 0,
+            isWarning: false,
+            message: userPlan === 'free'
+                ? `Você atingiu o limite de ${dailyLimit} caso clínico diário do plano Gratuito. Pratique mais intensamente com upgrade!`
+                : `Você atingiu o limite de ${dailyLimit} casos clínicos diários do plano Estudante.`,
+            upgradeRequired: true,
+            limit: dailyLimit
+        };
+    }
+
+    // Incrementar contador
+    usageData.count++;
+    try {
+        localStorage.setItem(storageKey, JSON.stringify(usageData));
+    } catch (err) {
+        console.error('Erro ao salvar contagem:', err);
+    }
+
+    // Alertar no penúltimo uso (quando restar apenas 1)
+    const newRemaining = dailyLimit - usageData.count;
+    const isWarning = newRemaining === 1;
+
+    if (isWarning) {
+        console.warn('⚠️ ALERTA: Resta apenas 1 simulação de cortesia!');
+    }
+
+    console.log(`✅ Uso permitido - Nova contagem: ${usageData.count}/${dailyLimit}`);
+
+    // Mensagens personalizadas por plano
+    let warningMessage;
+    if (userPlan === 'free' && usageData.count === dailyLimit) {
+        warningMessage = `⚠️ Você está usando seu único caso clínico diário. Pratique mais intensamente com upgrade!`;
+    } else if (isWarning) {
+        warningMessage = `⚠️ Atenção: Resta apenas ${newRemaining} caso clínico hoje. Não pare de treinar, faça upgrade!`;
+    } else {
+        warningMessage = `Você tem ${newRemaining} casos clínicos restantes hoje.`;
+    }
+
+    return {
+        allowed: true,
+        remaining: newRemaining,
+        isWarning: isWarning || (userPlan === 'free' && usageData.count === dailyLimit),
+        message: warningMessage,
+        upgradeRequired: false,
+        limit: dailyLimit
+    };
+}
+
+/**
+ * Exibe uma notificação toast
+ * @param {string} message - Mensagem
+ * @param {string} type - Tipo: 'info', 'success', 'warning', 'danger'
+ * @param {number} timeout - Tempo em ms
+ */
+function showToastNotification(message, type = 'info', timeout = 4000) {
+    // Criar container se não existir
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+            pointer-events: none;
+        `;
+        document.body.appendChild(container);
+    }
+
+    // Cores por tipo
+    const colors = {
+        info: '#3498db',
+        success: '#27ae60',
+        warning: '#f39c12',
+        danger: '#e74c3c'
+    };
+
+    const icons = {
+        info: 'ℹ️',
+        success: '✅',
+        warning: '⚠️',
+        danger: '🚫'
+    };
+
+    // Criar toast
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        background: ${colors[type] || colors.info};
+        color: white;
+        padding: 16px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        font-size: 14px;
+        font-weight: 500;
+        pointer-events: auto;
+        cursor: pointer;
+        animation: slideInRight 0.3s ease-out;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    `;
+
+    toast.innerHTML = `
+        <span style="font-size: 20px;">${icons[type] || icons.info}</span>
+        <span style="flex: 1;">${message}</span>
+        <button style="background: none; border: none; color: white; font-size: 18px; cursor: pointer; padding: 0; margin-left: 10px; opacity: 0.7;" onclick="this.parentElement.remove()">×</button>
+    `;
+
+    container.appendChild(toast);
+
+    // Auto-remover
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+    }, timeout);
+
+    // Adicionar CSS de animação se necessário
+    if (!document.getElementById('toast-animations')) {
+        const style = document.createElement('style');
+        style.id = 'toast-animations';
+        style.textContent = `
+            @keyframes slideInRight {
+                from { opacity: 0; transform: translateX(100%); }
+                to { opacity: 1; transform: translateX(0); }
+            }
+            @keyframes slideOutRight {
+                from { opacity: 1; transform: translateX(0); }
+                to { opacity: 0; transform: translateX(100%); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
 /**
  * Inicia um novo atendimento de PCR.
  * 
@@ -1615,6 +1815,68 @@ function cancelPatientSetup() {
  * @throws {Error} Se já houver uma PCR ativa
  */
 function startPCR() {
+    // ================================================
+    // VERIFICAÇÃO DE LIMITES DIÁRIOS - V4.0
+    // ================================================
+
+    // Obter plano atual do usuário
+    const userPlan = state.currentUser?.plan || 'free';
+    console.log('👤 Plano do usuário:', userPlan);
+
+    // Verificar limites de uso (usando função do localStorage)
+    const usageCheck = checkAndIncrementSimulationUse(userPlan);
+    console.log('📊 Resultado da verificação:', usageCheck);
+
+    // CASO 1: Bloqueio total - 5º uso atingido
+    if (!usageCheck.allowed) {
+        console.warn('🚫 BLOQUEIO ATIVADO - Limite diário atingido');
+
+        // Mostrar toast de bloqueio
+        showToastNotification(
+            '🚫 Limite atingido! Faça upgrade para treinar sem limites.',
+            'danger',
+            6000
+        );
+
+        // Abrir modal de upgrade com contexto de bloqueio
+        setTimeout(() => {
+            if (typeof window.showUpgradeModal === 'function') {
+                window.showUpgradeModal({
+                    reason: 'daily_limit_reached',
+                    currentPlan: userPlan,
+                    message: usageCheck.message,
+                    upgradeRequired: true
+                });
+            } else if (typeof window.openPlansModal === 'function') {
+                window.openPlansModal();
+            } else {
+                alert(usageCheck.message + '\n\nFaça upgrade para continuar treinando sem limites!');
+            }
+        }, 500);
+
+        return; // BLOQUEAR EXECUÇÃO
+    }
+
+    // CASO 2: Alerta de penúltimo uso (resta apenas 1 simulação)
+    if (usageCheck.isWarning) {
+        console.warn('⚠️ ALERTA - Penúltimo uso detectado');
+
+        showToastNotification(
+            usageCheck.message,
+            'warning',
+            8000
+        );
+    }
+
+    // CASO 3: Uso normal
+    if (usageCheck.remaining !== null && usageCheck.remaining > 1) {
+        console.log(`✅ Uso permitido - Restam ${usageCheck.remaining} simulações hoje`);
+    }
+
+    // ================================================
+    // INICIALIZAÇÃO DA PCR (LÓGICA ORIGINAL)
+    // ================================================
+
     // Previne múltiplas ativações
     if (state.pcrActive) {
         console.warn('PCR já está ativa. Finalize o atendimento atual antes de iniciar outro.');

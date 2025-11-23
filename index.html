@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="sound-settings-styles.css?v=2" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="settings-menu-styles.css?v=2" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="profile-plan-styles.css?v=1" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="plans-modal.css?v=2" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="plans-modal.css?v=20251122" media="print" onload="this.media='all'">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://sdk.mercadopago.com/js/v2" defer></script>
@@ -1657,7 +1657,7 @@
                 <div class="plan-card" data-plan="free">
                     <div class="plan-header">
                         <h3 class="plan-name">Gratuito</h3>
-                        <p class="plan-description">Conheça o básico</p>
+                        <p class="plan-description">Teste o básico</p>
                     </div>
 
                     <div class="plan-pricing">
@@ -1666,16 +1666,19 @@
                             <span class="price-value">0</span>
                             <span class="period">/mês</span>
                         </div>
+                        <p class="price-detail" style="color: #e74c3c; font-weight: 600; margin-top: 8px;">
+                            ⚠️ 1 caso clínico/dia
+                        </p>
                     </div>
 
                     <ul class="plan-features">
                         <li class="plan-feature">
                             <i class="icon">✓</i>
-                            <span>Tela PCR com timer</span>
+                            <span><strong>1 simulação/dia</strong></span>
                         </li>
                         <li class="plan-feature">
                             <i class="icon">✓</i>
-                            <span>Timer de drogas</span>
+                            <span>Tela PCR com timer</span>
                         </li>
                         <li class="plan-feature">
                             <i class="icon">✓</i>
@@ -1683,11 +1686,11 @@
                         </li>
                         <li class="plan-feature disabled">
                             <i class="icon">✗</i>
-                            <span>Simulador avançado</span>
+                            <span>Salvar pacientes</span>
                         </li>
                         <li class="plan-feature disabled">
                             <i class="icon">✗</i>
-                            <span>Logs de pacientes</span>
+                            <span>Dashboard completo</span>
                         </li>
                     </ul>
 
@@ -1706,16 +1709,24 @@
                     <div class="plan-pricing">
                         <div class="plan-price">
                             <span class="currency">R$</span>
-                            <span class="price-value" data-price-mensal="9.90" data-price-anual="7.92">9,90</span>
+                            <span class="price-value" data-price-mensal="24.90" data-price-anual="19.92">24,90</span>
                             <span class="period">/mês</span>
                         </div>
                         <p class="price-detail">
-                            <span class="annual-info" style="display: none;">R$ 95/ano</span>
-                            <span class="monthly-info">R$ 9,90 cobrado mensalmente</span>
+                            <span class="annual-info" style="display: none;">R$ 239,04/ano</span>
+                            <span class="monthly-info">R$ 24,90 cobrado mensalmente</span>
                         </p>
+                        <div class="savings-badge">
+                            <span class="annual-savings" style="display: none;">💰 Economize R$ 59,76/ano</span>
+                            <span class="monthly-savings">Economize 20% no plano anual</span>
+                        </div>
                     </div>
 
                     <ul class="plan-features">
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span><strong>10 casos clínicos/dia</strong></span>
+                        </li>
                         <li class="plan-feature">
                             <i class="icon">✓</i>
                             <span>Quiz completo explicado</span>
@@ -1728,13 +1739,9 @@
                             <i class="icon">✓</i>
                             <span><strong>Salva 1 paciente</strong></span>
                         </li>
-                        <li class="plan-feature disabled">
-                            <i class="icon">✗</i>
-                            <span>Simulador avançado</span>
-                        </li>
-                        <li class="plan-feature disabled">
-                            <i class="icon">✗</i>
-                            <span>Logs ilimitados</span>
+                        <li class="plan-feature">
+                            <i class="icon">✓</i>
+                            <span>Certificado digital</span>
                         </li>
                     </ul>
 
@@ -1742,8 +1749,8 @@
                         class="plan-cta cta-student"
                         onclick="selectPlan('estudante')"
                         data-plan-id="estudante"
-                        data-price-mensal="990"
-                        data-price-anual="9504">
+                        data-price-mensal="2490"
+                        data-price-anual="23904">
                         <span class="cta-text">Começar Agora</span>
                     </button>
 
@@ -1761,15 +1768,15 @@
                     <div class="plan-pricing">
                         <div class="plan-price">
                             <span class="currency">R$</span>
-                            <span class="price-value" data-price-mensal="19.90" data-price-anual="15.92">19,90</span>
+                            <span class="price-value" data-price-mensal="49.90" data-price-anual="39.92">49,90</span>
                             <span class="period">/mês</span>
                         </div>
                         <p class="price-detail">
-                            <span class="annual-info" style="display: none;">R$ 191/ano</span>
-                            <span class="monthly-info">R$ 19,90 cobrado mensalmente</span>
+                            <span class="annual-info" style="display: none;">R$ 479,04/ano</span>
+                            <span class="monthly-info">R$ 49,90 cobrado mensalmente</span>
                         </p>
                         <div class="savings-badge">
-                            <span class="annual-savings" style="display: none;">Economize R$ 48/ano</span>
+                            <span class="annual-savings" style="display: none;">💰 Economize R$ 119,76/ano</span>
                             <span class="monthly-savings">Economize 20% no plano anual</span>
                         </div>
                     </div>
@@ -1777,7 +1784,7 @@
                     <ul class="plan-features">
                         <li class="plan-feature">
                             <i class="icon">✓</i>
-                            <span><strong>Simulador completo</strong></span>
+                            <span><strong>Simulador ILIMITADO</strong></span>
                         </li>
                         <li class="plan-feature">
                             <i class="icon">✓</i>
@@ -1785,15 +1792,15 @@
                         </li>
                         <li class="plan-feature">
                             <i class="icon">✓</i>
-                            <span>Game Engine avançado</span>
+                            <span>Dashboard avançado</span>
                         </li>
                         <li class="plan-feature">
                             <i class="icon">✓</i>
-                            <span>Histórico completo</span>
+                            <span>Exportação PDF</span>
                         </li>
                         <li class="plan-feature">
                             <i class="icon">✓</i>
-                            <span>Tudo do Estudante</span>
+                            <span>Suporte prioritário</span>
                         </li>
                     </ul>
 
@@ -1801,8 +1808,8 @@
                         class="plan-cta cta-professional"
                         onclick="selectPlan('profissional')"
                         data-plan-id="profissional"
-                        data-price-mensal="1990"
-                        data-price-anual="19104">
+                        data-price-mensal="4990"
+                        data-price-anual="47904">
                         <span class="cta-text">Assinar Agora</span>
                     </button>
                 </div>
@@ -1817,20 +1824,16 @@
                     </div>
 
                     <div class="plan-pricing">
-                        <div class="price-comparison">
-                            <span class="old-price">R$ 1.199</span>
-                            <span class="discount-badge">-58%</span>
-                        </div>
                         <div class="plan-price">
                             <span class="currency">R$</span>
-                            <span class="price-value">499</span>
+                            <span class="price-value">1.199</span>
                             <span class="period">,90</span>
                         </div>
                         <p class="price-detail premium-detail">
-                            Pagamento único
+                            Pagamento único • Sem mensalidades
                         </p>
                         <div class="roi-calculator">
-                            Sem mensalidades
+                            🎯 Equivale a 2 anos do Profissional
                         </div>
                     </div>
 
@@ -1841,19 +1844,19 @@
                         </li>
                         <li class="plan-feature">
                             <i class="icon">✓</i>
-                            <span><strong>Acesso para sempre</strong></span>
+                            <span><strong>Acesso vitalício garantido</strong></span>
                         </li>
                         <li class="plan-feature">
                             <i class="icon">✓</i>
-                            <span>Atualizações futuras</span>
+                            <span>Todas as atualizações futuras</span>
                         </li>
                         <li class="plan-feature">
                             <i class="icon">✓</i>
-                            <span>Novos recursos grátis</span>
+                            <span>Acesso Beta Prioritário</span>
                         </li>
                         <li class="plan-feature">
                             <i class="icon">✓</i>
-                            <span>Sem renovação</span>
+                            <span>Badge exclusivo de membro fundador</span>
                         </li>
                     </ul>
 
@@ -1861,9 +1864,9 @@
                         class="plan-cta cta-lifetime"
                         onclick="selectPlan('vitalicio')"
                         data-plan-id="vitalicio"
-                        data-price-mensal="49990"
-                        data-price-anual="49990">
-                        <span class="cta-text">Garantir Acesso</span>
+                        data-price-mensal="119990"
+                        data-price-anual="119990">
+                        <span class="cta-text">Garantir Acesso Vitalício</span>
                     </button>
 
                     <div class="authority-proof">
@@ -1883,12 +1886,20 @@
     <script type="module" src="src/main.js"></script>
 
 
+    <!-- Force Reload Script - Remover após teste -->
+    <script>
+        // Limpar cache agressivamente
+        if (window.performance && performance.navigation.type !== 1) {
+            console.log('🔄 Primeira carga - forçando reload hard...');
+            window.location.reload(true);
+        }
+    </script>
     <script src="settings-integration.js?v=3" defer></script>
     <script src="sound-settings.js" defer></script>
-    <script src="mercadopago-config.js" defer></script>
-    <script src="mercadopago-integration.js" defer></script>
-    <script src="plans-modal-optimized.js" defer></script>
+    <script src="mercadopago-config.js?t=<?php echo time(); ?>" defer></script>
+    <script src="mercadopago-integration.js?t=<?php echo time(); ?>" defer></script>
+    <script src="plans-modal-optimized.js?t=1732311600000" defer></script>
     <script src="toggle-fix.js"></script>
-    <script src="script.js?v=3" defer></script>
+    <script src="script.js?t=1732311600000" defer></script>
 </body>
 </html>
