@@ -3704,15 +3704,10 @@ function showGlasgowModal() {
 }
 
 function updateGlasgowScore() {
-    const ocular = parseInt(document.getElementById('glasgow-ocular').value);
-    const verbal = parseInt(document.getElementById('glasgow-verbal').value);
-    const motora = parseInt(document.getElementById('glasgow-motora').value);
     const ocular = parseInt(document.getElementById('glasgow-ocular').value) || 0;
     const verbal = parseInt(document.getElementById('glasgow-verbal').value) || 0;
     const motora = parseInt(document.getElementById('glasgow-motora').value) || 0;
 
-    const isValid = ocular > 0 && verbal > 0 && motora > 0;
-    const score = ocular + verbal + motora;
     // DELEGA PARA O MÓDULO MÉDICO TESTADO:
     const result = window.MedicalBrain.calculateGlasgow(ocular, verbal, motora);
     
@@ -3720,33 +3715,10 @@ function updateGlasgowScore() {
     const severityDisplay = document.getElementById('glasgow-severity');
     const box = scoreDisplay.closest('.recommendation-box');
     
-    let severity = '';
-    let bgColor = 'var(--primary)';
-    
-    if (isValid) {
-        if (score >= 13) {
-            severity = 'Traumatismo Cranioencefálico (TCE) Leve';
-            bgColor = 'var(--success)';
-        } else if (score >= 9) {
-            severity = 'TCE Moderado';
-            bgColor = 'var(--warning)';
-        } else {
-            severity = 'TCE Grave (Intubação Considerada)';
-            bgColor = 'var(--danger)';
-        }
-        scoreDisplay.textContent = score;
-    } else {
-        scoreDisplay.textContent = 'N/A';
-        severity = 'Selecione os três critérios';
-        bgColor = 'var(--primary)';
-    }
     scoreDisplay.textContent = result.score !== null ? result.score : 'N/A';
     severityDisplay.textContent = result.severity;
     box.style.backgroundColor = `var(--${result.color})`;
 
-    box.style.backgroundColor = bgColor;
-    severityDisplay.textContent = severity;
-    return isValid ? score : null;
     return result.score;
 }
 
