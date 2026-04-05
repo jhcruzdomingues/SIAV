@@ -3,7 +3,7 @@
 // =============================================
 // Remove CSS não utilizado para otimizar tamanho
 
-module.exports = {
+export default {
   content: [
     './index.html',
     './script.js',
