@@ -28,6 +28,9 @@ jobs:
       - name: 🧪 Executar testes
         run: npm run test:run
 
+      - name: 📁 Preparar pasta de build
+        run: mkdir -p build-optimized
+
       - name: 🏗️ Build otimizado
         run: npm run build
         env:
