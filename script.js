@@ -2862,42 +2862,8 @@ function promptRhythmCheck() {
 // ===============================================
 
 function getShockRecommendation(rhythmType) {
-    const age = parseInt(state.patient.age) || 30;
-    const weight = parseInt(state.patient.weight) || 70;
-    const isPediatric = age < 8 || weight < 30;
-
-    let recommendedEnergy = '';
-    let energies = [];
-
-    // Normaliza o texto para facilitar a detecção (aceita variações como 'Taquicardia Ventricular s/ Pulso')
-    const norm = ('' + (rhythmType || '')).toLowerCase();
-    const isShockableLabel = /fibril|fv|taquicardia|tvsp|tv\s?(sem|s\/)/i.test(norm);
-
-    if (isShockableLabel) {
-        if (isPediatric) {
-            const calculatedValues = getCalculatedPediatricValues(weight); 
-            recommendedEnergy = `${calculatedValues.shock1} J`;
-            energies = [`${calculatedValues.shock1} J`, `${calculatedValues.shock2} J`];
-            if (parseInt(calculatedValues.shock2) < 100) energies.push('100 J'); 
-
-            let doseDetails = `2 J/kg (1ª Dose)`;
-            if (state.shockCount > 0) {
-                 doseDetails = `4 J/kg (2ª Dose ou superior)`;
-            }
-
-            return { recommendedEnergy, energies, doseDetails };
-        }
-
-        // Adulto: Protocolo AHA 2025 - Bifásico 200 J padrão
-        let doseDetails = '';
-        if (state.shockCount > 0) {
-            doseDetails = '';
-        }
-
-        return { recommendedEnergy: '200', energies: ['120 J', '150 J', '200 J', '360 J'], doseDetails: doseDetails };
-    }
-
-    return { recommendedEnergy: 'N/A', energies: [], doseDetails: 'Ritmo Não Chocável' };
+    // DELEGA PARA O MÓDULO MÉDICO TESTADO (AHA 2025):
+    return window.MedicalBrain.getShockRecommendation(state.patient, state.shockCount, rhythmType);
 }
 
 function setupShockActionScreen(rhythmType) {
@@ -3741,9 +3707,14 @@ function updateGlasgowScore() {
     const ocular = parseInt(document.getElementById('glasgow-ocular').value);
     const verbal = parseInt(document.getElementById('glasgow-verbal').value);
     const motora = parseInt(document.getElementById('glasgow-motora').value);
+    const ocular = parseInt(document.getElementById('glasgow-ocular').value) || 0;
+    const verbal = parseInt(document.getElementById('glasgow-verbal').value) || 0;
+    const motora = parseInt(document.getElementById('glasgow-motora').value) || 0;
 
     const isValid = ocular > 0 && verbal > 0 && motora > 0;
     const score = ocular + verbal + motora;
+    // DELEGA PARA O MÓDULO MÉDICO TESTADO:
+    const result = window.MedicalBrain.calculateGlasgow(ocular, verbal, motora);
     
     const scoreDisplay = document.getElementById('glasgow-score-display');
     const severityDisplay = document.getElementById('glasgow-severity');
@@ -3769,10 +3740,14 @@ function updateGlasgowScore() {
         severity = 'Selecione os três critérios';
         bgColor = 'var(--primary)';
     }
+    scoreDisplay.textContent = result.score !== null ? result.score : 'N/A';
+    severityDisplay.textContent = result.severity;
+    box.style.backgroundColor = `var(--${result.color})`;
 
     box.style.backgroundColor = bgColor;
     severityDisplay.textContent = severity;
     return isValid ? score : null;
+    return result.score;
 }
 
 function saveGlasgow() {
