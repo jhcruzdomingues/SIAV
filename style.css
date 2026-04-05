@@ -465,15 +465,6 @@ h2 {
     color: white;
     padding: 10px 18px;
     border-radius: 8px;
-/* --- MELHORIA MOBILE: Botão Checar Ritmo maior --- */
-.btn-check-rhythm {
-     border-radius: 16px;
-     padding: 24px 0;
-     font-size: 1.15em;
-     font-weight: 800;
-     margin-bottom: 28px;
-     touch-action: manipulation;
-}
     font-weight: 600;
     margin-bottom: 20px;
     display: inline-flex;
@@ -575,11 +566,6 @@ h2 {
 
 .pcr-timer-box {
     text-align: center;
-/* --- MELHORIA MOBILE: Mais espaçamento entre botões secundários --- */
-.pcr-actions-grid {
-     gap: 18px;
-     margin-bottom: 28px;
-}
     flex-shrink: 0;
 }
 
@@ -630,15 +616,6 @@ h2 {
 .drug-timer-header-value {
     font-family: 'Courier New', monospace;
     color: var(--dark);
-/* --- MELHORIA MOBILE: Botões secundários maiores --- */
-.btn-action {
-     border-radius: 16px;
-     padding: 22px 0;
-     gap: 14px;
-     font-size: 1.08em;
-     min-height: 70px;
-     touch-action: manipulation;
-}
     font-weight: 700;
     font-size: 0.95em;
 }
@@ -835,7 +812,6 @@ h2 {
     opacity: 1 !important;
     font-weight: 600;
 }
-}
 
 .protocol-hint-box.primary .protocol-details-text,
 .protocol-hint-box.danger .protocol-details-text,
@@ -918,12 +894,6 @@ h2 {
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.1);
     color: var(--font-color);
-        color: #fff;
-        color: var(--font-color);
-    }
-    body[data-theme="dark"] .alert-title, body[data-theme="dark"] .alert-text, body[data-theme="dark"] .protocol-details-text, body[data-theme="dark"] .protocol-next-dose {
-        color: #fff;
-    }
     border-left: 3px solid;
     display: flex;
     align-items: flex-start;
@@ -1266,15 +1236,6 @@ body[data-theme="dark"] .protocol-next-dose {
 
 .btn-action {
     background: white;
-/* --- MELHORIA MOBILE: Botão RCE maior --- */
-.btn-rosc {
-     border-radius: 16px;
-     padding: 24px 0;
-     font-size: 1.15em;
-     font-weight: 800;
-     margin-bottom: 28px;
-     touch-action: manipulation;
-}
     border: 2px solid #e8ecef;
     border-radius: 12px;
     padding: 16px;
@@ -1396,16 +1357,6 @@ body[data-theme="dark"] .protocol-next-dose {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 14px;
     display: flex;
-/* --- MELHORIA MOBILE: Botão Finalizar maior --- */
-.btn-finish {
-     border-radius: 16px;
-     padding: 22px 0;
-     font-size: 1.12em;
-     font-weight: 800;
-     margin-top: 28px;
-     margin-bottom: 10px;
-     touch-action: manipulation;
-}
     align-items: center;
     justify-content: center;
     font-size: 1.6em;
@@ -4218,7 +4169,6 @@ nav {
             font-size: 1.18em;
             border-radius: 22px;
         }
-        .btn-check-rhythm, .btn-rosc, .btn-finish {
         .btn-check-rhythm, .btn-rosc {
             padding: 28px 0;
             font-size: 1.18em;
@@ -5031,6 +4981,7 @@ body[data-theme="dark"] .protocol-hint-box.success {
 }
 
 /* Timeline - Tema Escuro */
+/* =============================================
    LOGO
    ============================================= */
 
