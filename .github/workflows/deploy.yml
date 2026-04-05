@@ -12,6 +12,8 @@ jobs:
     name: 🚀 Deploy para Netlify
     runs-on: ubuntu-latest
     environment: production
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: 📥 Checkout código
@@ -37,9 +39,7 @@ jobs:
           NODE_ENV: production
 
       - name: 🚀 Deploy para Netlify
-        uses: netlify/actions/cli@master
-        with:
-          args: deploy --prod --dir=.
+        run: npx netlify-cli deploy --prod --dir=.
         env:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
