@@ -278,25 +278,41 @@ body[data-theme="dark"] .drug-timer-panel, body[data-theme="dark"] .drug-timer-s
     --shadow: rgba(0, 0, 0, 0.1);
 }
 
-/* --- VARIÁVEIS DE CORES - TEMA ESCURO --- */
+/* --- VARIÁVEIS DE CORES - TEMA ESCURO PROFISSIONAL --- */
 body[data-theme="dark"] {
-    --primary: #5dade2;        /* Azul mais claro para contraste */
-    --secondary: #7f8c8d;      /* Cinza mais suave */
-    --success: #52d97c;        /* Verde mais vibrante */
-    --warning: #f4d03f;        /* Amarelo mais brilhante */
-    --danger: #ec7063;         /* Vermelho mais suave */
-    --dark: #e8eaed;           /* Texto claro */
-    --light: #1e1e1e;          /* Fundo escuro */
-    --font-color: #e8eaed;     /* Texto claro */
+    /* Cores primárias - tons vibrantes mas suaves */
+    --primary: #60a5fa;        /* Azul vibrante (blue-400) */
+    --secondary: #8b95a6;      /* Cinza azulado */
+    --success: #34d399;        /* Verde esmeralda (green-400) */
+    --warning: #fbbf24;        /* Amarelo dourado (yellow-400) */
+    --danger: #f87171;         /* Vermelho coral (red-400) */
+    --info: #38bdf8;           /* Ciano (cyan-400) */
 
-    /* Variáveis de tema escuro */
-    --bg-body: #121212;
-    --bg-container: #1e1e1e;
-    --bg-card: #2d2d2d;
-    --text-primary: #e8eaed;
-    --text-secondary: #9aa0a6;
-    --border-color: #3c4043;
-    --shadow: rgba(0, 0, 0, 0.5);
+    /* Texto */
+    --dark: #f1f5f9;           /* Texto principal super claro */
+    --font-color: #e2e8f0;     /* Texto geral */
+    --text-primary: #f1f5f9;   /* Texto principal */
+    --text-secondary: #94a3b8; /* Texto secundário */
+    --text-muted: #64748b;     /* Texto desabilitado */
+
+    /* Fundos - hierarquia visual clara */
+    --bg-body: #0f172a;        /* Fundo mais escuro (slate-900) */
+    --bg-container: #1e293b;   /* Container principal (slate-800) */
+    --bg-card: #334155;        /* Cards elevados (slate-700) */
+    --bg-elevated: #475569;    /* Elementos elevados (slate-600) */
+    --bg-hover: #3f4f66;       /* Hover state */
+    --light: #1e293b;          /* Fundo alternativo */
+
+    /* Bordas e divisores */
+    --border-color: #334155;   /* Bordas sutis */
+    --border-light: #475569;   /* Bordas mais visíveis */
+
+    /* Sombras */
+    --shadow: rgba(0, 0, 0, 0.6);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7);
 }
 
 * {
@@ -912,6 +928,13 @@ h2 {
     display: flex;
     align-items: flex-start;
     gap: 10px;
+}
+
+body[data-theme="dark"] .alert-title,
+body[data-theme="dark"] .alert-text,
+body[data-theme="dark"] .protocol-details-text,
+body[data-theme="dark"] .protocol-next-dose {
+    color: #fff;
 }
 
 .alert-box.alert-critical {
@@ -1676,6 +1699,10 @@ body[data-theme="dark"] .form-section-header h4 {
     color: var(--text-primary);
 }
 
+body[data-theme="dark"] .form-section-header i {
+    color: var(--primary);
+}
+
 body[data-theme="dark"] .form-field label {
     color: var(--text-primary);
 }
@@ -2400,13 +2427,28 @@ body[data-theme="dark"] .max-plan-message p {
 }
 
 .primary-btn {
-    background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
-    border-color: #2471a3;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+    padding: 14px 28px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 14px rgba(52, 152, 219, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 .primary-btn:hover {
-    background: linear-gradient(135deg, #2471a3 0%, #2980b9 100%);
-    box-shadow: 0 5px 16px rgba(41, 128, 185, 0.4);
+    background: linear-gradient(135deg, #2980b9 0%, #2471a3 100%);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
     transform: translateY(-2px);
+}
+.primary-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
 }
 
 .success-btn {
@@ -3116,63 +3158,84 @@ body[data-theme="dark"] .max-plan-message p {
 
 .login-prompt-card {
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    padding: 40px;
-    border-radius: 20px;
+    padding: 36px;
+    border-radius: 16px;
     text-align: center;
-    border: 2px solid rgba(52, 152, 219, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(52, 152, 219, 0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+.login-prompt-card:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
 }
 
 .login-prompt-icon {
-    width: 80px;
-    height: 80px;
+    width: 72px;
+    height: 72px;
     margin: 0 auto 20px;
     background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 40px;
+    font-size: 36px;
     color: white;
-    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+    box-shadow: 0 4px 16px rgba(52, 152, 219, 0.25);
+    transition: all 0.3s ease;
+}
+.login-prompt-card:hover .login-prompt-icon {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.35);
 }
 
 .login-prompt-card h3 {
-    margin: 0 0 15px 0;
-    font-size: 1.8em;
+    margin: 0 0 12px 0;
+    font-size: 1.6em;
     color: #2c3e50;
-    font-weight: 800;
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
 .login-prompt-card > p {
-    margin: 0 0 25px 0;
-    color: #7f8c8d;
-    font-size: 1.05em;
-    line-height: 1.6;
+    margin: 0 0 20px 0;
+    color: #6c757d;
+    font-size: 1em;
+    line-height: 1.5;
+    max-width: 90%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .login-features {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin: 25px 0;
+    gap: 10px;
+    margin: 20px 0 24px;
     text-align: left;
 }
 
 .login-feature {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px;
-    background: rgba(39, 174, 96, 0.05);
-    border-radius: 10px;
-    font-size: 0.9em;
+    gap: 8px;
+    padding: 10px 12px;
+    background: rgba(39, 174, 96, 0.06);
+    border-radius: 8px;
+    font-size: 0.875em;
     color: #2c3e50;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.login-feature:hover {
+    background: rgba(39, 174, 96, 0.1);
+    transform: translateX(2px);
 }
 
 .login-feature i {
     color: #27ae60;
-    font-size: 1.2em;
+    font-size: 1.1em;
     flex-shrink: 0;
 }
 
@@ -4156,15 +4219,30 @@ nav {
             border-radius: 22px;
         }
         .btn-check-rhythm, .btn-rosc, .btn-finish {
+        .btn-check-rhythm, .btn-rosc {
             padding: 28px 0;
             font-size: 1.18em;
             border-radius: 20px;
+            font-weight: 800;
+            margin-bottom: 28px;
+            touch-action: manipulation;
+        }
+        .btn-finish {
+            padding: 22px 0;
+            font-size: 1.18em;
+            border-radius: 20px;
+            font-weight: 800;
+            margin-top: 28px;
+            margin-bottom: 10px;
+            touch-action: manipulation;
         }
         .btn-action {
             padding: 26px 0;
             font-size: 1.13em;
             border-radius: 20px;
             min-height: 80px;
+            gap: 14px;
+            touch-action: manipulation;
         }
         .pcr-actions-grid {
             gap: 22px;
@@ -4498,7 +4576,16 @@ body[data-theme="dark"] .modal {
 body[data-theme="dark"] .modal-content {
     background-color: var(--bg-container);
     color: var(--text-primary);
-    border-color: var(--border-color);
+    border: 1px solid var(--border-color);
+}
+
+body[data-theme="dark"] .modal-content h3 {
+    color: var(--text-primary);
+    border-bottom-color: var(--border-color);
+}
+
+body[data-theme="dark"] .modal-content label {
+    color: var(--text-primary);
 }
 
 /* Inputs e formulários */
@@ -4507,14 +4594,37 @@ body[data-theme="dark"] select,
 body[data-theme="dark"] textarea {
     background-color: var(--bg-card);
     color: var(--text-primary);
-    border-color: var(--border-color);
+    border: 1px solid var(--border-color);
+}
+
+body[data-theme="dark"] input::placeholder,
+body[data-theme="dark"] textarea::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
 }
 
 body[data-theme="dark"] input:focus,
 body[data-theme="dark"] select:focus,
 body[data-theme="dark"] textarea:focus {
     border-color: var(--primary);
-    background-color: #2d2d2d;
+    background-color: var(--bg-elevated);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+/* Estados de validação em dark mode */
+body[data-theme="dark"] input:invalid:not(:placeholder-shown) {
+    border-color: var(--danger);
+}
+
+body[data-theme="dark"] input:valid:not(:placeholder-shown) {
+    border-color: var(--success);
+}
+
+/* Ícones nos labels dos formulários */
+body[data-theme="dark"] .form-field label i,
+body[data-theme="dark"] .modal-content label i {
+    color: var(--primary);
 }
 
 /* Botões - Tema Escuro (Consolidado) */
@@ -4546,8 +4656,40 @@ body[data-theme="dark"] .success-btn:hover {
 
 /* Botões com cores específicas */
 body[data-theme="dark"] .primary-btn {
-    background-color: var(--primary);
+    background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
     color: #ffffff;
+    border: none;
+}
+
+body[data-theme="dark"] .primary-btn:hover {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    box-shadow: 0 6px 20px rgba(96, 165, 250, 0.4);
+}
+
+body[data-theme="dark"] .close-btn {
+    background-color: var(--bg-card);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+body[data-theme="dark"] .close-btn:hover {
+    background-color: var(--bg-elevated);
+    color: var(--text-primary);
+    border-color: var(--border-light);
+}
+
+/* Botão de cadastro (verde) em dark mode */
+body[data-theme="dark"] button[type="submit"][style*="22b573"],
+body[data-theme="dark"] .register-btn {
+    background: linear-gradient(135deg, var(--success) 0%, #10b981 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+body[data-theme="dark"] button[type="submit"][style*="22b573"]:hover,
+body[data-theme="dark"] .register-btn:hover {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    box-shadow: 0 6px 20px rgba(52, 211, 153, 0.4) !important;
 }
 
 /* Footer/Navigation */

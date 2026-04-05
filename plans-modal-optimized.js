@@ -23,7 +23,7 @@ const PRICING_CONFIG = {
             priceInCents: 23904,
             display: '19,92',
             period: '/mês',
-            detail: 'cobrado anualmente (R$ 239,04/ano)',
+            detail: 'cobrado anualmente',
             savings: 'R$ 59,76',
             totalAnnual: 'R$ 239,04'
         }
@@ -41,7 +41,7 @@ const PRICING_CONFIG = {
             priceInCents: 47904,
             display: '39,92',
             period: '/mês',
-            detail: 'cobrado anualmente (R$ 479,04/ano)',
+            detail: 'cobrado anualmente',
             savings: 'R$ 119,76',
             totalAnnual: 'R$ 479,04'
         }
@@ -211,24 +211,24 @@ function selectPlan(planId) {
 
     const benefits = {
         estudante: [
-            'Acesso ao Simulador: 5 casos/dia',
+            '10 casos clínicos por dia',
             'Quiz completo com explicações',
-            'Estudo aprofundado de casos',
-            'Log de desempenho: 1 paciente',
+            'Estudos detalhados de casos',
+            'Salva até 5 pacientes',
             'Certificado digital'
         ],
         profissional: [
             'Simulador ILIMITADO',
             'Logs ilimitados de pacientes',
-            'Dashboard avançado',
-            'Exportação de relatórios PDF',
-            'Suporte prioritário'
+            'Dashboard avançado com métricas',
+            'Exportação de relatórios em PDF',
+            'Suporte prioritário por email'
         ],
         vitalicio: [
             'Todos os recursos Profissional',
             'Acesso vitalício garantido',
             'Todas as atualizações futuras',
-            'Acesso Beta Prioritário',
+            'Acesso Beta Prioritário a novos protocolos',
             'Badge exclusivo de membro fundador'
         ]
     };
@@ -416,20 +416,13 @@ function initPlansModal() {
     // Event listeners para toggle
     const billingButtons = document.querySelectorAll('.billing-label');
     billingButtons.forEach((button) => {
-        const period = button.getAttribute('data-period');
-
         button.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             const clickedPeriod = this.getAttribute('data-period');
+            console.log('Botão clicado:', clickedPeriod);
             toggleBillingPeriod(clickedPeriod);
-        }, true);
-
-        button.addEventListener('touchstart', function(e) {
-            e.preventDefault();
-            const clickedPeriod = this.getAttribute('data-period');
-            toggleBillingPeriod(clickedPeriod);
-        }, { passive: false });
+        });
 
         button.style.pointerEvents = 'auto';
         button.style.cursor = 'pointer';
@@ -453,7 +446,8 @@ function initPlansModal() {
         }
     });
 
-    // Inicializar preços
+    // Inicializar preços com estado anual (padrão)
+    console.log('Inicializando preços no modo:', isAnnualBilling ? 'Anual' : 'Mensal');
     setTimeout(() => {
         updatePlanPricing('estudante');
         updatePlanPricing('profissional');

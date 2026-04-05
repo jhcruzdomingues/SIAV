@@ -18,6 +18,7 @@ describe('Toast UI', () => {
     expect(container).toBeTruthy();
     const toasts = container.querySelectorAll('.toast');
     expect(toasts.length).toBeGreaterThan(0);
-    expect(toasts[0].textContent).toBe('Teste de toast');
+    // O toast inclui ícone e botão, então verifica se contém a mensagem
+    expect(toasts[0].textContent).toContain('Teste de toast');
   });
 });

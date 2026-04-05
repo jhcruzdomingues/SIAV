@@ -28,10 +28,61 @@ const soundSettings = {
 let currentPreviewAudio = null;
 
 /**
+ * Helper para usar o IndexedDB nativo (evita limite de 5MB do localStorage)
+ */
+const soundsDB = {
+    db: null,
+    async init() {
+        if (this.db) return this.db;
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('SiavSoundsDB', 1);
+            request.onupgradeneeded = event => {
+                event.target.result.createObjectStore('audioStore');
+            };
+            request.onsuccess = event => {
+                this.db = event.target.result;
+                resolve(this.db);
+            };
+            request.onerror = event => reject(event.target.error);
+        });
+    },
+    async setItem(key, value) {
+        const db = await this.init();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('audioStore', 'readwrite');
+            const store = tx.objectStore('audioStore');
+            const request = store.put(value, key);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    },
+    async getItem(key) {
+        const db = await this.init();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('audioStore', 'readonly');
+            const store = tx.objectStore('audioStore');
+            const request = store.get(key);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    },
+    async removeItem(key) {
+        const db = await this.init();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('audioStore', 'readwrite');
+            const store = tx.objectStore('audioStore');
+            const request = store.delete(key);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+};
+
+/**
  * Inicializa o sistema de sons quando o modal é aberto
  */
-function initSoundSettings() {
-    loadSoundSettings();
+async function initSoundSettings() {
+    await loadSoundSettings();
     setupVolumeControl();
     setupSoundToggle();
     setupSoundSelectors();
@@ -41,7 +92,7 @@ function initSoundSettings() {
 /**
  * Carrega configurações salvas do localStorage
  */
-function loadSoundSettings() {
+async function loadSoundSettings() {
     try {
         const saved = localStorage.getItem('siav_sound_settings');
         if (saved) {
@@ -61,7 +112,7 @@ function loadSoundSettings() {
         document.getElementById('metronome-sound-select').value = soundSettings.sounds.metronome;
 
         // Carregar sons personalizados
-        loadCustomSounds();
+        await loadCustomSounds();
 
         console.log('✅ Configurações de som carregadas');
     } catch (error) {
@@ -127,13 +178,24 @@ function setupSoundSelectors() {
 }
 
 /**
- * Carrega sons personalizados do localStorage
+ * Carrega sons personalizados do IndexedDB (com fallback/migração do localStorage)
  */
-function loadCustomSounds() {
+async function loadCustomSounds() {
     try {
-        const customSounds = localStorage.getItem('siav_custom_sounds');
+        let customSounds = await soundsDB.getItem('siav_custom_sounds');
+        
+        // Migração do localStorage para IndexedDB (se existir no velho e não no novo)
+        if (!customSounds) {
+            const legacySounds = localStorage.getItem('siav_custom_sounds');
+            if (legacySounds) {
+                customSounds = JSON.parse(legacySounds);
+                await soundsDB.setItem('siav_custom_sounds', customSounds);
+                localStorage.removeItem('siav_custom_sounds'); // Limpa o velho
+            }
+        }
+        
         if (customSounds) {
-            soundSettings.customSounds = JSON.parse(customSounds);
+            soundSettings.customSounds = customSounds;
 
             // Adicionar aos dropdowns
             Object.keys(soundSettings.customSounds).forEach(type => {
@@ -201,7 +263,7 @@ function handleSoundUpload(event, type) {
 
     // Ler arquivo como Data URL
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = async function(e) {
         const soundData = {
             name: file.name.replace(/\.[^/.]+$/, ''), // Remove extensão
             data: e.target.result
@@ -232,7 +294,7 @@ function handleSoundUpload(event, type) {
         uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Adicionar Som Personalizado';
 
         // Salvar automaticamente
-        saveCustomSounds();
+        await saveCustomSounds();
 
         alert(`✅ Som "${soundData.name}" adicionado com sucesso!`);
     };
@@ -250,17 +312,15 @@ function handleSoundUpload(event, type) {
 }
 
 /**
- * Salva sons personalizados no localStorage
+ * Salva sons personalizados no IndexedDB
  */
-function saveCustomSounds() {
+async function saveCustomSounds() {
     try {
-        localStorage.setItem('siav_custom_sounds', JSON.stringify(soundSettings.customSounds));
-        console.log('✅ Sons personalizados salvos');
+        await soundsDB.setItem('siav_custom_sounds', soundSettings.customSounds);
+        console.log('✅ Sons personalizados salvos no IndexedDB');
     } catch (error) {
-        console.error('❌ Erro ao salvar sons personalizados:', error);
-        if (error.name === 'QuotaExceededError') {
-            alert('⚠️ Armazenamento cheio. Remova alguns sons personalizados.');
-        }
+        console.error('❌ Erro ao salvar sons personalizados no IndexedDB:', error);
+        alert('⚠️ Erro ao salvar o áudio no banco de dados do navegador.');
     }
 }
 
@@ -381,7 +441,7 @@ function updateGlobalAudios() {
 /**
  * Restaura configurações padrão
  */
-function resetSoundSettings() {
+async function resetSoundSettings() {
     const confirm = window.confirm(
         '⚠️ Tem certeza que deseja restaurar as configurações padrão?\n\n' +
         'Isso irá:\n' +
@@ -408,12 +468,13 @@ function resetSoundSettings() {
         metronome: []
     };
 
-    // Limpar localStorage
+    // Limpar armazenamento
     localStorage.removeItem('siav_sound_settings');
-    localStorage.removeItem('siav_custom_sounds');
+    localStorage.removeItem('siav_custom_sounds'); // Legacy
+    await soundsDB.removeItem('siav_custom_sounds');
 
     // Recarregar interface
-    loadSoundSettings();
+    await loadSoundSettings();
 
     // Limpar grupos de sons personalizados
     ['shock', 'alert', 'drug', 'metronome'].forEach(type => {

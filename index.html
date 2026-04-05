@@ -12,13 +12,13 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SIAV">
 
-    <link rel="preload" href="style.css?v=3" as="style">
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="preload" href="style.css?v=4" as="style">
+    <link rel="stylesheet" href="style.css?v=4">
     <link rel="stylesheet" href="shock-styles.css?v=2" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="sound-settings-styles.css?v=2" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="settings-menu-styles.css?v=2" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="profile-plan-styles.css?v=1" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="plans-modal.css?v=20251122" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="plans-modal.css?v=darkmode1" media="print" onload="this.media='all'">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://sdk.mercadopago.com/js/v2" defer></script>
@@ -574,7 +574,7 @@
                                     </div>
                                     <button type="submit" class="primary-btn wide-btn"><i class="fas fa-sign-in-alt"></i> Entrar</button>
                                 </form>
-                                <button type="button" class="close-btn" onclick="document.getElementById('login-modal').style.display='none'">Fechar</button>
+                                <button type="button" class="close-btn">Fechar</button>
                             </div>
                         </div>
                         <div id="register-modal" class="modal" style="display:none;">
@@ -613,7 +613,7 @@
                                     </div>
                                     <button type="submit" class="primary-btn wide-btn" style="background: #22b573;"><i class="fas fa-user-plus"></i> Cadastrar</button>
                                 </form>
-                                <button type="button" class="close-btn" onclick="document.getElementById('register-modal').style.display='none'">Fechar</button>
+                                <button type="button" class="close-btn">Fechar</button>
                             </div>
                         </div>
                         <script>
@@ -621,11 +621,41 @@
                             const btnLogin = document.getElementById('open-login-btn');
                             const btnRegister = document.getElementById('open-register-btn');
                             if (btnLogin) btnLogin.onclick = () => {
-                                document.getElementById('login-modal').style.display = 'block';
+                                const modal = document.getElementById('login-modal');
+                                modal.style.display = 'flex';
+                                modal.classList.add('show');
                             };
                             if (btnRegister) btnRegister.onclick = () => {
-                                document.getElementById('register-modal').style.display = 'block';
+                                const modal = document.getElementById('register-modal');
+                                modal.style.display = 'flex';
+                                modal.classList.add('show');
                             };
+
+                            // Handlers para fechar modais
+                            const closeButtons = document.querySelectorAll('.close-btn');
+                            closeButtons.forEach(btn => {
+                                btn.addEventListener('click', function() {
+                                    const modal = this.closest('.modal');
+                                    if (modal) {
+                                        modal.classList.remove('show');
+                                        setTimeout(() => {
+                                            modal.style.display = 'none';
+                                        }, 300);
+                                    }
+                                });
+                            });
+
+                            // Fecha modal ao clicar fora
+                            document.querySelectorAll('.modal').forEach(modal => {
+                                modal.addEventListener('click', function(e) {
+                                    if (e.target === this) {
+                                        this.classList.remove('show');
+                                        setTimeout(() => {
+                                            this.style.display = 'none';
+                                        }, 300);
+                                    }
+                                });
+                            });
                         });
                         </script>
                         </button>
@@ -1643,8 +1673,8 @@
             <header class="plans-header">
                 <!-- Toggle de Período de Cobrança -->
                 <div class="billing-toggle" id="billing-toggle">
-                    <button class="billing-label active" data-period="monthly" onclick="window.toggleBillingPeriod('monthly'); return false;">Mensal</button>
-                    <button class="billing-label billing-label-annual" data-period="annual" onclick="window.toggleBillingPeriod('annual'); return false;">
+                    <button class="billing-label" data-period="monthly">Mensal</button>
+                    <button class="billing-label active" data-period="annual">
                         Anual <span class="save-tag">-20%</span>
                     </button>
                 </div>
@@ -1666,8 +1696,8 @@
                             <span class="price-value">0</span>
                             <span class="period">/mês</span>
                         </div>
-                        <p class="price-detail" style="color: #e74c3c; font-weight: 600; margin-top: 8px;">
-                            ⚠️ 1 caso clínico/dia
+                        <p class="price-detail">
+                            Grátis para sempre
                         </p>
                     </div>
 
@@ -1709,17 +1739,13 @@
                     <div class="plan-pricing">
                         <div class="plan-price">
                             <span class="currency">R$</span>
-                            <span class="price-value" data-price-mensal="24.90" data-price-anual="19.92">24,90</span>
+                            <span class="price-value" data-price-mensal="24.90" data-price-anual="19.92">19,92</span>
                             <span class="period">/mês</span>
                         </div>
                         <p class="price-detail">
-                            <span class="annual-info" style="display: none;">R$ 239,04/ano</span>
-                            <span class="monthly-info">R$ 24,90 cobrado mensalmente</span>
+                            <span class="annual-info">cobrado anualmente</span>
+                            <span class="monthly-info" style="display: none;">cobrado mensalmente</span>
                         </p>
-                        <div class="savings-badge">
-                            <span class="annual-savings" style="display: none;">💰 Economize R$ 59,76/ano</span>
-                            <span class="monthly-savings">Economize 20% no plano anual</span>
-                        </div>
                     </div>
 
                     <ul class="plan-features">
@@ -1737,7 +1763,7 @@
                         </li>
                         <li class="plan-feature">
                             <i class="icon">✓</i>
-                            <span><strong>Salva 1 paciente</strong></span>
+                            <span><strong>Salva até 5 pacientes</strong></span>
                         </li>
                         <li class="plan-feature">
                             <i class="icon">✓</i>
@@ -1768,17 +1794,13 @@
                     <div class="plan-pricing">
                         <div class="plan-price">
                             <span class="currency">R$</span>
-                            <span class="price-value" data-price-mensal="49.90" data-price-anual="39.92">49,90</span>
+                            <span class="price-value" data-price-mensal="49.90" data-price-anual="39.92">39,92</span>
                             <span class="period">/mês</span>
                         </div>
                         <p class="price-detail">
-                            <span class="annual-info" style="display: none;">R$ 479,04/ano</span>
-                            <span class="monthly-info">R$ 49,90 cobrado mensalmente</span>
+                            <span class="annual-info">cobrado anualmente</span>
+                            <span class="monthly-info" style="display: none;">cobrado mensalmente</span>
                         </p>
-                        <div class="savings-badge">
-                            <span class="annual-savings" style="display: none;">💰 Economize R$ 119,76/ano</span>
-                            <span class="monthly-savings">Economize 20% no plano anual</span>
-                        </div>
                     </div>
 
                     <ul class="plan-features">
@@ -1833,7 +1855,7 @@
                             Pagamento único • Sem mensalidades
                         </p>
                         <div class="roi-calculator">
-                            🎯 Equivale a 2 anos do Profissional
+                            🎯 Se paga em 2 anos
                         </div>
                     </div>
 
@@ -1877,6 +1899,67 @@
 
             </div>
 
+            <!-- Seção de Garantia -->
+            <section class="risk-reversal-section">
+                <h3>Garantia Incondicional de 7 Dias</h3>
+                <div class="guarantees-grid">
+                    <div class="guarantee-item">
+                        <div class="guarantee-icon">🛡️</div>
+                        <strong>Risco Zero</strong>
+                        <p>Se não gostar, devolvemos 100% do seu dinheiro</p>
+                    </div>
+                    <div class="guarantee-item">
+                        <div class="guarantee-icon">⚡</div>
+                        <strong>Acesso Imediato</strong>
+                        <p>Comece a treinar em menos de 2 minutos</p>
+                    </div>
+                    <div class="guarantee-item">
+                        <div class="guarantee-icon">🔒</div>
+                        <strong>Pagamento Seguro</strong>
+                        <p>Criptografia SSL e proteção Mercado Pago</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Seção de Depoimentos -->
+            <section class="testimonials-section">
+                <h3>O Que Nossos Usuários Dizem</h3>
+                <div class="testimonials-carousel">
+                    <div class="testimonial-card">
+                        <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+                        <p>"O simulador SIAV me preparou perfeitamente para as emergências reais. Passei na residência!"</p>
+                        <div class="testimonial-author">
+                            <strong>Ana Paula Rodrigues</strong>
+                            <span>Estudante de Medicina - USP</span>
+                        </div>
+                    </div>
+                    <div class="testimonial-card">
+                        <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+                        <p>"Como residente, uso diariamente para revisar protocolos. Vale cada centavo do plano profissional."</p>
+                        <div class="testimonial-author">
+                            <strong>Dr. Ricardo Mendes</strong>
+                            <span>Residente de Emergência - UNIFESP</span>
+                        </div>
+                    </div>
+                    <div class="testimonial-card">
+                        <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+                        <p>"O plano vitalício foi o melhor investimento. Uso há 3 anos e continua se pagando."</p>
+                        <div class="testimonial-author">
+                            <strong>Dra. Juliana Costa</strong>
+                            <span>Cardiologista - Hospital Sírio-Libanês</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer class="plans-footer">
+                <p>
+                    <strong>SIAV V4.0</strong> - Sistema Interativo de Aprendizagem Vitalícia<br>
+                    Treinamento profissional para salvar vidas
+                </p>
+            </footer>
+
         </div>
     </div>
 
@@ -1898,8 +1981,8 @@
     <script src="sound-settings.js" defer></script>
     <script src="mercadopago-config.js?t=<?php echo time(); ?>" defer></script>
     <script src="mercadopago-integration.js?t=<?php echo time(); ?>" defer></script>
-    <script src="plans-modal-optimized.js?t=1732311600000" defer></script>
+    <script src="plans-modal-optimized-v5.js" defer></script>
     <script src="toggle-fix.js"></script>
-    <script src="script.js?t=1732311600000" defer></script>
+    <script src="script.js" defer></script>
 </body>
 </html>

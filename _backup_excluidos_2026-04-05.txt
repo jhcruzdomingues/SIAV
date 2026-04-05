@@ -1,0 +1,25 @@
+Arquivos removidos do SIAV em 05/04/2026 para limpeza Marco Zero:
+
+- accessibility.css
+- force-reload.js
+- plans-modal-optimized.js
+- plans-modal.css.backup
+- nul
+- Microsoft.VisualStudio.Services (1).VSIXPackage
+- limpar-cache.html
+- test-plans-modal.html
+- test-usage-limit.html
+- plans-modal.html
+- TESTE_V4.1_CHECKLIST.md
+- _testes/ (diretório)
+- sounds/library/shocks/shock-2.mp3
+- sounds/library/shocks/shock-3.mp3
+- sounds/library/alerts/alert-2.mp3
+- sounds/library/alerts/alert-3.mp3
+- sounds/library/alerts/alert-4.mp3
+- sounds/library/alerts/alert-5.mp3
+- sounds/library/drugs/drug-2.mp3
+- sounds/library/drugs/drug-3.mp3
+- sounds/library/metronome/metronome-2.wav
+- sounds/library/metronome/metronome-3.wav
+- sounds/library/metronome/metronome-4.mp3

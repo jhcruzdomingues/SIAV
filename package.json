@@ -3,6 +3,7 @@
   "version": "1.1.0",
   "description": "Sistema Inteligente de Assistência à Vida - App médico para PCR/ACLS",
   "main": "index.html",
+  "type": "module",
   "scripts": {
     "build": "npm run build:css && npm run build:js",
     "build:js": "terser script.js -o build-optimized/script.min.js --compress --mangle --comments false && terser settings-integration.js -o build-optimized/settings-integration.min.js --compress --mangle --comments false",

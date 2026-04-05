@@ -5,6 +5,54 @@
 
 const STORAGE_PREFIX = 'siav_';
 
+// Importações necessárias para validação online
+import { supabase } from '../config/supabase.js';
+import { state } from '../config/state.js';
+
+/**
+ * ================================================
+ * BANCO DE DADOS ASSÍNCRONO (IndexedDB)
+ * Usado para armazenar logs pesados sem travar a UI (cronômetro)
+ * ================================================
+ */
+export const appDB = {
+  db: null,
+  async init() {
+    if (this.db) return this.db;
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('SiavAppDB', 1);
+      request.onupgradeneeded = event => {
+        event.target.result.createObjectStore('appStore');
+      };
+      request.onsuccess = event => {
+        this.db = event.target.result;
+        resolve(this.db);
+      };
+      request.onerror = event => reject(event.target.error);
+    });
+  },
+  async setItem(key, value) {
+    const db = await this.init();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('appStore', 'readwrite');
+      const store = tx.objectStore('appStore');
+      const request = store.put(value, key);
+      request.onsuccess = () => resolve(true);
+      request.onerror = () => reject(request.error);
+    });
+  },
+  async getItem(key, defaultValue = null) {
+    const db = await this.init();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('appStore', 'readonly');
+      const store = tx.objectStore('appStore');
+      const request = store.get(key);
+      request.onsuccess = () => resolve(request.result !== undefined ? request.result : defaultValue);
+      request.onerror = () => reject(request.error);
+    });
+  }
+};
+
 // ⭐ NOVOS LIMITES OTIMIZADOS - V4.1
 const FREE_DAILY_LIMIT = 1;      // Plano gratuito: 1 caso/dia
 const STUDENT_DAILY_LIMIT = 10;  // Plano estudante: 10 casos/dia
@@ -99,36 +147,63 @@ export function loadSettings() {
 }
 
 /**
- * Salva logs offline (fallback quando sem internet)
+ * Salva logs offline (usando IndexedDB para não bloquear a thread principal)
  * @param {object} pcrLog - Log do atendimento
  */
-export function saveOfflineLog(pcrLog) {
-  const logs = getItem('offline_logs', []);
-  logs.push({
-    ...pcrLog,
-    saved_at: new Date().toISOString(),
-    synced: false
-  });
-  setItem('offline_logs', logs);
+export async function saveOfflineLog(pcrLog) {
+  try {
+    const logs = await appDB.getItem('offline_logs', []);
+    logs.push({
+      ...pcrLog,
+      id: Date.now().toString(), // Garante um ID único
+      saved_at: new Date().toISOString(),
+      synced: false
+    });
+    await appDB.setItem('offline_logs', logs);
+    console.log('✅ Log offline salvo no IndexedDB com sucesso!');
+  } catch (err) {
+    console.error('❌ Erro ao salvar log no IndexedDB, usando fallback:', err);
+    // Fallback síncrono para o antigo localStorage
+    const localLogs = getItem('offline_logs', []);
+    localLogs.push({ ...pcrLog, id: Date.now().toString(), saved_at: new Date().toISOString(), synced: false });
+    setItem('offline_logs', localLogs);
+  }
 }
 
 /**
  * Recupera logs offline pendentes de sync
- * @returns {Array}
+ * @returns {Promise<Array>}
  */
-export function getOfflineLogs() {
-  return getItem('offline_logs', []).filter(log => !log.synced);
+export async function getOfflineLogs() {
+  try {
+    const logs = await appDB.getItem('offline_logs', []);
+    const localLogs = getItem('offline_logs', []); // Busca do legado também
+    const allLogs = [...logs, ...localLogs];
+    return allLogs.filter(log => !log.synced);
+  } catch (err) {
+    return getItem('offline_logs', []).filter(log => !log.synced);
+  }
 }
 
 /**
  * Marca log como sincronizado
- * @param {number} index - Índice do log
+ * @param {string|number} identifier - ID único ou Índice do log
  */
-export function markLogSynced(index) {
-  const logs = getItem('offline_logs', []);
-  if (logs[index]) {
-    logs[index].synced = true;
-    setItem('offline_logs', logs);
+export async function markLogSynced(identifier) {
+  try {
+    const logs = await appDB.getItem('offline_logs', []);
+    const logIndex = logs.findIndex(l => l.id === identifier || l.id === String(identifier));
+    if (logIndex !== -1) logs[logIndex].synced = true;
+    await appDB.setItem('offline_logs', logs);
+
+    // Limpa o fallback também
+    const localLogs = getItem('offline_logs', []);
+    if (typeof identifier === 'number' && localLogs[identifier]) {
+        localLogs[identifier].synced = true;
+        setItem('offline_logs', localLogs);
+    }
+  } catch (err) {
+    console.error('❌ Erro ao marcar log como sincronizado:', err);
   }
 }
 
@@ -167,11 +242,12 @@ export function getStorageSizeFormatted() {
  * @param {string} userPlan - Plano do usuário ('free', 'estudante', 'profissional', 'vitalicio')
  * @returns {object} - {allowed: boolean, remaining: number, isWarning: boolean, limit: number}
  */
-export function checkAndIncrementSimulationUse(userPlan) {
+export async function checkAndIncrementSimulationUse(userPlan) {
   console.log('🔍 Verificando uso do simulador para plano:', userPlan);
+  const normalizedPlan = userPlan.toLowerCase();
 
   // Planos ilimitados (profissional e vitalício)
-  if (userPlan === 'profissional' || userPlan === 'vitalicio') {
+  if (normalizedPlan === 'profissional' || normalizedPlan === 'vitalicio' || normalizedPlan === 'professional' || normalizedPlan === 'lifetime') {
     console.log('✅ Plano ilimitado - uso permitido');
     return {
       allowed: true,
@@ -183,25 +259,28 @@ export function checkAndIncrementSimulationUse(userPlan) {
   }
 
   // Determinar limite baseado no plano
-  const dailyLimit = userPlan === 'free' ? FREE_DAILY_LIMIT : STUDENT_DAILY_LIMIT;
+  const dailyLimit = normalizedPlan === 'free' ? FREE_DAILY_LIMIT : STUDENT_DAILY_LIMIT;
   console.log(`📋 Limite diário para plano ${userPlan}:`, dailyLimit);
 
-  // Planos com limite (free e estudante)
-  const today = new Date().toDateString(); // Ex: "Sat Nov 23 2025"
-  const usageData = getItem('daily_usage', {
-    date: today,
-    count: 0
-  });
+  // Sincronizando com a regra de backend do Supabase
+  let currentCount = 0;
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0); // Início do dia
 
-  // Resetar contador se for um novo dia
-  if (usageData.date !== today) {
-    console.log('🔄 Novo dia detectado - resetando contador');
-    usageData.date = today;
-    usageData.count = 0;
+  if (state.currentUser && state.currentUser.isLoggedIn && state.currentUser.id) {
+    try {
+      const { count, error } = await supabase
+        .from('simulation_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', state.currentUser.id)
+        .gte('created_at', todayStart.toISOString());
+      
+      if (!error) currentCount = count || 0;
+    } catch (err) {
+      console.error('Falha ao consultar limite no Supabase:', err);
+    }
   }
 
-  // Verificar limite
-  const currentCount = usageData.count;
   const remaining = dailyLimit - currentCount;
 
   console.log(`📊 Uso atual: ${currentCount}/${dailyLimit} (restam ${remaining})`);
@@ -213,7 +292,7 @@ export function checkAndIncrementSimulationUse(userPlan) {
       allowed: false,
       remaining: 0,
       isWarning: false,
-      message: userPlan === 'free'
+      message: normalizedPlan === 'free'
         ? `Você atingiu o limite de ${dailyLimit} caso clínico diário do plano Gratuito. Pratique mais intensamente com upgrade!`
         : `Você atingiu o limite de ${dailyLimit} casos clínicos diários do plano Estudante.`,
       upgradeRequired: true,
@@ -221,34 +300,30 @@ export function checkAndIncrementSimulationUse(userPlan) {
     };
   }
 
-  // Incrementar contador
-  usageData.count++;
-  setItem('daily_usage', usageData);
-
   // Alertar no penúltimo uso
-  const newRemaining = dailyLimit - usageData.count;
-  const isWarning = newRemaining === 1;
+  const newRemaining = dailyLimit - (currentCount + 1);
+  const isWarning = newRemaining === 0;
 
   if (isWarning) {
     console.warn('⚠️ ALERTA: Resta apenas 1 simulação de cortesia!');
   }
 
-  console.log(`✅ Uso permitido - Nova contagem: ${usageData.count}/${dailyLimit}`);
+  console.log(`✅ Uso permitido. Ao concluir a simulação a contagem será: ${currentCount + 1}/${dailyLimit}`);
 
   // Mensagens personalizadas por plano
   let warningMessage;
-  if (userPlan === 'free' && usageData.count === dailyLimit) {
-    warningMessage = `⚠️ Você está usando seu único caso clínico diário. Pratique mais intensamente com upgrade!`;
+  if (normalizedPlan === 'free' && currentCount === 0) {
+    warningMessage = `⚠️ Este é seu único caso gratuito do dia.\n\nPratique mais intensamente com upgrade!`;
   } else if (isWarning) {
-    warningMessage = `⚠️ Atenção: Resta apenas ${newRemaining} caso clínico hoje. Não pare de treinar, faça upgrade!`;
+    warningMessage = `⚠️ Atenção: Resta apenas 1 caso clínico hoje. Não pare de treinar, faça upgrade!`;
   } else {
-    warningMessage = `Você tem ${newRemaining} casos clínicos restantes hoje.`;
+    warningMessage = `Você tem ${newRemaining + 1} casos clínicos restantes hoje.`;
   }
 
   return {
     allowed: true,
-    remaining: newRemaining,
-    isWarning: isWarning || (userPlan === 'free' && usageData.count === dailyLimit),
+    remaining: newRemaining + 1,
+    isWarning: isWarning || (normalizedPlan === 'free'),
     message: warningMessage,
     upgradeRequired: false,
     limit: dailyLimit

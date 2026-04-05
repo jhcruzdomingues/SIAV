@@ -24,7 +24,7 @@ jobs:
           cache: 'npm'
 
       - name: 📚 Instalar dependências
-        run: npm ci
+        run: npm install
 
       - name: 🧪 Executar testes
         run: npm run test:run
@@ -34,15 +34,10 @@ jobs:
         env:
           NODE_ENV: production
 
-      - name: 📝 Criar arquivo de ambiente de produção
-        run: |
-          echo "VITE_SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> build-optimized/.env
-          echo "VITE_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> build-optimized/.env
-
       - name: 🚀 Deploy para Netlify
         uses: netlify/actions/cli@master
         with:
-          args: deploy --prod --dir=build-optimized
+          args: deploy --prod --dir=.
         env:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
@@ -70,7 +65,7 @@ jobs:
           cache: 'npm'
 
       - name: 📚 Instalar dependências
-        run: npm ci
+        run: npm install
 
       - name: 🏗️ Build otimizado
         run: npm run build

@@ -17,7 +17,7 @@ import { state, resetPCRState, addTimelineEvent } from './config/state.js';
 import { PLANS, TIMINGS, BPM } from './config/constants.js';
 
 import { handleLogin, logout, checkSession, onAuthStateChange } from './services/auth.js';
-import { loadUserProfile, saveUserProfile, savePCRLog, loadPCRLogs, loadUserStats, fetchRandomClinicalCase, saveSimulationLog, loadSimulationLogs } from './services/database.js';
+import { loadUserProfile, saveUserProfile, savePCRLog, loadPCRLogs, loadUserStats, fetchRandomClinicalCase, saveSimulationLog, loadSimulationLogs, preloadClinicalCases } from './services/database.js';
 import { setItem, getItem, saveSettings, loadSettings, saveOfflineLog, getOfflineLogs, markLogSynced } from './services/storage.js';
 
 import { formatTime, formatDate, formatDateTime, calculatePediatricDose } from './utils/formatters.js';
@@ -27,6 +27,7 @@ import { getProtocolNextStep, shouldAdministerDrug, getRecommendedShockEnergy, g
 
 // Novos módulos
 import { initI18n, t, setLocale, getLocale } from './i18n/index.js';
+import { events } from './utils/events.js';
 import { initAnalytics, SIAVAnalytics, trackEvent, trackPageView } from './analytics/index.js';
 import { initAccessibility, announce } from './accessibility/index.js';
 import { showToast } from './ui/toast.js';
@@ -74,6 +75,8 @@ async function initApp() {
     console.log('✅ Usuário logado:', user.email);
     await loadUserProfile(user.id);
     SIAVAnalytics.screenViewed('home');
+    // Só faz preload de casos clínicos se usuário estiver autenticado
+    preloadClinicalCases();
   } else {
     console.log('ℹ️ Usuário não autenticado');
   }
@@ -86,6 +89,8 @@ async function initApp() {
       if (session?.user) {
         loadUserProfile(session.user.id);
         trackEvent('user_login');
+        // Carregar/preload casos clínicos APÓS login
+        preloadClinicalCases();
       }
     } else if (event === 'SIGNED_OUT') {
       console.log('👋 Logout realizado');
@@ -96,10 +101,12 @@ async function initApp() {
   console.log('✅ SIAV inicializado com sucesso!');
   announce('Aplicativo SIAV carregado e pronto para uso');
 
+  // 8. Não faz mais preload automático de casos clínicos sem autenticação
+
   // Sincronização de logs pendentes quando voltar online
   window.addEventListener('online', async () => {
     try {
-      const pending = getOfflineLogs();
+      const pending = await getOfflineLogs();
       if (!pending || pending.length === 0) return;
 
       showToast(`Sincronizando ${pending.length} registros offline...`, { type: 'info', timeout: 4000 });
@@ -109,7 +116,7 @@ async function initApp() {
         try {
           const saved = await savePCRLog(log);
           if (saved && saved.success) {
-            markLogSynced(i);
+            await markLogSynced(log.id || i);
             showToast('Registro sincronizado com sucesso', { type: 'success' });
           }
         } catch (err) {
@@ -119,6 +126,30 @@ async function initApp() {
     } catch (err) {
       console.error('Erro no processo de sincronizacao offline:', err);
     }
+  });
+
+  // ==========================================
+  // REGISTRO DE EVENTOS GLOBAIS (Event Bus)
+  // ==========================================
+  
+  events.on('PCR_STARTED', (payload) => {
+    showScreen('pcr');
+  });
+
+  events.on('PCR_FINISHED', () => {
+    showScreen('home');
+  });
+
+  events.on('SIMULATION_BLOCKED', (context) => {
+    setTimeout(() => {
+      if (typeof window.showUpgradeModal === 'function') {
+        window.showUpgradeModal(context);
+      } else if (typeof window.openPlansModal === 'function') {
+        window.openPlansModal();
+      } else {
+        alert(context.message + '\n\nFaça upgrade para continuar treinando sem limites!');
+      }
+    }, 500);
   });
 
   // Listeners dos botões principais da home
@@ -149,6 +180,7 @@ window.SIAV = {
   loadPCRLogs,
   loadUserStats,
   fetchRandomClinicalCase,
+  preloadClinicalCases,
   saveSimulationLog,
   loadSimulationLogs,
 

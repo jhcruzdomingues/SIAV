@@ -17,7 +17,11 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(test:*)",
-      "Bash(explorer:*)"
+      "Bash(explorer:*)",
+      "Bash(nul)",
+      "Bash(findstr:*)",
+      "Bash(more:*)",
+      "Bash(copy:*)"
     ],
     "deny": [],
     "ask": []

@@ -5,9 +5,17 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setItem, getItem, removeItem, saveSettings, loadSettings } from '../src/services/storage.js';
 
+// Impede o Node.js de tentar baixar o Supabase via URL (https://) durante o teste
+vi.mock('../src/config/supabase.js', () => ({
+    supabase: {}
+}));
+
 describe('Storage Service', () => {
     beforeEach(() => {
-        localStorage.clear();
+        // Limpa apenas chaves do SIAV para evitar conflitos
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('siav_')) localStorage.removeItem(key);
+        });
         vi.clearAllMocks();
     });
 
@@ -65,7 +73,13 @@ describe('Storage Service', () => {
             saveSettings(settings);
             const loaded = loadSettings();
 
-            expect(loaded).toEqual(settings);
+            // Deve manter as chaves informadas
+            expect(loaded.theme).toBe('dark');
+            expect(loaded.soundsEnabled).toBe(true);
+            expect(loaded.soundVolume).toBe(0.8);
+            expect(loaded.locale).toBe('en-US');
+            // Deve manter customSounds (default)
+            expect(loaded).toHaveProperty('customSounds');
         });
 
         it('deve carregar configurações padrão se não existirem', () => {
@@ -86,13 +100,17 @@ describe('Storage Service', () => {
             const loaded = loadSettings();
 
             expect(loaded.theme).toBe('dark');
-            expect(loaded).toHaveProperty('soundsEnabled'); // Mantém padrão
+            // Mantém padrões para demais chaves
+            expect(loaded.soundsEnabled).toBe(true);
+            expect(loaded.soundVolume).toBe(0.7);
+            expect(loaded.locale).toBe('en-US');
+            expect(loaded).toHaveProperty('customSounds');
         });
     });
 
     describe('Casos de erro', () => {
         it('deve lidar com JSON inválido no localStorage', () => {
-            localStorage.setItem('invalid-json', '{invalid json}');
+            localStorage.setItem('siav_invalid-json', '{invalid json}');
 
             expect(() => getItem('invalid-json')).not.toThrow();
             expect(getItem('invalid-json', 'default')).toBe('default');

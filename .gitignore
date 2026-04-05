@@ -45,3 +45,4 @@ desktop.ini
 # Testes
 coverage/
 .nyc_output/
+nul

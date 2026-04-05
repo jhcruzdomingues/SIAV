@@ -7,25 +7,21 @@ import { state, resetPCRState } from '../config/state.js';
 import { announce } from '../accessibility/index.js';
 import { checkAndIncrementSimulationUse } from '../services/storage.js';
 import { showToast } from '../ui/toast.js';
+import { events } from '../utils/events.js';
 
 /**
  * Obtém o plano atual do usuário
  * @returns {string} - 'free', 'estudante', 'profissional', ou 'vitalicio'
  */
 function getCurrentUserPlan() {
-  // Verificar se há plano salvo no state
-  if (state.userPlan) {
-    return state.userPlan;
+  // Busca o plano de forma segura do estado global autenticado pelo Supabase.
+  // Removemos o fallback do localStorage para evitar fraudes via DevTools.
+  if (state.currentUser && state.currentUser.plan) {
+    return state.currentUser.plan.toLowerCase();
   }
-
-  // Verificar localStorage como fallback
-  try {
-    const userProfile = JSON.parse(localStorage.getItem('siav_user_profile') || '{}');
-    return userProfile.plan || 'free';
-  } catch (err) {
-    console.warn('Erro ao obter plano do usuário:', err);
-    return 'free'; // Padrão: plano gratuito
-  }
+  
+  // Fallback seguro usando apenas a variável de memória
+  return state.userPlan ? state.userPlan.toLowerCase() : 'free';
 }
 
 /**
@@ -35,73 +31,6 @@ function getCurrentUserPlan() {
  */
 export function startPCR(patientData = null) {
   console.log('🚀 Tentando iniciar PCR...');
-
-  // ================================================
-  // VERIFICAÇÃO DE LIMITES DIÁRIOS - V4.0
-  // ================================================
-
-  // Obter plano atual do usuário
-  const userPlan = getCurrentUserPlan();
-  console.log('👤 Plano do usuário:', userPlan);
-
-  // Verificar limites de uso
-  const usageCheck = checkAndIncrementSimulationUse(userPlan);
-  console.log('📊 Resultado da verificação:', usageCheck);
-
-  // CASO 1: Bloqueio total - 5º uso atingido
-  if (!usageCheck.allowed) {
-    console.warn('🚫 BLOQUEIO ATIVADO - Limite diário atingido');
-
-    // Anunciar para acessibilidade
-    announce('Limite diário de simulações atingido. Faça upgrade para continuar treinando.');
-
-    // Mostrar toast de bloqueio
-    showToast(
-      '🚫 Limite atingido! Faça upgrade para treinar sem limites.',
-      { type: 'danger', timeout: 6000 }
-    );
-
-    // Abrir modal de upgrade com contexto de bloqueio
-    setTimeout(() => {
-      if (typeof window.showUpgradeModal === 'function') {
-        window.showUpgradeModal({
-          reason: 'daily_limit_reached',
-          currentPlan: userPlan,
-          message: usageCheck.message,
-          upgradeRequired: true
-        });
-      } else {
-        // Fallback: abrir modal normal de planos
-        if (typeof window.openPlansModal === 'function') {
-          window.openPlansModal();
-        } else {
-          console.error('❌ Função openPlansModal não encontrada!');
-          alert(usageCheck.message + '\n\nFaça upgrade para continuar treinando sem limites!');
-        }
-      }
-    }, 500);
-
-    return false;
-  }
-
-  // CASO 2: Alerta de penúltimo uso (resta apenas 1 simulação)
-  if (usageCheck.isWarning) {
-    console.warn('⚠️ ALERTA - Penúltimo uso detectado');
-
-    // Mostrar toast de aviso
-    showToast(
-      usageCheck.message,
-      { type: 'warning', timeout: 8000 }
-    );
-
-    // Anunciar para acessibilidade
-    announce(usageCheck.message);
-  }
-
-  // CASO 3: Uso normal
-  if (usageCheck.remaining !== null && usageCheck.remaining > 1) {
-    console.log(`✅ Uso permitido - Restam ${usageCheck.remaining} simulações hoje`);
-  }
 
   // ================================================
   // INICIALIZAÇÃO DA PCR (LÓGICA ORIGINAL)
@@ -130,12 +59,8 @@ export function startPCR(patientData = null) {
   announce('Atendimento de PCR iniciado!');
   console.log('✅ PCR iniciada com sucesso');
 
-  // Troca para tela de PCR
-  const pcrScreen = document.getElementById('pcr-screen');
-  if (pcrScreen) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    pcrScreen.classList.add('active');
-  }
+  // Notifica o restante do sistema que a PCR começou
+  events.emit('PCR_STARTED', { patientData });
 
   return true;
 }
@@ -153,12 +78,8 @@ export function finishPCR() {
 
   announce('Atendimento de PCR finalizado.');
 
-  // Volta para tela inicial
-  const homeScreen = document.getElementById('home-screen');
-  if (homeScreen) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    homeScreen.classList.add('active');
-  }
+  // Notifica o restante do sistema que a PCR terminou
+  events.emit('PCR_FINISHED');
 
   console.log('✅ PCR finalizada');
 }
@@ -196,25 +117,13 @@ export function startSimulation(caseId) {
       { type: 'danger', timeout: 6000 }
     );
 
-    // Abrir modal de upgrade com contexto de bloqueio
-    setTimeout(() => {
-      if (typeof window.showUpgradeModal === 'function') {
-        window.showUpgradeModal({
-          reason: 'daily_limit_reached',
-          currentPlan: userPlan,
-          message: usageCheck.message,
-          upgradeRequired: true
-        });
-      } else {
-        // Fallback: abrir modal normal de planos
-        if (typeof window.openPlansModal === 'function') {
-          window.openPlansModal();
-        } else {
-          console.error('❌ Função openPlansModal não encontrada!');
-          alert(usageCheck.message + '\n\nFaça upgrade para continuar treinando sem limites!');
-        }
-      }
-    }, 500);
+    // Notifica a UI que a simulação foi bloqueada
+    events.emit('SIMULATION_BLOCKED', {
+      reason: 'daily_limit_reached',
+      currentPlan: userPlan,
+      message: usageCheck.message,
+      upgradeRequired: true
+    });
 
     return false;
   }

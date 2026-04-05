@@ -68,6 +68,8 @@ export {
   truncate
 } from './utils/formatters.js';
 
+export { events } from './utils/events.js';
+
 export {
   MEDICATIONS,
   calculateDose,

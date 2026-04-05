@@ -8,6 +8,13 @@
 import { supabase } from '../config/supabase.js';
 import { state } from '../config/state.js';
 
+// Cache para casos clínicos (10 minutos de validade)
+let casesCache = null;
+let cacheTimestamp = 0;
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutos
+const CASES_LIMIT = 30; // Reduzido de 50 para 30 para mais velocidade
+let preloadingPromise = null; // Promise de pré-carregamento
+
 /**
  * Carrega perfil do usuário
  * @param {string} userId - ID do usuário
@@ -478,75 +485,71 @@ export async function loadSimulationLogs(limit = 50) {
 export async function fetchRandomClinicalCase(excludeCaseId = null) {
   try {
     console.log('🔍 [SIAV] Iniciando busca de casos clínicos...');
-    if (excludeCaseId) {
-      console.log('🚫 [SIAV] Excluindo caso:', excludeCaseId);
-    }
 
-    // Buscar casos clínicos com game_flow válido (não vazio)
-    let query = supabase
-      .from('clinical_cases')
-      .select('*')
-      .not('game_flow', 'is', null);
+    let data;
+    const now = Date.now();
 
-    // Excluir caso específico se fornecido
-    if (excludeCaseId) {
-      query = query.neq('id', excludeCaseId);
-    }
+    // Verificar se o cache é válido
+    if (casesCache && (now - cacheTimestamp) < CACHE_DURATION) {
+      console.log('⚡ [SIAV] Usando cache de casos clínicos');
+      data = casesCache;
+    } else {
+      console.log('🌐 [SIAV] Buscando casos do Supabase...');
 
-    const { data, error } = await query.limit(20); // Buscar até 20 casos para aleatoriedade
+      // Buscar casos clínicos com game_flow válido (não vazio) - otimizado
+      const { data: fetchedData, error } = await supabase
+        .from('clinical_cases')
+        .select('id, title, difficulty, game_flow') // Buscar apenas campos necessários
+        .not('game_flow', 'is', null)
+        .limit(CASES_LIMIT);
 
-    // Verificar erros do Supabase (incluindo RLS)
-    if (error) {
-      console.error('❌ [SIAV] Erro do Supabase:', error);
-      console.error('❌ [SIAV] Código do erro:', error.code);
-      console.error('❌ [SIAV] Mensagem:', error.message);
-
-      // Verificar se é erro de permissão RLS
-      if (error.code === 'PGRST301' || error.message.includes('policy')) {
-        throw new Error('⚠️ Erro de Permissão RLS. Execute o SQL de configuração comentado em database.js');
+      // Verificar erros do Supabase (incluindo RLS)
+      if (error) {
+        console.error('❌ [SIAV] Erro do Supabase:', error);
+        if (error.code === 'PGRST301' || error.message.includes('policy')) {
+          throw new Error('⚠️ Erro de Permissão RLS. Execute o SQL de configuração comentado em database.js');
+        }
+        throw new Error('Erro ao buscar caso clínico: ' + error.message);
       }
 
-      throw new Error('Erro ao buscar caso clínico: ' + error.message);
-    }
-
-    console.log('✅ [SIAV] Dados recebidos do Supabase:', data);
-    console.log('📊 [SIAV] Total de casos encontrados:', data?.length || 0);
-
-    // Verificar se há dados
-    if (!data || data.length === 0) {
-      console.error('❌ [SIAV] Nenhum caso clínico encontrado!');
-      console.error('⚠️ [SIAV] Possíveis causas:');
-      console.error('   1. Tabela clinical_cases está vazia');
-      console.error('   2. Políticas RLS estão bloqueando o acesso');
-      console.error('   3. Coluna game_flow está null em todos os registros');
-      throw new Error('Nenhum caso clínico encontrado. Verifique as Políticas RLS no Supabase.');
-    }
-
-    // Filtrar casos que têm game_flow válido (array com pelo menos 1 step)
-    const validCases = data.filter(c => {
-      const hasGameFlow = c.game_flow && Array.isArray(c.game_flow) && c.game_flow.length > 0;
-      if (!hasGameFlow) {
-        console.warn('⚠️ [SIAV] Caso sem game_flow válido:', c.title);
+      // Verificar se há dados
+      if (!fetchedData || fetchedData.length === 0) {
+        throw new Error('Nenhum caso clínico encontrado. Verifique as Políticas RLS no Supabase.');
       }
-      return hasGameFlow;
-    });
 
-    console.log('✅ [SIAV] Casos válidos com game_flow:', validCases.length);
+      // Filtrar casos válidos
+      const validCases = fetchedData.filter(c =>
+        c.game_flow && Array.isArray(c.game_flow) && c.game_flow.length > 0
+      );
 
-    if (validCases.length === 0) {
-      throw new Error('Nenhum caso com game_flow válido encontrado. Verifique os dados no Supabase.');
+      if (validCases.length === 0) {
+        throw new Error('Nenhum caso com game_flow válido encontrado. Verifique os dados no Supabase.');
+      }
+
+      // Atualizar cache
+      casesCache = validCases;
+      cacheTimestamp = now;
+      data = validCases;
+
+      console.log(`✅ [SIAV] ${validCases.length} casos carregados e em cache`);
     }
 
-    // Selecionar um caso aleatório dos casos válidos
-    // Usar timestamp para melhorar aleatoriedade
-    const randomIndex = Math.floor((Math.random() * Date.now()) % validCases.length);
-    const selectedCase = validCases[randomIndex];
+    // Filtrar caso excluído se fornecido
+    let availableCases = data;
+    if (excludeCaseId) {
+      availableCases = data.filter(c => c.id !== excludeCaseId);
+      console.log(`🚫 [SIAV] Excluindo caso ${excludeCaseId}. Casos disponíveis: ${availableCases.length}`);
+    }
 
-    console.log('🎯 [SIAV] Caso selecionado:', selectedCase.title);
-    console.log('📋 [SIAV] Dificuldade:', selectedCase.difficulty);
-    console.log('🎮 [SIAV] Steps no game_flow:', selectedCase.game_flow.length);
-    console.log('🎲 [SIAV] Índice sorteado:', randomIndex, 'de', validCases.length, 'casos disponíveis');
-    console.log('📦 [SIAV] Dados completos do caso:', selectedCase);
+    if (availableCases.length === 0) {
+      throw new Error('Nenhum caso disponível após exclusão.');
+    }
+
+    // Selecionar um caso aleatório - otimizado
+    const randomIndex = Math.floor(Math.random() * availableCases.length);
+    const selectedCase = availableCases[randomIndex];
+
+    console.log(`🎯 [SIAV] Caso selecionado: ${selectedCase.title} (${selectedCase.difficulty}) - ${selectedCase.game_flow.length} steps`);
 
     return selectedCase;
 
@@ -555,4 +558,33 @@ export async function fetchRandomClinicalCase(excludeCaseId = null) {
     console.error('📍 [SIAV] Stack trace:', err.stack);
     throw err; // Propagar erro para ser tratado na UI
   }
+}
+
+/**
+ * Pré-carrega casos clínicos em background para performance instantânea
+ * Deve ser chamado assim que a página carregar
+ */
+export function preloadClinicalCases() {
+  // Evitar múltiplos carregamentos simultâneos
+  if (preloadingPromise) return preloadingPromise;
+
+  // Verificar se o cache já está válido
+  if (casesCache && (Date.now() - cacheTimestamp) < CACHE_DURATION) {
+    console.log('⚡ Cache já válido, pré-carregamento desnecessário');
+    return Promise.resolve(casesCache);
+  }
+
+  console.log('🔄 Pré-carregando casos clínicos em background...');
+
+  preloadingPromise = fetchRandomClinicalCase()
+    .then(() => {
+      console.log('✅ Casos pré-carregados com sucesso');
+      preloadingPromise = null;
+    })
+    .catch(err => {
+      console.warn('⚠️ Erro ao pré-carregar casos:', err.message);
+      preloadingPromise = null;
+    });
+
+  return preloadingPromise;
 }

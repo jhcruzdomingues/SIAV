@@ -1,4 +1,5 @@
 const CACHE_NAME = 'siav-v6';
+const CACHE_NAME = 'siav-v7';
 const ASSETS_TO_CACHE = [
   '/index.html',
   '/style.css',
@@ -80,6 +81,8 @@ self.addEventListener('fetch', (event) => {
 
   // Network first for HTML and CSS to always get latest version
   if (event.request.url.includes('.html') || event.request.url.includes('.css')) {
+  // Network first for HTML, CSS, and JSON to always get latest version
+  if (event.request.url.includes('.html') || event.request.url.includes('.css') || event.request.url.includes('.json')) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {

@@ -55,7 +55,9 @@ console.log('Diagnóstico Supabase:', {
     supabaseClient: window.supabaseClient,
     window_supabase: window.supabase
 });
-const supabase = window.supabaseClient || window.SIAV?.supabase || window.supabase;
+
+// Use sempre o cliente global Supabase já inicializado
+// window.supabaseClient é a referência correta
 
 // Estrutura para o Plano padrão
 const DEFAULT_USER_DATA = {
@@ -106,13 +108,13 @@ const PLAN_PRIORITY = {
 };
 
 const ACCESS_LEVELS = {
-    'log_history': 'professional',
-    'quiz_simulations': 'student',
+    'log_history': 'free', // Todos podem ver logs, mas com limites de salvamento
+    'quiz_simulations': 'free', // Todos podem acessar, mas com limites de uso (Free=1, Student=10, Pro=ilimitado)
     'study_review': 'student',
     'advanced_dashboard': 'professional',
-    'notes_logging': 'professional', 
-    'med_logging': 'professional', 
-    'pdf_download': 'student' 
+    'notes_logging': 'professional',
+    'med_logging': 'professional',
+    'pdf_download': 'student'
 };
 
 /**
@@ -251,42 +253,49 @@ const CYCLE_DURATION = 120000; // 2 minutos em milissegundos
 // ===============================================
 
 function showUpgradeModal(requiredPlan) {
-    const modal = document.getElementById('upgrade-modal');
-    const title = document.getElementById('upgrade-plan-title');
-    const requiredLevelText = document.getElementById('required-level');
-    const restrictionText = document.getElementById('restriction-text');
-    
-    if (!modal || !title) return;
+    // Redireciona direto para a página de vendas (modal de planos)
+    if (typeof openPlansModal === 'function') {
+        openPlansModal();
+    } else if (window.openPlansModal) {
+        window.openPlansModal();
+    } else {
+        const modal = document.getElementById('upgrade-modal');
+        const title = document.getElementById('upgrade-plan-title');
+        const requiredLevelText = document.getElementById('required-level');
+        const restrictionText = document.getElementById('restriction-text');
+        
+        if (!modal || !title) return;
 
-    let planInfo = {};
+        let planInfo = {};
 
-    switch (requiredPlan) {
-        case 'student':
-            planInfo = { 
-                title: "ESTUDANTE (R$ 9,90/mês)", 
-                level: "Estudante",
-                restriction: "Esta funcionalidade (Revisão, Simulado e PDFs) é exclusiva para assinantes dos planos Estudante e Profissional.",
-                color: 'var(--success)'
-            };
-            break;
-        case 'professional':
-            planInfo = { 
-                title: "PROFISSIONAL (R$ 19,90/mês)", 
-                level: "Profissional",
-                restriction: "Esta funcionalidade (Log de Atendimento/Salvar Dados) é exclusiva para o Plano Profissional.",
-                color: 'var(--danger)'
-            };
-            break;
-        default:
-            return;
+        switch (requiredPlan) {
+            case 'student':
+                planInfo = { 
+                    title: "ESTUDANTE (R$ 9,90/mês)", 
+                    level: "Estudante",
+                    restriction: "Esta funcionalidade (Revisão, Simulado e PDFs) é exclusiva para assinantes dos planos Estudante e Profissional.",
+                    color: 'var(--success)'
+                };
+                break;
+            case 'professional':
+                planInfo = { 
+                    title: "PROFISSIONAL (R$ 19,90/mês)", 
+                    level: "Profissional",
+                    restriction: "Esta funcionalidade (Log de Atendimento/Salvar Dados) é exclusiva para o Plano Profissional.",
+                    color: 'var(--danger)'
+                };
+                break;
+            default:
+                return;
+        }
+
+        title.textContent = `🚨 Upgrade Necessário: ${planInfo.title}`;
+        if (requiredLevelText) requiredLevelText.textContent = planInfo.level;
+        if (restrictionText) restrictionText.textContent = planInfo.restriction;
+        title.style.color = planInfo.color;
+
+        modal.classList.add('show');
     }
-
-    title.textContent = `🚨 Upgrade Necessário: ${planInfo.title}`;
-    requiredLevelText.textContent = planInfo.level;
-    restrictionText.textContent = planInfo.restriction;
-    title.style.color = planInfo.color;
-
-    modal.classList.add('show');
 }
 
 function checkAccess(featureKey, requireUpgradeModal = true) {
@@ -316,41 +325,15 @@ function checkAccess(featureKey, requireUpgradeModal = true) {
 }
 
 function startSubscriptionFlow() {
-    if (!state.currentUser.isLoggedIn) {
-        alert("Faça login para gerenciar ou fazer upgrade do seu plano.");
-        showProfileModal();
-        return;
+    // Redireciona para a página de vendas (modal de planos)
+    if (typeof openPlansModal === 'function') {
+        openPlansModal();
+    } else if (window.openPlansModal) {
+        window.openPlansModal();
+    } else {
+        console.error('Função openPlansModal não encontrada');
+        alert('Não foi possível abrir a página de planos. Tente novamente.');
     }
-
-    if (state.currentUser.plan === 'professional') {
-        alert("Você já está no Plano Profissional! Não é necessário upgrade.");
-        return;
-    }
-
-    const checkoutURL = "https://checkout.stripe.com/pay_for_siav_app";
-    
-    alert(`Redirecionando para o Checkout do Stripe (Simulação)!\n\nSeu plano atual: ${state.currentUser.plan.toUpperCase()}.\n\nAguarde 3 segundos para o redirecionamento simulado...`);
-
-    setTimeout(() => {
-        
-        const newPlan = prompt("Simulação de Retorno do Stripe:\n\nDigite o novo plano desejado para testar o Upgrade (student ou professional):").toLowerCase();
-        
-        if (newPlan === 'student' || newPlan === 'professional') {
-            
-            alert(`Simulando recebimento do Webhook e atualização do Plano para ${newPlan.toUpperCase()}.`);
-            
-            state.currentUser.plan = newPlan;
-            
-            saveState();
-            updateDashboard();
-            alert("✅ Upgrade de Plano Simulado com Sucesso! Seu acesso foi atualizado.");
-            showScreen('dashboard'); 
-            
-
-        } else {
-            alert("Upgrade cancelado ou plano inválido. Voltando ao aplicativo.");
-        }
-    }, 3000); 
 }
 
 
@@ -509,55 +492,60 @@ function resetUserState() {
 /**
  * Configura o listener para detectar mudanças no estado de autenticação
  */
-supabase.auth.onAuthStateChange(async (event, session) => {
-    console.log(`🔐 Auth Event: ${event}`, session ? `User: ${session.user.email}` : 'No session');
+const supabaseInstance = window.SIAV?.supabase || window.supabase;
+if (supabaseInstance && supabaseInstance.auth) {
+    supabaseInstance.auth.onAuthStateChange(async (event, session) => {
+        console.log(`🔐 Auth Event: ${event}`, session ? `User: ${session.user.email}` : 'No session');
 
-    switch (event) {
-        case 'SIGNED_IN':
-            // Usuário fez login
-            if (session && session.user) {
-                const user = session.user;
+        switch (event) {
+            case 'SIGNED_IN':
+                // Usuário fez login
+                if (session && session.user) {
+                    const user = session.user;
 
-                state.currentUser.isLoggedIn = true;
-                state.currentUser.id = user.id;
-                state.currentUser.email = user.email;
-                state.currentUser.token = session.access_token;
+                    state.currentUser.isLoggedIn = true;
+                    state.currentUser.id = user.id;
+                    state.currentUser.email = user.email;
+                    state.currentUser.token = session.access_token;
 
-                await fetchUserProfile(user.id, user.email);
+                    await fetchUserProfile(user.id, user.email);
 
-                console.log(`✅ Login detectado: ${user.email} (${state.currentUser.plan.toUpperCase()})`);
+                    console.log(`✅ Login detectado: ${user.email} (${state.currentUser.plan.toUpperCase()})`);
+
+                    updateGreetingsAndHeader();
+                    updateDashboard();
+                }
+                break;
+
+            case 'SIGNED_OUT':
+                // Usuário fez logout
+                resetUserState();
+                console.log('👋 Logout detectado');
 
                 updateGreetingsAndHeader();
                 updateDashboard();
-            }
-            break;
+                break;
 
-        case 'SIGNED_OUT':
-            // Usuário fez logout
-            resetUserState();
-            console.log('👋 Logout detectado');
+            case 'TOKEN_REFRESHED':
+                // Token foi atualizado
+                if (session) {
+                    state.currentUser.token = session.access_token;
+                    console.log('🔄 Token renovado');
+                }
+                break;
 
-            updateGreetingsAndHeader();
-            updateDashboard();
-            break;
-
-        case 'TOKEN_REFRESHED':
-            // Token foi atualizado
-            if (session) {
-                state.currentUser.token = session.access_token;
-                console.log('🔄 Token renovado');
-            }
-            break;
-
-        case 'USER_UPDATED':
-            // Dados do usuário foram atualizados
-            if (session && session.user) {
-                await fetchUserProfile(session.user.id, session.user.email);
-                console.log('📝 Perfil atualizado');
-            }
-            break;
-    }
-});
+            case 'USER_UPDATED':
+                // Dados do usuário foram atualizados
+                if (session && session.user) {
+                    await fetchUserProfile(session.user.id, session.user.email);
+                    console.log('📝 Perfil atualizado');
+                }
+                break;
+        }
+    });
+} else {
+    console.warn('⚠️ Cliente Supabase não encontrado para onAuthStateChange. A autenticação não funcionará corretamente.');
+}
 
 function saveState() {
     const stateToSave = {
@@ -580,10 +568,9 @@ async function loadState() {
             state.quizResults = parsedState.quizResults || [];
         }
 
-        // Verifica autenticação ao carregar o app
-        await checkAuthStatus();
-
-        console.log('✅ Estado do App e Sessão Supabase carregados.');
+        // Não faz mais verificação automática de autenticação ao carregar o app
+        // Apenas carrega estado local
+        console.log('✅ Estado do App carregado (apenas localStorage, sem Supabase).');
 
     } catch (e) {
         console.error('Erro ao carregar estado do Local Storage ou Supabase', e);
@@ -596,6 +583,96 @@ async function savePcrLogToSupabase(logEntry) {
         if (!state.currentUser.isLoggedIn) {
             console.warn("Tentativa de salvar log sem usuario logado.");
             return { success: false, message: "Usuario nao logado." };
+        }
+
+        // ================================================
+        // VERIFICAÇÃO DE LIMITES DE LOGS SALVOS
+        // ================================================
+        const userPlan = (state.currentUser?.plan || 'free').toLowerCase();
+
+        // Definir limites por plano
+        let logLimit;
+        if (userPlan === 'free') {
+            logLimit = 1;
+        } else if (userPlan === 'student' || userPlan === 'estudante') {
+            logLimit = 5;
+        } else if (userPlan === 'professional' || userPlan === 'profissional' ||
+                   userPlan === 'lifetime' || userPlan === 'vitalicio') {
+            logLimit = null; // Ilimitado
+        } else {
+            logLimit = 1; // Fallback para free
+        }
+
+        console.log(`📊 Limite de logs para plano ${userPlan}:`, logLimit || 'Ilimitado');
+
+        // Se houver limite, verificar quantidade atual
+        if (logLimit !== null) {
+            const { count, error: countError } = await supabase
+                .from('pcr_logs')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', state.currentUser.id);
+
+            if (countError) {
+                console.error('Erro ao contar logs:', countError);
+            } else {
+                console.log(`📈 Logs atuais: ${count}/${logLimit}`);
+
+                // Se atingiu o limite
+                if (count >= logLimit) {
+                    console.warn(`🚫 Limite de ${logLimit} log(s) atingido!`);
+
+                    // Buscar o log mais antigo
+                    const { data: oldestLog, error: fetchError } = await supabase
+                        .from('pcr_logs')
+                        .select('id, created_at, patient_name')
+                        .eq('user_id', state.currentUser.id)
+                        .order('created_at', { ascending: true })
+                        .limit(1)
+                        .single();
+
+                    if (fetchError || !oldestLog) {
+                        console.error('Erro ao buscar log mais antigo:', fetchError);
+                        return { success: false, message: 'Erro ao verificar logs existentes.' };
+                    }
+
+                    // Confirmar exclusão do log mais antigo
+                    const confirmMsg = `Você atingiu o limite de ${logLimit} log(s) salvos do plano ${userPlan === 'free' ? 'Gratuito' : 'Estudante'}.\n\n` +
+                        `Para salvar este novo atendimento, deseja excluir o log mais antigo?\n\n` +
+                        `Log mais antigo:\n` +
+                        `- Paciente: ${oldestLog.patient_name || 'N/I'}\n` +
+                        `- Data: ${new Date(oldestLog.created_at).toLocaleString('pt-BR')}\n\n` +
+                        `Confirmar exclusão e salvar novo log?`;
+
+                    if (!confirm(confirmMsg)) {
+                        console.log('❌ Usuário cancelou a exclusão');
+
+                        // Oferecer upgrade
+                        if (confirm('Deseja fazer upgrade para salvar mais logs sem limites?')) {
+                            if (typeof openPlansModal === 'function') {
+                                openPlansModal();
+                            } else if (window.openPlansModal) {
+                                window.openPlansModal();
+                            }
+                        }
+
+                        return { success: false, message: 'Salvamento cancelado pelo usuário.' };
+                    }
+
+                    // Excluir log mais antigo
+                    const { error: deleteError } = await supabase
+                        .from('pcr_logs')
+                        .delete()
+                        .eq('id', oldestLog.id);
+
+                    if (deleteError) {
+                        console.error('Erro ao excluir log antigo:', deleteError);
+                        alert('Erro ao excluir log antigo. Tente novamente.');
+                        return { success: false, message: 'Erro ao excluir log antigo.' };
+                    }
+
+                    console.log('✅ Log mais antigo excluído com sucesso');
+                }
+            }
         }
 
         // Validacao de entrada
@@ -682,15 +759,17 @@ async function savePcrLogToSupabase(logEntry) {
 }
 
 async function fetchPcrLogs() {
-    if (!state.currentUser.isLoggedIn || state.currentUser.plan !== 'professional') {
+    // Qualquer usuário logado pode buscar seus logs
+    if (!state.currentUser.isLoggedIn) {
         state.patientLog = [];
         return;
     }
-    
+
     try {
         const { data, error } = await supabase
             .from('pcr_logs')
-            .select('*') 
+            .select('*')
+            .eq('user_id', state.currentUser.id)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -718,18 +797,22 @@ async function fetchPcrLogs() {
 }
 
 async function deleteLogEntry(logId) {
-    if (!state.currentUser.isLoggedIn || state.currentUser.plan !== 'professional') {
-        alert("Ação restrita. Faça login com o Plano Profissional.");
+    // Verificar apenas se está logado
+    if (!state.currentUser.isLoggedIn) {
+        alert("Você precisa estar logado para excluir registros.");
+        showProfileModal();
         return;
     }
-    
-    if (!confirm(`Tem certeza que deseja EXCLUIR o registro #${logId}? Esta ação é irreversível.`)) return;
+
+    if (!confirm(`Tem certeza que deseja EXCLUIR este registro? Esta ação é irreversível.`)) return;
 
     try {
+        // Garantir que só pode excluir seus próprios logs
         const { error } = await supabase
             .from('pcr_logs')
             .delete()
-            .eq('id', logId); 
+            .eq('id', logId)
+            .eq('user_id', state.currentUser.id);
 
         if (error) throw error;
 
@@ -1604,113 +1687,244 @@ function cancelPatientSetup() {
 }
 
 // ================================================
-// SISTEMA DE CONTROLE DE USO DIÁRIO - V4.1
-// Limites Otimizados: FREE = 1, ESTUDANTE = 10
+// SISTEMA DE CONTROLE DE USO - V5.0
+// Reset após 24h do último uso (não à meia-noite)
+// Limites: FREE = 1, STUDENT = 10, PRO = Ilimitado
 // ================================================
 
-const FREE_DAILY_LIMIT = 1;      // Plano gratuito: 1 caso/dia
-const STUDENT_DAILY_LIMIT = 10;  // Plano estudante: 10 casos/dia
+const FREE_DAILY_LIMIT = 1;      // Plano gratuito: 1 caso a cada 24h
+const STUDENT_DAILY_LIMIT = 10;  // Plano estudante: 10 casos a cada 24h
+const RESET_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 horas em milissegundos
+
+/**
+ * Formata tempo restante em formato legível
+ * @param {number} ms - Milissegundos
+ * @returns {string} - Tempo formatado
+ */
+function formatTimeRemaining(ms) {
+    // Garantir que ms seja positivo
+    if (ms <= 0) {
+        return 'disponível agora';
+    }
+
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (hours > 0) {
+        return `${hours}h ${minutes}min`;
+    } else if (minutes > 0) {
+        return `${minutes} minutos`;
+    } else {
+        return 'menos de 1 minuto';
+    }
+}
 
 /**
  * Verifica e incrementa o contador de uso do simulador
- * @param {string} userPlan - Plano do usuário ('free', 'estudante', 'profissional', 'vitalicio')
- * @returns {object} - {allowed: boolean, remaining: number, isWarning: boolean}
+ * @param {string} userPlan - Plano do usuário ('free', 'student', 'professional', 'lifetime')
+ * @returns {object} - {allowed: boolean, remaining: number, isWarning: boolean, timeUntilReset: string}
  */
-function checkAndIncrementSimulationUse(userPlan) {
+async function checkAndIncrementSimulationUse(userPlan) {
     console.log('🔍 Verificando uso do simulador para plano:', userPlan);
 
-    // Planos ilimitados (profissional e vitalício)
-    if (userPlan === 'profissional' || userPlan === 'vitalicio') {
+    // Normalizar nome do plano
+    const normalizedPlan = userPlan.toLowerCase();
+
+    // Planos ilimitados (professional, profissional, lifetime, vitalicio)
+    if (normalizedPlan === 'professional' || normalizedPlan === 'profissional' ||
+        normalizedPlan === 'lifetime' || normalizedPlan === 'vitalicio') {
         console.log('✅ Plano ilimitado - uso permitido');
         return {
             allowed: true,
             remaining: null,
             isWarning: false,
-            message: 'Acesso ilimitado'
+            message: 'Acesso ilimitado',
+            timeUntilReset: null
         };
     }
 
     // Determinar limite baseado no plano
-    const dailyLimit = userPlan === 'free' ? FREE_DAILY_LIMIT : STUDENT_DAILY_LIMIT;
-    console.log(`📋 Limite diário para plano ${userPlan}:`, dailyLimit);
+    let dailyLimit;
+    if (normalizedPlan === 'free') {
+        dailyLimit = FREE_DAILY_LIMIT;
+    } else if (normalizedPlan === 'student' || normalizedPlan === 'estudante') {
+        dailyLimit = STUDENT_DAILY_LIMIT;
+    } else {
+        // Fallback para planos desconhecidos
+        dailyLimit = FREE_DAILY_LIMIT;
+        console.warn(`⚠️ Plano desconhecido '${userPlan}', usando limite FREE`);
+    }
+    console.log(`📋 Limite para plano ${userPlan}:`, dailyLimit);
 
-    // Planos com limite (free e estudante)
-    const today = new Date().toDateString();
-    const storageKey = 'siav_daily_usage';
+    const now = Date.now();
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0); // Início do dia atual
 
-    let usageData;
-    try {
-        const stored = localStorage.getItem(storageKey);
-        usageData = stored ? JSON.parse(stored) : { date: today, count: 0 };
-    } catch (err) {
-        usageData = { date: today, count: 0 };
+    let currentCount = 0;
+
+    // Conta os logs de simulação no Supabase do usuário no dia atual
+    if (state.currentUser && state.currentUser.isLoggedIn && state.currentUser.id) {
+        try {
+            const { count, error } = await supabase
+                .from('simulation_logs') // Tabela onde salvam-se os logs de simulação
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', state.currentUser.id)
+                .gte('created_at', todayStart.toISOString());
+                
+            if (!error) {
+                currentCount = count || 0;
+            } else {
+                console.error('Erro ao contar uso no Supabase:', error);
+            }
+        } catch (err) {
+            console.error('Falha ao consultar limite no Supabase:', err);
+        }
+    } else {
+        console.warn('⚠️ Usuário não logado, o uso do simulador pode falhar na validação do limite.');
     }
 
-    // Resetar contador se for um novo dia
-    if (usageData.date !== today) {
-        console.log('🔄 Novo dia detectado - resetando contador');
-        usageData.date = today;
-        usageData.count = 0;
-    }
-
-    // Verificar limite
-    const currentCount = usageData.count;
+    const timeUntilReset = RESET_INTERVAL_MS - (now - todayStart.getTime());
     const remaining = dailyLimit - currentCount;
 
     console.log(`📊 Uso atual: ${currentCount}/${dailyLimit} (restam ${remaining})`);
 
     // Bloquear se atingiu o limite
     if (currentCount >= dailyLimit) {
-        console.warn('🚫 LIMITE DIÁRIO ATINGIDO!');
+        console.warn('🚫 LIMITE ATINGIDO!');
+
+        const timeRemainingFormatted = formatTimeRemaining(timeUntilReset);
+
+        let message;
+        if (normalizedPlan === 'free') {
+            message = `Você atingiu o limite de ${dailyLimit} uso do Simulador Avançado.\n\n` +
+                     `⏰ Tempo até reset: ${timeRemainingFormatted}\n\n` +
+                     `Upgrade para treinar sem limites!`;
+        } else if (normalizedPlan === 'student' || normalizedPlan === 'estudante') {
+            message = `Você atingiu o limite de ${dailyLimit} usos do Simulador Avançado.\n\n` +
+                     `⏰ Tempo até reset: ${timeRemainingFormatted}\n\n` +
+                     `Upgrade para Profissional e treine ilimitado!`;
+        } else {
+            message = `Você atingiu o limite de ${dailyLimit} usos.\n\n` +
+                     `⏰ Tempo até reset: ${timeRemainingFormatted}\n\n` +
+                     `Faça upgrade para treinar sem limites!`;
+        }
+
         return {
             allowed: false,
             remaining: 0,
             isWarning: false,
-            message: userPlan === 'free'
-                ? `Você atingiu o limite de ${dailyLimit} caso clínico diário do plano Gratuito. Pratique mais intensamente com upgrade!`
-                : `Você atingiu o limite de ${dailyLimit} casos clínicos diários do plano Estudante.`,
+            message: message,
             upgradeRequired: true,
-            limit: dailyLimit
+            limit: dailyLimit,
+            timeUntilReset: timeRemainingFormatted
         };
     }
 
-    // Incrementar contador
-    usageData.count++;
-    try {
-        localStorage.setItem(storageKey, JSON.stringify(usageData));
-    } catch (err) {
-        console.error('Erro ao salvar contagem:', err);
-    }
+    // O incremento real agora acontece *apenas* quando a simulação finaliza 
+    // (na função saveSimulationLog que insere na tabela simulation_logs do Supabase).
+    // Isso é mais justo: se o usuário fechar a página no meio, não perde o limite de uso diário.
 
     // Alertar no penúltimo uso (quando restar apenas 1)
-    const newRemaining = dailyLimit - usageData.count;
-    const isWarning = newRemaining === 1;
+    const newRemaining = dailyLimit - (currentCount + 1);
+    const isWarning = newRemaining === 0;
 
     if (isWarning) {
         console.warn('⚠️ ALERTA: Resta apenas 1 simulação de cortesia!');
     }
 
-    console.log(`✅ Uso permitido - Nova contagem: ${usageData.count}/${dailyLimit}`);
+    console.log(`✅ Uso permitido. Ao concluir a simulação, a nova contagem será ${currentCount + 1}/${dailyLimit}`);
+
+    const timeRemainingFormatted = formatTimeRemaining(timeUntilReset);
 
     // Mensagens personalizadas por plano
     let warningMessage;
-    if (userPlan === 'free' && usageData.count === dailyLimit) {
-        warningMessage = `⚠️ Você está usando seu único caso clínico diário. Pratique mais intensamente com upgrade!`;
+    if (normalizedPlan === 'free' && currentCount === 0) {
+        warningMessage = `⚠️ Este é seu único caso gratuito do dia.\n\n` +
+                        `⏰ Próximo uso disponível em: ${timeRemainingFormatted}\n\n` +
+                        `Pratique mais intensamente com upgrade!`;
+    } else if (isWarning && (normalizedPlan === 'student' || normalizedPlan === 'estudante')) {
+        warningMessage = `⚠️ Atenção: Resta apenas 1 uso do Simulador hoje.\n\n` +
+                        `⏰ Reset em: ${timeRemainingFormatted}\n\n` +
+                        `Upgrade para Profissional e treine ilimitado!`;
     } else if (isWarning) {
-        warningMessage = `⚠️ Atenção: Resta apenas ${newRemaining} caso clínico hoje. Não pare de treinar, faça upgrade!`;
+        warningMessage = `⚠️ Atenção: Resta apenas 1 uso.\n\n` +
+                        `⏰ Reset em: ${timeRemainingFormatted}`;
     } else {
-        warningMessage = `Você tem ${newRemaining} casos clínicos restantes hoje.`;
+        warningMessage = `Você tem ${newRemaining + 1} usos restantes.\n\n` +
+                        `⏰ Reset em: ${timeRemainingFormatted}`;
     }
 
     return {
         allowed: true,
-        remaining: newRemaining,
-        isWarning: isWarning || (userPlan === 'free' && usageData.count === dailyLimit),
+        remaining: newRemaining + 1,
+        isWarning: isWarning || (normalizedPlan === 'free'),
         message: warningMessage,
         upgradeRequired: false,
-        limit: dailyLimit
+        limit: dailyLimit,
+        timeUntilReset: timeRemainingFormatted
     };
 }
+
+/**
+ * Função helper para resetar o contador de uso (DEBUG)
+ * Chamar no console: resetSimulationUsage()
+ */
+function resetSimulationUsage() {
+    const storageKey = 'siav_simulator_usage';
+    localStorage.removeItem(storageKey);
+    console.log('✅ Contador de uso resetado!');
+    return 'Contador resetado com sucesso. Você pode usar o simulador novamente.';
+}
+
+/**
+ * Função helper para verificar uso atual sem incrementar (DEBUG)
+ * Chamar no console: checkCurrentUsage()
+ */
+function checkCurrentUsage() {
+    const storageKey = 'siav_simulator_usage';
+    const userPlan = state.currentUser?.plan || 'free';
+    const stored = localStorage.getItem(storageKey);
+    const now = Date.now();
+    const usageData = stored ? JSON.parse(stored) : { firstUseTimestamp: now, count: 0 };
+
+    const normalizedPlan = userPlan.toLowerCase();
+    let limit;
+    if (normalizedPlan === 'free') {
+        limit = FREE_DAILY_LIMIT;
+    } else if (normalizedPlan === 'student' || normalizedPlan === 'estudante') {
+        limit = STUDENT_DAILY_LIMIT;
+    } else if (normalizedPlan === 'professional' || normalizedPlan === 'profissional' ||
+               normalizedPlan === 'lifetime' || normalizedPlan === 'vitalicio') {
+        limit = 'Ilimitado';
+    } else {
+        limit = FREE_DAILY_LIMIT;
+    }
+
+    const timeSinceFirstUse = now - usageData.firstUseTimestamp;
+    const timeUntilReset = RESET_INTERVAL_MS - timeSinceFirstUse;
+    const timeRemainingFormatted = timeUntilReset > 0 ? formatTimeRemaining(timeUntilReset) : 'Disponível agora';
+
+    console.log('📊 Status de Uso do Simulador:');
+    console.log('   Plano:', userPlan);
+    console.log('   Limite:', limit);
+    console.log('   Usado neste período:', usageData.count);
+    console.log('   Primeiro uso:', new Date(usageData.firstUseTimestamp).toLocaleString('pt-BR'));
+    console.log('   ⏰ Tempo até reset:', timeRemainingFormatted);
+    console.log('   Restante:', typeof limit === 'number' ? limit - usageData.count : 'Ilimitado');
+
+    return {
+        plan: userPlan,
+        limit: limit,
+        used: usageData.count,
+        firstUse: new Date(usageData.firstUseTimestamp).toLocaleString('pt-BR'),
+        timeUntilReset: timeRemainingFormatted,
+        remaining: typeof limit === 'number' ? limit - usageData.count : 'Ilimitado'
+    };
+}
+
+// Tornar funções disponíveis globalmente para debug
+window.resetSimulationUsage = resetSimulationUsage;
+window.checkCurrentUsage = checkCurrentUsage;
 
 /**
  * Exibe uma notificação toast
@@ -1816,65 +2030,8 @@ function showToastNotification(message, type = 'info', timeout = 4000) {
  */
 function startPCR() {
     // ================================================
-    // VERIFICAÇÃO DE LIMITES DIÁRIOS - V4.0
-    // ================================================
-
-    // Obter plano atual do usuário
-    const userPlan = state.currentUser?.plan || 'free';
-    console.log('👤 Plano do usuário:', userPlan);
-
-    // Verificar limites de uso (usando função do localStorage)
-    const usageCheck = checkAndIncrementSimulationUse(userPlan);
-    console.log('📊 Resultado da verificação:', usageCheck);
-
-    // CASO 1: Bloqueio total - 5º uso atingido
-    if (!usageCheck.allowed) {
-        console.warn('🚫 BLOQUEIO ATIVADO - Limite diário atingido');
-
-        // Mostrar toast de bloqueio
-        showToastNotification(
-            '🚫 Limite atingido! Faça upgrade para treinar sem limites.',
-            'danger',
-            6000
-        );
-
-        // Abrir modal de upgrade com contexto de bloqueio
-        setTimeout(() => {
-            if (typeof window.showUpgradeModal === 'function') {
-                window.showUpgradeModal({
-                    reason: 'daily_limit_reached',
-                    currentPlan: userPlan,
-                    message: usageCheck.message,
-                    upgradeRequired: true
-                });
-            } else if (typeof window.openPlansModal === 'function') {
-                window.openPlansModal();
-            } else {
-                alert(usageCheck.message + '\n\nFaça upgrade para continuar treinando sem limites!');
-            }
-        }, 500);
-
-        return; // BLOQUEAR EXECUÇÃO
-    }
-
-    // CASO 2: Alerta de penúltimo uso (resta apenas 1 simulação)
-    if (usageCheck.isWarning) {
-        console.warn('⚠️ ALERTA - Penúltimo uso detectado');
-
-        showToastNotification(
-            usageCheck.message,
-            'warning',
-            8000
-        );
-    }
-
-    // CASO 3: Uso normal
-    if (usageCheck.remaining !== null && usageCheck.remaining > 1) {
-        console.log(`✅ Uso permitido - Restam ${usageCheck.remaining} simulações hoje`);
-    }
-
-    // ================================================
-    // INICIALIZAÇÃO DA PCR (LÓGICA ORIGINAL)
+    // USO DE PCR É ILIMITADO EM TODOS OS PLANOS
+    // Apenas o salvamento de logs tem limites
     // ================================================
 
     // Previne múltiplas ativações
@@ -2525,7 +2682,13 @@ function saveNotes() {
         }
 
         if (!checkAccess('notes_logging', false)) {
-            alert("Anotacoes salvas temporariamente na sessao. Faca upgrade para o Plano Profissional para salvar no log permanente.");
+            if (confirm("Anotacoes salvas temporariamente na sessao. Faca upgrade para o Plano Profissional para salvar no log permanente.\n\nDeseja ver os planos disponíveis?")) {
+                if (typeof openPlansModal === 'function') {
+                    openPlansModal();
+                } else if (window.openPlansModal) {
+                    window.openPlansModal();
+                }
+            }
             closeModal('notes-modal');
             notesInput.value = '';
             return;
@@ -3062,11 +3225,17 @@ function executePCRFinish() {
     
     addEvent('FINALIZAÇÃO: Atendimento de PCR finalizado', state.roscAchieved ? 'success' : 'critical');
     
-    if (checkAccess('log_history', false)) { 
+    if (checkAccess('log_history', false)) {
         generateEvolution(true);
     } else {
-        generateEvolution(false); 
-        alert("Atendimento finalizado. Faça upgrade para o Plano Profissional para salvar o histórico e os logs de PCR!");
+        generateEvolution(false);
+        if (confirm("Atendimento finalizado. Faça upgrade para o Plano Profissional para salvar o histórico e os logs de PCR!\n\nDeseja ver os planos disponíveis?")) {
+            if (typeof openPlansModal === 'function') {
+                openPlansModal();
+            } else if (window.openPlansModal) {
+                window.openPlansModal();
+            }
+        }
         showScreen('home');
     }
 }
@@ -3183,15 +3352,19 @@ function renderPatientLog() {
 
     // Verificação local de autenticação
     if (!state.currentUser.isLoggedIn) {
-        logList.innerHTML = '<p style="text-align: center; color: var(--danger); font-weight: 700;">Faça login para acessar o histórico.</p>';
+        logList.innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+                <p style="color: var(--danger); font-weight: 700; margin-bottom: 15px;">Faça login para acessar o histórico.</p>
+                <button onclick="showProfileModal()" class="primary-btn">
+                    Fazer Login
+                </button>
+            </div>
+        `;
         return;
     }
 
-    // Verificação local de permissão
-    if (!checkAccess('log_history', false)) {
-        logList.innerHTML = '<p style="text-align: center; color: var(--danger); font-weight: 700;">Bloqueado: Requer Plano Profissional.</p>';
-        return;
-    }
+    // TODOS os usuários logados podem ver seus logs
+    // Limites são aplicados no salvamento, não na visualização
 
     // Permissão OK, renderiza normalmente
     fetchPcrLogs().then(() => {
@@ -3624,11 +3797,15 @@ function saveGlasgow() {
 async function handleLogin(e) {
     e.preventDefault();
 
-    const loginBtn = document.querySelector('#login-form button[type="submit"]');
+    const form = e.target;
+    const loginBtn = form.querySelector('button[type="submit"]');
 
     try {
-        const emailInput = document.getElementById('login-email');
-        const passwordInput = document.getElementById('login-password');
+        // Suporta tanto o formulário principal quanto o modal simples
+        const emailInput = form.querySelector('input[type="email"]') ||
+                          document.getElementById('login-email');
+        const passwordInput = form.querySelector('input[type="password"]') ||
+                             document.getElementById('login-password');
 
         if (!emailInput || !passwordInput) {
             alert('Erro: Campos de login nao encontrados.');
@@ -3656,8 +3833,13 @@ async function handleLogin(e) {
             return;
         }
 
-        if (loginBtn) loginBtn.textContent = 'LOGANDO...';
-        if (loginBtn) loginBtn.disabled = true;
+        if (loginBtn) {
+            if (!loginBtn.getAttribute('data-original-text')) {
+                loginBtn.setAttribute('data-original-text', loginBtn.textContent);
+            }
+            loginBtn.textContent = 'LOGANDO...';
+            loginBtn.disabled = true;
+        }
 
         if (!supabase || !supabase.auth) {
             alert('Erro de autenticação: serviço indisponível.');
@@ -3676,14 +3858,18 @@ async function handleLogin(e) {
 
         updateGreetingsAndHeader();
         closeModal('profile-modal');
+        // Fecha o modal simples também, se estiver aberto
+        const loginModal = document.getElementById('login-modal');
+        if (loginModal) {
+            loginModal.classList.remove('show');
+            setTimeout(() => loginModal.style.display = 'none', 300);
+        }
         updateDashboard();
 
     } catch (error) {
         console.error('Erro no login:', error);
         if (error.message.includes('not found') || error.message.includes('Invalid login credentials')) {
              if (confirm("Usuario nao encontrado. Deseja cadastrar esta conta agora?")) {
-                 const email = document.getElementById('login-email').value.trim();
-                 const password = document.getElementById('login-password').value;
                  await handleRegistration(email, password);
              }
         } else {
@@ -3691,8 +3877,12 @@ async function handleLogin(e) {
         }
 
     } finally {
-        if (loginBtn) loginBtn.textContent = 'FAZER LOGIN / CADASTAR';
-        if (loginBtn) loginBtn.disabled = false;
+        if (loginBtn) {
+            // Restaura o texto correto do botão
+            const originalText = loginBtn.getAttribute('data-original-text') || 'ENTRAR';
+            loginBtn.innerHTML = loginBtn.innerHTML.replace('LOGANDO...', originalText);
+            loginBtn.disabled = false;
+        }
     }
 }
 
@@ -3742,6 +3932,59 @@ async function handleRegistration(email, password) {
         console.error('Erro no cadastro:', error);
         alert(`Falha no Cadastro: ${error.message}`);
         return false;
+    }
+}
+
+async function handleRegistrationFromForm(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    try {
+        const emailInput = form.querySelector('input[type="email"]');
+        const passwordInput = form.querySelector('input[type="password"]');
+        const nameInput = form.querySelector('input[id*="name"]');
+
+        if (!emailInput || !passwordInput) {
+            alert('Erro: Campos de cadastro nao encontrados.');
+            return;
+        }
+
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'CADASTRANDO...';
+
+            const success = await handleRegistration(email, password);
+
+            if (success) {
+                // Fecha o modal de registro
+                const registerModal = document.getElementById('register-modal');
+                if (registerModal) {
+                    registerModal.classList.remove('show');
+                    setTimeout(() => registerModal.style.display = 'none', 300);
+                }
+
+                // Limpa o formulário
+                form.reset();
+            }
+
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        } else {
+            await handleRegistration(email, password);
+        }
+
+    } catch (error) {
+        console.error('Erro no formulário de registro:', error);
+        alert(`Erro ao processar cadastro: ${error.message}`);
+        if (submitBtn) {
+            submitBtn.disabled = false;
+        }
     }
 }
 
@@ -4319,6 +4562,12 @@ async function startQuiz() {
     let usedFallback = false;
 
     try {
+            // Checagem imediata de conexão para evitar timeout do Supabase
+            if (!navigator.onLine) {
+                console.warn('SIAV: Dispositivo offline, ativando fallback do quiz.');
+                throw new Error('Offline');
+            }
+
         // Tentar carregar do Supabase primeiro
         let query = supabase
             .from('quiz_questions')
@@ -4350,6 +4599,12 @@ async function startQuiz() {
                 const matchesType = q.type === quizType;
                 const matchesDifficulty = difficulty === 'todos' || q.difficulty === difficulty;
                 return matchesType && matchesDifficulty;
+            }).map(q => {
+                // Corrige o formato da resposta offline: converte de índice numérico para a string exata
+                if (typeof q.answer === 'number' && q.options && q.options[q.answer]) {
+                    q.answer = q.options[q.answer];
+                }
+                return q;
             });
 
             usedFallback = true;
@@ -4556,6 +4811,44 @@ let simulationState = {
  */
 async function startAdvancedSimulator(clinicalCase) {
     console.log('🚀 [SIMULATOR] Iniciando Game Engine...');
+
+    // ================================================
+    // VERIFICAÇÃO DE LIMITES DO SIMULADOR AVANÇADO
+    // Free: 1 uso/dia | Student: 10 usos/dia | Pro: Ilimitado
+    // ================================================
+    const userPlan = state.currentUser?.plan || 'free';
+    console.log('👤 Plano do usuário:', userPlan);
+
+    // Verificar limites de uso
+    const usageCheck = await checkAndIncrementSimulationUse(userPlan);
+    console.log('📊 Resultado da verificação de limite:', usageCheck);
+
+    // Bloquear se atingiu o limite
+    if (!usageCheck.allowed) {
+        console.warn('🚫 LIMITE DIÁRIO ATINGIDO - Simulador Avançado bloqueado');
+
+        // Mostrar mensagem com timer e perguntar se quer fazer upgrade
+        const userWantsUpgrade = confirm(usageCheck.message + '\n\nDeseja ver os planos disponíveis?');
+
+        // Abrir modal de upgrade apenas se o usuário quiser
+        if (userWantsUpgrade) {
+            if (typeof window.openPlansModal === 'function') {
+                window.openPlansModal();
+            }
+        }
+
+        return; // BLOQUEAR EXECUÇÃO
+    }
+
+    // Mostrar alerta se estiver próximo do limite
+    if (usageCheck.isWarning) {
+        console.warn('⚠️ ALERTA - Próximo do limite do Simulado Avançado');
+        showToastNotification(
+            usageCheck.message,
+            'warning',
+            8000
+        );
+    }
 
     // ===== VALIDAÇÕES DEFENSIVAS =====
     if (!clinicalCase) {
@@ -5193,8 +5486,8 @@ async function initApp() {
     initDOMCache();
     
     await loadState();
-
-    // Verifica configuração de lembrar login
+    // Não checa mais sessão Supabase automaticamente
+    // A verificação de sessão/autenticação deve ser feita APENAS após ação do usuário (login/continuar)
     const rememberLogin = localStorage.getItem('siavRememberLogin');
     if (rememberLogin === 'false') {
         // Só tenta deslogar se houver sessão
@@ -5243,12 +5536,18 @@ async function initApp() {
         }
     });
     document.getElementById('nav-dashboard')?.addEventListener('click', () => {
-        updateDashboard(); 
+        updateDashboard();
             import('./src/services/permissions.js').then(({ canAccess }) => {
                 if (canAccess('dashboard')) {
                     showScreen('dashboard');
                 } else {
-                    alert('Acesso ao dashboard restrito ao seu plano.');
+                    if (confirm('Acesso ao dashboard restrito ao seu plano.\n\nDeseja ver os planos disponíveis?')) {
+                        if (typeof openPlansModal === 'function') {
+                            openPlansModal();
+                        } else if (window.openPlansModal) {
+                            window.openPlansModal();
+                        }
+                    }
                 }
             });
     });
@@ -5339,8 +5638,10 @@ if (submitBtn) {
 
 
     // Vínculos do Módulo de Perfil/Login/Dashboard
-    document.getElementById('login-form')?.addEventListener('submit', handleLogin); 
-    document.getElementById('profile-update-form')?.addEventListener('submit', handleProfileUpdate); 
+    document.getElementById('login-form')?.addEventListener('submit', handleLogin);
+    document.getElementById('login-form-simple')?.addEventListener('submit', handleLogin);
+    document.getElementById('register-form-full')?.addEventListener('submit', handleRegistrationFromForm);
+    document.getElementById('profile-update-form')?.addEventListener('submit', handleProfileUpdate);
     document.getElementById('logout-btn')?.addEventListener('click', logout);
     document.getElementById('cancel-profile-btn')?.addEventListener('click', () => closeModal('profile-modal'));
     document.getElementById('login-to-dashboard-btn')?.addEventListener('click', showProfileModal);
@@ -5355,7 +5656,13 @@ if (submitBtn) {
         if (canAccess('log_history')) {
             showScreen('log');
         } else {
-            alert('Acesso ao log restrito ao Plano Profissional.');
+            if (confirm('Acesso ao log restrito ao Plano Profissional.\n\nDeseja ver os planos disponíveis?')) {
+                if (typeof openPlansModal === 'function') {
+                    openPlansModal();
+                } else if (window.openPlansModal) {
+                    window.openPlansModal();
+                }
+            }
         }
     });
     document.getElementById('upgrade-plan-btn')?.addEventListener('click', startSubscriptionFlow);

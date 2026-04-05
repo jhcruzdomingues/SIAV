@@ -5,6 +5,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { initI18n, t, setLocale, getLocale, getAvailableLocales } from '../src/i18n/index.js';
 
+// Impede o Node.js de tentar baixar o Supabase via URL (https://) durante o teste
+vi.mock('../src/config/supabase.js', () => ({
+    supabase: {}
+}));
+
 describe('Sistema de Internacionalização', () => {
     beforeEach(() => {
         // Limpa localStorage antes de cada teste
@@ -12,13 +17,19 @@ describe('Sistema de Internacionalização', () => {
     });
 
     describe('initI18n()', () => {
+
         it('deve inicializar com idioma padrão pt-BR', () => {
+            // Mocka navigator.language para 'pt-BR'
+            const originalNavigator = global.navigator;
+            global.navigator = { language: 'pt-BR' };
             initI18n();
             expect(getLocale()).toBe('pt-BR');
+            global.navigator = originalNavigator;
         });
 
         it('deve carregar idioma salvo do localStorage', () => {
-            localStorage.setItem('locale', 'en-US');
+            // Usa o prefixo correto e stringify (igual o storage.js faz)
+            localStorage.setItem('siav_locale', JSON.stringify('en-US'));
             initI18n();
             expect(getLocale()).toBe('en-US');
         });
@@ -68,8 +79,12 @@ describe('Sistema de Internacionalização', () => {
         });
 
         it('deve salvar no localStorage', () => {
+            // Espiona o método setItem do localStorage
+            // No JSDOM, precisamos espionar o Protótipo da classe Storage
+            const spy = vi.spyOn(Storage.prototype, 'setItem');
             setLocale('es-ES');
-            expect(localStorage.setItem).toHaveBeenCalledWith('locale', 'es-ES');
+            expect(spy).toHaveBeenCalledWith('siav_locale', JSON.stringify('es-ES'));
+            spy.mockRestore();
         });
 
         it('não deve alterar para idioma não suportado', () => {
