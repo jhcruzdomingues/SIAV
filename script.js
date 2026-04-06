@@ -3441,7 +3441,7 @@ function downloadProtocolPDF(protocolKey) {
     
     const printWindow = window.open('', '', 'height=600,width=800');
     printWindow.document.write('<html><head><title>' + protocol.title + '</title>');
-    printWindow.document.write('<link rel="stylesheet" href="style.css" type="text/css" />');
+    printWindow.document.write('<link rel="stylesheet" href="assets/css/style.css" type="text/css" />');
     printWindow.document.write('</head><body><div id="print-area">');
     printWindow.document.write(protocol.content);
     printWindow.document.write('<div style="position: fixed; top: 30%; left: 0; width: 100%; text-align: center; opacity: 0.15; transform: rotate(-30deg); font-size: 60px; color: #333;">S.I.A.V.</div>');

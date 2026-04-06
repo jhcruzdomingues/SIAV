@@ -6,21 +6,13 @@
 module.exports = {
   content: [
     './index.html',
-    './script.js',
-    './settings-integration.js',
-    './mercadopago-integration.js',
-    './plans-modal-optimized.js',
+    './assets/js/**/*.js',
     './pages/**/*.html',
-    './plans-modal.html',
     './src/**/*.js'
   ],
 
   css: [
-    './style.css',
-    './shock-styles.css',
-    './sound-settings-styles.css',
-    './settings-menu-styles.css',
-    './plans-modal.css'
+    './assets/css/**/*.css'
   ],
 
   // Classes que devem ser mantidas mesmo se não aparecerem no HTML
