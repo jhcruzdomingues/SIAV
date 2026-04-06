@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "npm run build:css && npm run build:js",
-    "build:js": "terser assets/js/script.js -o build-optimized/script.min.js --compress --mangle --comments false && terser assets/js/settings-integration.js -o build-optimized/settings-integration.min.js --compress --mangle --comments false",
+    "build:js": "terser script.js -o build-optimized/script.min.js --compress --mangle --comments false && terser settings-integration.js -o build-optimized/settings-integration.min.js --compress --mangle --comments false",
     "build:css": "npm run purgecss && npm run minify:css",
     "purgecss": "purgecss --config purgecss.config.cjs --output build-optimized/",
     "minify:css": "postcss build-optimized/style.css -o build-optimized/style.min.css --use cssnano && postcss build-optimized/shock-styles.css -o build-optimized/shock-styles.min.css --use cssnano",
