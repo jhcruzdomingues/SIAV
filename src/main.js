@@ -33,6 +33,11 @@ import { addEvent, getIconForEvent, updateTimeline } from './ui/timeline.js';
 import { showVitalsModal, getVitalsStatus, recordVitals } from './pcr/vitals.js';
 import { manageProVisibility, fetchUserProfile, loadUserFromSession, checkAuthStatus, resetUserState, saveState, loadState, handleLogin as handleLoginUI, handleRegistration, handleRegistrationFromForm, handleProfileUpdate, logout as logoutUI, showProfileModal, updateGreetingsAndHeader, updateSidebarPlan, updateDashboard, initUIAuthListener } from './ui/auth-profile.js';
 import { showNotesModal, saveNotes, generateEvolution, savePcrLogToSupabase, fetchPcrLogs, deleteLogEntry, renderPatientLog, viewLogDetail } from './pcr/log.js';
+import { checkAccess, showUpgradeModal, startSubscriptionFlow, PLAN_PRIORITY, ACCESS_LEVELS } from './services/permissions.js';
+import { showStudyDetail, downloadProtocolPDF, showProtocolDetail, getTreatmentRecommendation, toggleCause, toggleStudyHSTs, createStudyHSTsList, closeTreatmentFullscreen } from './protocols/guidelines.js';
+import { showPatientModal, savePatientData, startPCRWithUninformedData, cancelPatientSetup } from './ui/patient.js';
+import { showGlasgowModal, updateGlasgowScore, saveGlasgow } from './ui/glasgow.js';
+import { updatePcrGuidance, feedbackCritico } from './ui/pcr-guidance.js';
 
 // Novos módulos
 import { initI18n, t, setLocale, getLocale } from './i18n/index.js';
@@ -243,6 +248,11 @@ Object.assign(window, { showVitalsModal, getVitalsStatus, recordVitals });
 Object.assign(window, { toggleMetronome, startMetronome, stopMetronome, adjustBPM, showTransientAlert });
 Object.assign(window, { manageProVisibility, fetchUserProfile, loadUserFromSession, checkAuthStatus, resetUserState, saveState, loadState, handleLogin: handleLoginUI, handleRegistration, handleRegistrationFromForm, handleProfileUpdate, logout: logoutUI, showProfileModal, updateGreetingsAndHeader, updateSidebarPlan, updateDashboard });
 Object.assign(window, { showNotesModal, saveNotes, generateEvolution, savePcrLogToSupabase, fetchPcrLogs, deleteLogEntry, renderPatientLog, viewLogDetail });
+Object.assign(window, { checkAccess, showUpgradeModal, startSubscriptionFlow, PLAN_PRIORITY, ACCESS_LEVELS });
+Object.assign(window, { showStudyDetail, downloadProtocolPDF, showProtocolDetail, getTreatmentRecommendation, toggleCause, toggleStudyHSTs, createStudyHSTsList, closeTreatmentFullscreen });
+Object.assign(window, { showPatientModal, savePatientData, startPCRWithUninformedData, cancelPatientSetup });
+Object.assign(window, { showGlasgowModal, updateGlasgowScore, saveGlasgow });
+Object.assign(window, { updatePcrGuidance, feedbackCritico });
 
 window.MedicalBrain = MedicalBrain;
 
