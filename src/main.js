@@ -31,6 +31,7 @@ import { showRhythmSelectorScreen, selectRhythmOption, processRhythmSelection, s
 import { showMedModal, updateMedicationDose, recordMedication, startDrugTimer, stopDrugTimer } from './pcr/medications.js';
 import { addEvent, getIconForEvent, updateTimeline } from './ui/timeline.js';
 import { showVitalsModal, getVitalsStatus, recordVitals } from './pcr/vitals.js';
+import { manageProVisibility, fetchUserProfile, loadUserFromSession, checkAuthStatus, resetUserState, saveState, loadState, handleLogin as handleLoginUI, handleRegistration, handleRegistrationFromForm, handleProfileUpdate, logout as logoutUI, showProfileModal, updateGreetingsAndHeader, updateSidebarPlan, updateDashboard, initUIAuthListener } from './ui/auth-profile.js';
 import { showNotesModal, saveNotes, generateEvolution, savePcrLogToSupabase, fetchPcrLogs, deleteLogEntry, renderPatientLog, viewLogDetail } from './pcr/log.js';
 
 // Novos módulos
@@ -90,21 +91,7 @@ async function initApp() {
   }
 
   // 7. Configurar listeners de autenticação
-  onAuthStateChange((event, session) => {
-    console.log('🔐 Auth event:', event);
-    if (event === 'SIGNED_IN') {
-      console.log('✅ Login realizado');
-      if (session?.user) {
-        loadUserProfile(session.user.id);
-        trackEvent('user_login');
-        // Carregar/preload casos clínicos APÓS login
-        preloadClinicalCases();
-      }
-    } else if (event === 'SIGNED_OUT') {
-      console.log('👋 Logout realizado');
-      trackEvent('user_logout');
-    }
-  });
+  initUIAuthListener();
 
   console.log('✅ SIAV inicializado com sucesso!');
   announce('Aplicativo SIAV carregado e pronto para uso');
@@ -254,6 +241,7 @@ Object.assign(window, { showMedModal, updateMedicationDose, recordMedication, st
 Object.assign(window, { addEvent, getIconForEvent, updateTimeline });
 Object.assign(window, { showVitalsModal, getVitalsStatus, recordVitals });
 Object.assign(window, { toggleMetronome, startMetronome, stopMetronome, adjustBPM, showTransientAlert });
+Object.assign(window, { manageProVisibility, fetchUserProfile, loadUserFromSession, checkAuthStatus, resetUserState, saveState, loadState, handleLogin: handleLoginUI, handleRegistration, handleRegistrationFromForm, handleProfileUpdate, logout: logoutUI, showProfileModal, updateGreetingsAndHeader, updateSidebarPlan, updateDashboard });
 Object.assign(window, { showNotesModal, saveNotes, generateEvolution, savePcrLogToSupabase, fetchPcrLogs, deleteLogEntry, renderPatientLog, viewLogDetail });
 
 window.MedicalBrain = MedicalBrain;

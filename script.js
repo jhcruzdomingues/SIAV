@@ -59,12 +59,6 @@ console.log('Diagnóstico Supabase:', {
 // Use sempre o cliente global Supabase já inicializado
 // window.supabaseClient é a referência correta
 
-// Estrutura para o Plano padrão
-const DEFAULT_USER_DATA = {
-    name: 'Convidado',
-    profession: 'Profissional de Saúde',
-    plan: 'free'
-};
 // --- FIM DA CONFIGURAÇÃO SUPABASE ---
 
 // Cache de elementos DOM para performance
@@ -193,8 +187,8 @@ window.state = Object.assign({
     causesChecked: [], 
     currentScreen: 'home',
     currentUser: {
-        isLoggedIn: false, name: DEFAULT_USER_DATA.name, email: null,
-        profession: DEFAULT_USER_DATA.profession, councilRegister: null,
+        isLoggedIn: false, name: 'Convidado', email: null,
+        profession: 'Profissional de Saúde', councilRegister: null,
         plan: DEFAULT_USER_DATA.plan, token: null, id: null, phone: null, birthDate: null
     },
     quiz: { active: false, questions: [], currentQuestionIndex: 0, score: 0, config: {} },
