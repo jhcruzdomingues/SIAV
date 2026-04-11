@@ -19,7 +19,7 @@ function showGlasgowModal() {
   if (modal) modal.style.display = 'block';
 }
 
-import { startPCR } from '../pcr/start.js';
+import { startPCR } from '../pcr/core.js';
 
 export function registerHomeButtonEvents() {
   document.getElementById('start-pcr-card')?.addEventListener('click', showPatientModal);

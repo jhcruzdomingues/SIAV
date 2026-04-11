@@ -171,54 +171,40 @@ let compressionCycle = {
  * @property {Array} patientLog - Histórico de atendimentos (profissional)
  * @property {Object} tempRhythmData - Dados temporários de seleção de ritmo
  */
-let state = {
+
+// =======================================================
+// ESTADO GLOBAL INTEGRADO COM MÓDULOS ES6
+// =======================================================
+// Inicializamos o objeto global window.state unindo com qualquer dado que
+// já tenha sido injetado pelo src/config/state.js, impedindo que o script legado perca estado.
+window.state = Object.assign({
     pcrActive: false,
     pcrStartTime: null,
     pcrSeconds: 0,
     metronomeActive: false,
     bpm: 110,
     events: [],
-    patient: {
-        weight: 70, 
-        age: 30 
-    },
+    patient: { weight: 70, age: 30, name: '', sex: '', allergies: '', comorbidities: '' },
     notes: [],
     shockCount: 0,
     medications: [], 
     rhythms: [], 
     totalCompressionSeconds: 0, 
     roscAchieved: false, 
-    
     causesChecked: [], 
     currentScreen: 'home',
-    
-    // O objeto currentUser agora depende do Supabase Session
     currentUser: {
-        isLoggedIn: false,
-        name: DEFAULT_USER_DATA.name,
-        email: null,
-        profession: DEFAULT_USER_DATA.profession,
-        councilRegister: null,
-        plan: DEFAULT_USER_DATA.plan, 
-        token: null, 
-        id: null,
-        phone: null,
-        birthDate: null
+        isLoggedIn: false, name: DEFAULT_USER_DATA.name, email: null,
+        profession: DEFAULT_USER_DATA.profession, councilRegister: null,
+        plan: DEFAULT_USER_DATA.plan, token: null, id: null, phone: null, birthDate: null
     },
-    
-    quiz: {
-        active: false,
-        questions: [], 
-        currentQuestionIndex: 0,
-        score: 0,
-        config: {}
-    },
+    quiz: { active: false, questions: [], currentQuestionIndex: 0, score: 0, config: {} },
     quizResults: [], 
     patientLog: [], 
-    
-    // NOVO ESTADO TEMPORÁRIO para passagem entre telas (Ritmo/Choque)
     tempRhythmData: { rhythm: null, notes: null }
-};
+}, window.state || {});
+
+let state = window.state;
 
 let intervals = {
     timer: null,
@@ -244,8 +230,6 @@ function feedbackCritico(btnId) {
         }
     }
 }
-
-const CYCLE_DURATION = 120000; // 2 minutos em milissegundos
 
 
 // ===============================================
@@ -1073,21 +1057,6 @@ function updatePcrGuidance() {
     if (hintDetails) {
         hintDetails.innerHTML = '';
     }
-// Função para exibir timer de drogas integrado ao painel único
-function getDrugTimerDisplay() {
-    // Se não existir PCR ativa ou ritmo não foi determinado ainda, não mostra
-    if (!state.pcrActive || compressionCycle.lastRhythmWasShockable === undefined) return '';
-    const nextStep = getProtocolNextStep();
-    if (!nextStep || !nextStep.medication) return '';
-    // Exibe nome do medicamento e status
-    let status = '';
-    if (nextStep.criticalAction === 'ADMINISTRE AGORA' || (nextStep.message && nextStep.message.includes('DEVIDA'))) {
-        status = `<span class='drug-timer-status due'>🔴 ${nextStep.message}</span>`;
-    } else {
-        status = `<span class='drug-timer-status ok'>✓ ${nextStep.message}</span>`;
-    }
-    return `<div class='drug-timer-panel'><span class='drug-timer-med'>${nextStep.medication}</span> ${status}</div>`;
-}
 
     // 2. Atualiza o status do ciclo e a barra de progresso
     let currentStepMessage = '';
@@ -1151,22 +1120,6 @@ function getDrugTimerDisplay() {
     if (compressionCycle.currentPhase !== 'compressions') hintBox.classList.remove('compressions');
     if (compressionCycle.currentPhase !== 'rhythm_check') hintBox.classList.remove('rhythm-check');
     if (compressionCycle.currentPhase !== 'shock_advised') hintBox.classList.remove('shock-advised');
-}
-
-// ===============================================
-// FUNÇÕES DE CÁLCULO PEDIÁTRICO
-// ===============================================
-
-function getCalculatedPediatricValues(weight) {
-    const safeWeight = Math.max(1, weight); 
-
-    return {
-        adrenalina: (safeWeight * 0.01).toFixed(2), 
-        amiodarona: (safeWeight * 5).toFixed(0), 
-        lidocaina: (safeWeight * 1).toFixed(1), 
-        shock1: (safeWeight * 2).toFixed(0), 
-        shock2: (safeWeight * 4).toFixed(0) 
-    };
 }
 
 
@@ -1238,27 +1191,6 @@ function showTransientAlert(message, style = 'warning', timeout = 4000) {
     }
     // Fallback: console
     console.info('ALERT:', message);
-}
-
-// Função utilitária para limpar todos os intervalos de forma segura
-function clearAllIntervals() {
-    const intervalKeys = Object.keys(intervals);
-    intervalKeys.forEach(key => {
-        if (intervals[key]) {
-            if (key === 'cycleTimer') {
-                clearTimeout(intervals[key]);
-            } else {
-                clearInterval(intervals[key]);
-            }
-            intervals[key] = null;
-        }
-    });
-    
-    // Limpa cycle timer separado
-    if (compressionCycle.cycleTimer) {
-        clearTimeout(compressionCycle.cycleTimer);
-        compressionCycle.cycleTimer = null;
-    }
 }
 
 function formatTime(totalSeconds) {
@@ -1348,14 +1280,17 @@ function updateDrugStatusDisplay() {
     }
 
     // Obter protocolo (baseado no ritmo)
-    const nextStep = getProtocolNextStep();
+    const nextStep = window.MedicalBrain.getProtocolNextStep(getPCRStateSnapshot());
     
-    if (nextStep && nextStep.medication) {
-        // Exibe o nome do medicamento e tempo
-        drugTimerValue.textContent = `${nextStep.medication}`;
+    const isDrugStep = nextStep && (nextStep.criticalAction === 'DRUG' || nextStep.message.includes('Adrenalina') || nextStep.message.includes('Amiodarona'));
+
+    if (isDrugStep) {
+        const medName = nextStep.message.split('—')[0].trim() || 'Medicação';
+
+        drugTimerValue.textContent = medName;
         
         // Exibe status devida/aguardar
-        if (nextStep.criticalAction === 'ADMINISTRE AGORA' || nextStep.message.includes('DEVIDA')) {
+        if ((nextStep.criticalAction === 'DRUG' && nextStep.message.includes('AGORA')) || nextStep.message.includes('DEVIDA') || nextStep.message.includes('URGENTE')) {
             drugStatusMessage.textContent = `🔴 ${nextStep.message}`;
             drugStatusMessage.classList.remove('ok');
             drugStatusMessage.classList.add('due');
@@ -2179,88 +2114,6 @@ function updateTimeline() {
     container.appendChild(fragment);
 }
 
-function startCycleProgress() {
-    // Early return se compressões não estão ativas
-    if (!compressionCycle.active) return;
-    
-    const progressBar = DOM_CACHE.progressBar || document.getElementById('cycle-progress');
-    if (!progressBar) return;
-    
-    // Limpa qualquer progresso anterior
-    if (intervals.progress) {
-        clearInterval(intervals.progress);
-        intervals.progress = null;
-    }
-    
-    // Reseta a barra
-    if (progressBar) progressBar.style.width = '0%';
-    
-    compressionCycle.cycleProgress = 0;
-    compressionCycle.startTime = Date.now();
-    
-    intervals.progress = setInterval(() => {
-        // Condições para parar o progresso
-        if (!compressionCycle.active || compressionCycle.currentPhase !== 'compressions') {
-            clearInterval(intervals.progress);
-            intervals.progress = null;
-            if (progressBar) progressBar.style.width = '0%';
-            return;
-        }
-        
-        // Calcula o tempo decorrido desde o início das compressões
-        const elapsed = Date.now() - compressionCycle.startTime;
-        let progress = (elapsed / CYCLE_DURATION) * 100;
-        
-        // Limita a 100%
-        if (progress >= 100) {
-            progress = 100;
-            clearInterval(intervals.progress);
-            intervals.progress = null;
-        }
-        
-        // Atualiza a barra de progresso
-        if (progressBar) {
-            progressBar.style.width = `${progress}%`;
-        }
-        compressionCycle.cycleProgress = progress;
-        
-    }, 100); // Atualiza a cada 100ms para smoothness
-}
-
-function startCompressions() {
-    feedbackCritico('compressions-btn');
-    if (compressionCycle.currentPhase === 'compressions') return;
-    if (compressionCycle.cycleTimer) clearTimeout(compressionCycle.cycleTimer);
-
-    compressionCycle.active = true;
-    compressionCycle.rhythmCheckTriggered = false; // Reseta a flag para o novo ciclo
-    compressionCycle.startTime = Date.now();
-    
-    if (compressionCycle.currentPhase === 'preparation') {
-        compressionCycle.cycleCount = 1; 
-    } else if (compressionCycle.currentPhase === 'rhythm_check' || compressionCycle.currentPhase === 'shock_advised') {
-        compressionCycle.cycleCount++; 
-    }
-
-    compressionCycle.currentPhase = 'compressions';
-    compressionCycle.cycleProgress = 0;
-    
-    updatePcrGuidance(); 
-    
-    if (!state.metronomeActive) {
-        toggleMetronome();
-    }
-
-    addEvent(`INÍCIO DE RCP - Ciclo ${compressionCycle.cycleCount} iniciado (2 min)`, 'critical');
-    startCycleProgress();
-    
-    compressionCycle.cycleTimer = setTimeout(() => {
-        if (compressionCycle.active && !compressionCycle.rhythmCheckTriggered) {
-            promptRhythmCheck();
-        }
-    }, CYCLE_DURATION);
-}
-
 function showPatientModal() {
     const patientModal = document.getElementById('patient-modal');
     if(patientModal) patientModal.classList.add('show');
@@ -2708,304 +2561,6 @@ function saveNotes() {
         console.error('Erro ao salvar anotacoes:', error);
         alert('Erro ao salvar anotacoes. Por favor, tente novamente.');
     }
-}
-
-// ===============================================
-// LÓGICA CONSOLIDADA DE RITMO E CONDUTA (NOVA)
-// ===============================================
-
-function showRhythmSelectorScreen(isCycleCheck = false) {
-    if (isCycleCheck) {
-        // Se for checagem de ciclo, reseta o input de notas
-        document.getElementById('selector-rhythm-notes').value = '';
-    }
-    
-    // Remove qualquer seleção de ritmo anterior ao abrir a tela
-    document.querySelectorAll('#rhythm-selector-screen .rhythm-option-btn').forEach(btn => {
-        btn.classList.remove('selected');
-    });
-    
-    // Limpa o dado temporário
-    state.tempRhythmData.rhythm = null;
-    state.tempRhythmData.notes = null;
-
-    showScreen('rhythm-selector');
-}
-
-function selectRhythmOption(element) {
-    const rhythm = element.getAttribute('data-rhythm');
-    const isAlreadySelected = element.classList.contains('selected');
-    
-    if (isAlreadySelected) {
-        // SEGUNDO CLIQUE: CONFIRMAR e processar
-        processRhythmSelection();
-    } else {
-        // PRIMEIRO CLIQUE: SELECIONAR (mostra botão laranja)
-        // Remove seleção de outros botões
-        document.querySelectorAll('#rhythm-selector-screen .rhythm-option-btn').forEach(btn => {
-            btn.classList.remove('selected');
-        });
-        
-        // Marca este como selecionado
-        element.classList.add('selected');
-        
-        // Salva o ritmo na variável temporária
-        state.tempRhythmData.rhythm = rhythm;
-        
-        // NÃO processa automaticamente - aguarda segundo clique
-    }
-}
-
-function processRhythmSelection() {
-    const rhythm = state.tempRhythmData.rhythm;
-    const notes = document.getElementById('selector-rhythm-notes').value;
-
-    if (!rhythm) {
-        showTransientAlert('Por favor, selecione um ritmo cardíaco.', 'warning', 3000);
-        return;
-    }
-    
-    const rhythmNames = {
-        'FV': 'Fibrilação Ventricular',
-        'TVSP': 'Taquicardia Ventricular s/ Pulso',
-        'AESP': 'Atividade Elétrica sem Pulso (AESP)',
-        'Assistolia': 'Assistolia',
-        'Ritmo': 'Ritmo de Perfusão (ROSC)' 
-    };
-    
-    // 1. Registra o Ritmo e a Nota na Linha do Tempo
-    state.rhythms.push({
-        type: rhythm,
-        name: rhythmNames[rhythm],
-        notes: notes,
-        time: new Date()
-    });
-    
-    let eventText = `Ritmo: ${rhythmNames[rhythm]}`;
-    if (notes) {
-        eventText += ` | Notas: ${notes}`;
-    }
-    addEvent(eventText, 'critical');
-
-    // 2. Define a Conduta
-    const isShockableRhythm = rhythm === 'FV' || rhythm === 'TVSP';
-    compressionCycle.lastRhythmWasShockable = isShockableRhythm;
-    
-    // NOVO: Ativa o timer de medicamentos AGORA que o ritmo foi determinado
-    startDrugTimer();
-    
-    if (isShockableRhythm) {
-        // RITMO CHOCÁVEL: Abre a tela de AÇÃO de Choque
-        compressionCycle.currentPhase = 'shock_advised';
-        playNotification('SHOCK');
-        
-        setupShockActionScreen(rhythmNames[rhythm]);
-        showScreen('shock-action');
-        
-    } else {
-        // RITMO NÃO CHOCÁVEL: Retoma compressões e mostra orientação não-bloqueante
-        compressionCycle.currentPhase = 'compressions';
-        updatePcrGuidance(); 
-        playNotification('DRUG'); 
-        const msg = `Ritmo Não-Chocável Detectado (${rhythmNames[rhythm]}). 1. Retomar compressões IMEDIATAMENTE. 2. Foco nos 5 H's e 5 T's.`;
-        addEvent(msg, 'critical');
-        showTransientAlert(msg, 'danger', 6000);
-        startCompressions();
-        showScreen('pcr');
-    }
-}
-
-function promptRhythmCheck() {
-    // Previne múltiplas execuções do mesmo ciclo
-    if (compressionCycle.rhythmCheckTriggered) {
-        return;
-    }
-    compressionCycle.rhythmCheckTriggered = true;
-
-    compressionCycle.currentPhase = 'rhythm_check';
-    compressionCycle.active = false; // Para o ciclo de compressões
-    updatePcrGuidance(); 
-
-    const cycleDuration = Date.now() - compressionCycle.startTime;
-    state.totalCompressionSeconds += Math.floor(cycleDuration / 1000);
-    
-    // Vibração suave para alerta de fim de ciclo
-    if ('vibrate' in navigator) {
-        navigator.vibrate([50, 100, 50]); // Padrão suave
-    }
-
-    // Tocar som de checagem de ritmo
-    if (typeof playSystemSound === 'function') {
-        playSystemSound('alert');
-    }
-
-    playNotification('CHECK_RHYTHM');
-    addEvent('PAUSA DE RCP: Fim do ciclo de 2 min. Analisar Ritmo e Pulso.', 'critical');
-    
-    // Exibe mensagem sem bloquear - usa modal em vez de confirm()
-    const hintBox = document.getElementById('protocol-hint-box');
-    if (hintBox) {
-        hintBox.classList.add('rhythm-check-alert');
-    }
-    
-    // Delay de 1.5 segundos antes de mostrar a tela de ritmo (tempo para protocolista perceber)
-    setTimeout(() => {
-        if (compressionCycle.currentPhase === 'rhythm_check' && compressionCycle.rhythmCheckTriggered) {
-            showRhythmSelectorScreen(true);
-        }
-    }, 1500);
-}
-
-
-// ===============================================
-// FUNÇÕES DA TELA DE CHOQUE (NOVA)
-// ===============================================
-
-function getShockRecommendation(rhythmType) {
-    // DELEGA PARA O MÓDULO MÉDICO TESTADO (AHA 2025):
-    return window.MedicalBrain.getShockRecommendation(state.patient, state.shockCount, rhythmType);
-}
-
-function setupShockActionScreen(rhythmType) {
-    const rhythmDisplay = document.getElementById('final-shock-rhythm');
-    const energyRecommendation = document.getElementById('shock-rec-display');
-    const energyDetails = document.getElementById('shock-rec-details');
-    const energyButtonsContainer = document.getElementById('shock-buttons-grid');
-    const appliedEnergyInput = document.getElementById('shock-applied-energy');
-    const applyBtn = document.getElementById('apply-shock-btn');
-    
-    // Pega as recomendações
-    const { recommendedEnergy, energies, doseDetails } = getShockRecommendation(rhythmType);
-    
-    if (rhythmDisplay) rhythmDisplay.textContent = rhythmType;
-    if (energyRecommendation) energyRecommendation.textContent = recommendedEnergy;
-    if (energyDetails) energyDetails.textContent = doseDetails;
-    
-    // Tenta setar a dose recomendada no input, limpando 'J' e ' '
-    const initialDose = parseInt(recommendedEnergy.replace(/[^0-9]/g, '')) || '';
-    appliedEnergyInput.value = initialDose;
-    
-    // Monta botões de atalho de energia
-    energyButtonsContainer.innerHTML = '';
-    energies.forEach((energy) => {
-        const btn = document.createElement('button');
-        btn.className = 'energy-btn';
-        btn.type = 'button';
-        btn.textContent = energy;
-
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('#shock-buttons-grid .energy-btn').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-            appliedEnergyInput.value = parseInt(energy.replace(/[^0-9]/g, ''));
-            // Habilita o botão de aplicar choque quando uma energia válida for selecionada
-            if (applyBtn) applyBtn.disabled = false;
-        });
-
-        energyButtonsContainer.appendChild(btn);
-
-        // Pre-seleciona a energia recomendada (protocolo AHA 2025)
-        const energyValue = parseInt(energy.replace(/[^0-9]/g, ''));
-        const recommendedValue = parseInt(recommendedEnergy.replace(/[^0-9]/g, ''));
-        if (energyValue === recommendedValue) {
-            // Marca selecionado visualmente
-            setTimeout(() => {
-                btn.classList.add('selected');
-                appliedEnergyInput.value = energyValue;
-                if (applyBtn) applyBtn.disabled = false;
-            }, 0);
-        }
-    });
-
-    // Se não houver energias sugeridas, limpa o input e desabilita o botão aplicar
-    if (!energies || energies.length === 0) {
-        appliedEnergyInput.value = '';
-        if (applyBtn) applyBtn.disabled = true;
-    }
-
-    // Permite ao usuário digitar manualmente a energia — ativa o botão aplicar se valor válido
-    appliedEnergyInput.removeEventListener && appliedEnergyInput.removeEventListener('input', null);
-    appliedEnergyInput.addEventListener('input', () => {
-        const val = parseInt(appliedEnergyInput.value);
-        if (applyBtn) applyBtn.disabled = !(val && val > 0);
-    });
-}
-
-function applyShockAndResume() {
-    feedbackCritico('apply-shock-btn');
-    try {
-        const rhythmTypeDisplay = document.getElementById('final-shock-rhythm');
-        const energyInput = document.getElementById('shock-applied-energy');
-
-        if (!energyInput) {
-            alert('Erro: Campo de energia nao encontrado.');
-            return;
-        }
-
-        const rhythmType = rhythmTypeDisplay ? rhythmTypeDisplay.textContent : 'N/I';
-        const appliedEnergy = energyInput.value.trim();
-
-        // Validacao de entrada
-        if (!appliedEnergy) {
-            showTransientAlert('Informe a energia aplicada em Joule para registrar!', 'warning', 3000);
-            return;
-        }
-
-        const energyValue = parseInt(appliedEnergy);
-        if (isNaN(energyValue) || energyValue <= 0) {
-            showTransientAlert('Energia deve ser um numero positivo!', 'warning', 3000);
-            return;
-        }
-
-        if (energyValue > 360) {
-            if (!confirm('Energia acima de 360J. Confirmar este valor?')) {
-                return;
-            }
-        }
-
-        // Vibracao forte para feedback tatil do choque
-        if ('vibrate' in navigator) {
-            navigator.vibrate([200, 100, 200, 100, 200]); // Padrao forte
-        }
-
-        // Tocar som de choque
-        if (typeof playSystemSound === 'function') {
-            playSystemSound('shock');
-        }
-
-        state.shockCount++;
-
-        let shockText = `CHOQUE #${state.shockCount} - ${rhythmType} - ${energyValue}J`;
-        addEvent(shockText, 'critical');
-
-        const shockMsg = `CHOQUE ADMINISTRADO! (${energyValue}J) - RETOMAR COMPRESSOES IMEDIATAMENTE.`;
-        addEvent(shockMsg, 'critical');
-        showTransientAlert(shockMsg, 'danger', 5000);
-
-        updatePcrGuidance();
-        startCompressions(); // Retoma as compressoes apos o choque
-        showScreen('pcr');
-    } catch (error) {
-        console.error('Erro ao aplicar choque:', error);
-        alert('Erro ao registrar choque. Por favor, tente novamente.');
-    }
-}
-
-function roscObtido() {
-    feedbackCritico('rosc-btn');
-    if (!state.pcrActive) {
-        showTransientAlert("Inicie um atendimento de PCR para registrar o ROSC.", 'warning', 3000);
-        return;
-    }
-    
-    if (!confirm("CONFIRMAR: O paciente obteve Retorno da Circulação Espontânea (RCE/ROSC)?")) {
-        return;
-    }
-    
-    state.roscAchieved = true;
-    addEvent('ROSC OBTIDO - Pulso presente, Circulação Espontânea', 'success');
-    
-    showTransientAlert('✅ ROSC OBTIDO! Finalizando RCP e iniciando Cuidados Pós-PCR.', 'success', 4000);
-    finishPCR();
 }
 
 
@@ -4495,7 +4050,7 @@ function shuffleArray(array) {
 
 // =====================================================
 // GAME ENGINE: Simulador Avançado Interativo
- 3// (Lógica extraída para simulator.js)
+// (Lógica extraída para simulator.js)
 // =====================================================
 
 function createMetronomeSound() {
@@ -5051,4 +4606,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 0);
 });
 
-initApp();
+initApp(); 

@@ -75,28 +75,25 @@ async function createMercadoPagoCheckout(planLevel, period) {
         // Mostrar loading
         showCheckoutLoading();
 
-        // Chamar backend para criar preferencia
-        const response = await fetch('http://localhost:3000/api/mercadopago/create-preference', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+        // Usar a Supabase Edge Function recém-criada
+        const supabase = window.SIAV?.supabase || window.supabaseClient || window.supabase;
+        if (!supabase) throw new Error('Cliente Supabase não encontrado na integração.');
+
+        const { data, error } = await supabase.functions.invoke('mercadopago-checkout', {
+            body: {
                 plan: planLevel,
                 period: period,
                 user: {
                     email: userEmail,
-                    name: userName
+                    name: userName,
+                    id: typeof state !== 'undefined' ? state.currentUser?.id : localStorage.getItem('userId')
                 }
-            })
+            }
         });
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || 'Erro ao criar preferencia de pagamento');
+        if (error) {
+            throw new Error(error.message || 'Erro ao criar preferencia de pagamento via Supabase');
         }
-
-        const data = await response.json();
 
         if (!data) {
             throw new Error('Resposta invalida do servidor');
@@ -346,20 +343,33 @@ function checkPaymentStatus() {
  * Notifica backend sobre status do pagamento
  */
 async function notifyPaymentStatus(paymentId, status) {
+    if (status !== 'approved' && status !== 'success') return;
+
     try {
-        await fetch('/api/mercadopago/payment-status', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                paymentId,
-                status,
-                userId: localStorage.getItem('userId')
-            })
+        const supabase = window.SIAV?.supabase || window.supabaseClient || window.supabase;
+        if (!supabase) return;
+
+        showCheckoutLoading();
+        const loadingText = document.querySelector('#checkout-loading h3');
+        if (loadingText) loadingText.textContent = 'Validando pagamento...';
+
+        const { data, error } = await supabase.functions.invoke('mercadopago-verify', {
+            body: { payment_id: paymentId, status: status }
         });
+
+        hideCheckoutLoading();
+
+        if (error) throw error;
+        
+        if (data && data.success) {
+            alert(`🎉 Pagamento aprovado! Seu plano foi atualizado para ${data.plan.toUpperCase()} com sucesso. Aproveite o SIAV!`);
+            window.history.replaceState({}, document.title, window.location.pathname);
+            window.location.reload();
+        }
     } catch (error) {
+        hideCheckoutLoading();
         console.error('Erro ao notificar status:', error);
+        alert('Ocorreu um erro ao validar seu pagamento. Se o valor foi debitado, contate o suporte.');
     }
 }
 

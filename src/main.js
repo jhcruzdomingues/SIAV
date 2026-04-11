@@ -24,6 +24,11 @@ import { formatTime, formatDate, formatDateTime, calculatePediatricDose } from '
 import { MEDICATIONS, calculateDose } from './utils/medications.js';
 
 import { getProtocolNextStep, shouldAdministerDrug, getRecommendedShockEnergy, getProtocolGuidance } from './protocols/medical.js';
+import * as MedicalBrain from './protocols/medical.js';
+
+import { startPCR, finishPCR, executePCRFinish, startTimer, startCycleProgress, startCompressions, promptRhythmCheck, clearAllIntervals } from './pcr/core.js';
+import { showRhythmSelectorScreen, selectRhythmOption, processRhythmSelection, setupShockActionScreen, applyShockAndResume, roscObtido } from './pcr/rhythm.js';
+import { showMedModal, updateMedicationDose, recordMedication, startDrugTimer, stopDrugTimer } from './pcr/medications.js';
 
 // Novos módulos
 import { initI18n, t, setLocale, getLocale } from './i18n/index.js';
@@ -234,6 +239,17 @@ window.SIAV = {
   // Supabase (para uso direto se necessário)
   supabase
 };
+
+// Vincula as funções extraídas da PCR para garantir compatibilidade perfeita com onclicks do HTML
+Object.assign(window, {
+  startPCR, finishPCR, executePCRFinish, 
+  startTimer, startCycleProgress, startCompressions, 
+  promptRhythmCheck, clearAllIntervals
+});
+Object.assign(window, { showRhythmSelectorScreen, selectRhythmOption, processRhythmSelection, setupShockActionScreen, applyShockAndResume, roscObtido });
+Object.assign(window, { showMedModal, updateMedicationDose, recordMedication, startDrugTimer, stopDrugTimer });
+
+window.MedicalBrain = MedicalBrain;
 
 // ===== INICIALIZAÇÃO AUTOMÁTICA =====
 
