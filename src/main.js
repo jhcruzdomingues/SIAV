@@ -31,6 +31,7 @@ import { showRhythmSelectorScreen, selectRhythmOption, processRhythmSelection, s
 import { showMedModal, updateMedicationDose, recordMedication, startDrugTimer, stopDrugTimer } from './pcr/medications.js';
 import { addEvent, getIconForEvent, updateTimeline } from './ui/timeline.js';
 import { showVitalsModal, getVitalsStatus, recordVitals } from './pcr/vitals.js';
+import { showNotesModal, saveNotes, generateEvolution, savePcrLogToSupabase, fetchPcrLogs, deleteLogEntry, renderPatientLog, viewLogDetail } from './pcr/log.js';
 
 // Novos módulos
 import { initI18n, t, setLocale, getLocale } from './i18n/index.js';
@@ -38,8 +39,8 @@ import { events } from './utils/events.js';
 import { initAnalytics, SIAVAnalytics, trackEvent, trackPageView } from './analytics/index.js';
 import { initAccessibility, announce } from './accessibility/index.js';
 import { showToast } from './ui/toast.js';
-import { initDOMCache, showScreen, closeModal, openModal } from './ui/dom.js';
-import { initAudio, playNotification } from './ui/audio.js';
+import { initDOMCache, showScreen, closeModal, openModal, showTransientAlert } from './ui/dom.js';
+import { initAudio, playNotification, toggleMetronome, startMetronome, stopMetronome, adjustBPM } from './ui/audio.js';
 
 
 // Importa eventos dos botões principais
@@ -252,6 +253,8 @@ Object.assign(window, { showRhythmSelectorScreen, selectRhythmOption, processRhy
 Object.assign(window, { showMedModal, updateMedicationDose, recordMedication, startDrugTimer, stopDrugTimer });
 Object.assign(window, { addEvent, getIconForEvent, updateTimeline });
 Object.assign(window, { showVitalsModal, getVitalsStatus, recordVitals });
+Object.assign(window, { toggleMetronome, startMetronome, stopMetronome, adjustBPM, showTransientAlert });
+Object.assign(window, { showNotesModal, saveNotes, generateEvolution, savePcrLogToSupabase, fetchPcrLogs, deleteLogEntry, renderPatientLog, viewLogDetail });
 
 window.MedicalBrain = MedicalBrain;
 
