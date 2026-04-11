@@ -1,47 +1,7 @@
 const CACHE_NAME = 'siav-v8';
 const ASSETS_TO_CACHE = [
+  '/',
   '/index.html',
-  '/style.css',
-  '/shock-styles.css',
-  '/sound-settings-styles.css',
-  '/settings-menu-styles.css',
-  '/settings-integration.js',
-  '/mercadopago-config.js',
-  '/engine.js',
-  '/simulator.js',
-  '/src/main.js',
-  '/src/config/supabase.js',
-  '/src/config/constants.js',
-  '/src/config/state.js',
-  '/src/services/auth.js',
-  '/src/services/database.js',
-  '/src/services/storage.js',
-  '/src/services/permissions.js',
-  '/src/utils/formatters.js',
-  '/src/utils/medications.js',
-  '/src/utils/events.js',
-  '/src/utils/logger.js',
-  '/src/protocols/medical.js',
-  '/src/protocols/guidelines.js',
-  '/src/pcr/core.js',
-  '/src/pcr/rhythm.js',
-  '/src/pcr/medications.js',
-  '/src/pcr/vitals.js',
-  '/src/pcr/log.js',
-  '/src/ui/dom.js',
-  '/src/ui/events.js',
-  '/src/ui/audio.js',
-  '/src/ui/timeline.js',
-  '/src/ui/toast.js',
-  '/src/ui/patient.js',
-  '/src/ui/glasgow.js',
-  '/src/ui/pcr-guidance.js',
-  '/src/ui/auth-profile.js',
-  '/src/i18n/index.js',
-  '/src/i18n/translations.js',
-  '/src/analytics/index.js',
-  '/src/accessibility/index.js',
-  '/src/index.js',
   '/data/quiz-fallback.json',
   '/sounds/shock.mp3',
   '/sounds/alert-sound.mp3',
@@ -102,8 +62,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network first for HTML and CSS to always get latest version
-  if (event.request.url.includes('.html') || event.request.url.includes('.css')) {
   // Network first for HTML, CSS, and JSON to always get latest version
   if (event.request.url.includes('.html') || event.request.url.includes('.css') || event.request.url.includes('.json')) {
     event.respondWith(

@@ -81,9 +81,6 @@ export {
 // Protocols
 export {
   getProtocolNextStep,
-  shouldAdministerDrug,
-  shouldAdministerAntiarrhythmic,
-  getRecommendedShockEnergy,
-  validateCPRQuality,
-  getProtocolGuidance
+  getShockRecommendation,
+  calculateGlasgow
 } from './protocols/medical.js';

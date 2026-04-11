@@ -23,7 +23,7 @@ import { setItem, getItem, saveSettings, loadSettings, saveOfflineLog, getOfflin
 import { formatTime, formatDate, formatDateTime, calculatePediatricDose } from './utils/formatters.js';
 import { MEDICATIONS, calculateDose } from './utils/medications.js';
 
-import { getProtocolNextStep, shouldAdministerDrug, getRecommendedShockEnergy, getProtocolGuidance } from './protocols/medical.js';
+import { getProtocolNextStep, getShockRecommendation, calculateGlasgow } from './protocols/medical.js';
 import * as MedicalBrain from './protocols/medical.js';
 
 import { startPCR, finishPCR, executePCRFinish, startTimer, startCycleProgress, startCompressions, promptRhythmCheck, clearAllIntervals } from './pcr/core.js';
@@ -48,9 +48,8 @@ import { showToast } from './ui/toast.js';
 import { initDOMCache, showScreen, closeModal, openModal, showTransientAlert } from './ui/dom.js';
 import { initAudio, playNotification, toggleMetronome, startMetronome, stopMetronome, adjustBPM } from './ui/audio.js';
 
+import { registerAllEvents } from './ui/events.js';
 
-// Importa eventos dos botões principais
-import { registerHomeButtonEvents } from './ui/events.js';
 // ===== INICIALIZAÇÃO =====
 
 console.log('%c🏥 SIAV v2.0 - Sistema Modular Inicializado', 'color: #e74c3c; font-size: 16px; font-weight: bold;');
@@ -211,9 +210,7 @@ window.SIAV = {
 
   // Protocolos
   getProtocolNextStep,
-  shouldAdministerDrug,
-  getRecommendedShockEnergy,
-  getProtocolGuidance,
+  getShockRecommendation,
 
   // Constantes
   PLANS,
@@ -269,7 +266,7 @@ window.MedicalBrain = MedicalBrain;
 let quizEngineInstance = null;
 async function getQuizEngine() {
     if (!quizEngineInstance) {
-        const { QuizEngine } = await import('../../engine.js');
+        const { QuizEngine } = await import('../engine.js');
         quizEngineInstance = new QuizEngine({
             state: state,
             supabase: supabase,
