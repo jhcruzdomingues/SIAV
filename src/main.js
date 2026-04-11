@@ -29,6 +29,8 @@ import * as MedicalBrain from './protocols/medical.js';
 import { startPCR, finishPCR, executePCRFinish, startTimer, startCycleProgress, startCompressions, promptRhythmCheck, clearAllIntervals } from './pcr/core.js';
 import { showRhythmSelectorScreen, selectRhythmOption, processRhythmSelection, setupShockActionScreen, applyShockAndResume, roscObtido } from './pcr/rhythm.js';
 import { showMedModal, updateMedicationDose, recordMedication, startDrugTimer, stopDrugTimer } from './pcr/medications.js';
+import { addEvent, getIconForEvent, updateTimeline } from './ui/timeline.js';
+import { showVitalsModal, getVitalsStatus, recordVitals } from './pcr/vitals.js';
 
 // Novos módulos
 import { initI18n, t, setLocale, getLocale } from './i18n/index.js';
@@ -248,6 +250,8 @@ Object.assign(window, {
 });
 Object.assign(window, { showRhythmSelectorScreen, selectRhythmOption, processRhythmSelection, setupShockActionScreen, applyShockAndResume, roscObtido });
 Object.assign(window, { showMedModal, updateMedicationDose, recordMedication, startDrugTimer, stopDrugTimer });
+Object.assign(window, { addEvent, getIconForEvent, updateTimeline });
+Object.assign(window, { showVitalsModal, getVitalsStatus, recordVitals });
 
 window.MedicalBrain = MedicalBrain;
 
