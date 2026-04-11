@@ -101,8 +101,6 @@ async function initApp() {
   console.log('✅ SIAV inicializado com sucesso!');
   announce('Aplicativo SIAV carregado e pronto para uso');
 
-  // 8. Não faz mais preload automático de casos clínicos sem autenticação
-
   // Sincronização de logs pendentes quando voltar online
   window.addEventListener('online', async () => {
     try {
@@ -152,8 +150,19 @@ async function initApp() {
     }, 500);
   });
 
-  // Listeners dos botões principais da home
-  registerHomeButtonEvents();
+  // Vincula TODOS os listeners da interface da aplicação
+  registerAllEvents();
+  
+  // Registra Service Worker (PWA)
+  if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+              .then((reg) => console.log('Service Worker registrado com sucesso:', reg.scope))
+              .catch((err) => console.log('Falha ao registrar Service Worker:', err));
+      });
+  }
+  
+  showScreen('home');
 }
 
 // ===== EXPORTS GLOBAIS (Para compatibilidade com código legado) =====
@@ -255,6 +264,28 @@ Object.assign(window, { showGlasgowModal, updateGlasgowScore, saveGlasgow });
 Object.assign(window, { updatePcrGuidance, feedbackCritico });
 
 window.MedicalBrain = MedicalBrain;
+
+// Lazy Load do Quiz Engine
+let quizEngineInstance = null;
+async function getQuizEngine() {
+    if (!quizEngineInstance) {
+        const { QuizEngine } = await import('../../engine.js');
+        quizEngineInstance = new QuizEngine({
+            state: state,
+            supabase: supabase,
+            checkAccess: checkAccess,
+            closeModal: closeModal,
+            saveState: saveState,
+            updateDashboard: updateDashboard
+        });
+    }
+    return quizEngineInstance;
+}
+window.startQuiz = async () => { const engine = await getQuizEngine(); engine.startQuiz(); };
+window.nextQuizQuestion = async () => { 
+    const engine = await getQuizEngine(); 
+    if (state.quiz.currentQuestionIndex < state.quiz.questions.length - 1) engine.displayQuestion(state.quiz.currentQuestionIndex + 1); else engine.finishQuiz();
+};
 
 // ===== INICIALIZAÇÃO AUTOMÁTICA =====
 
