@@ -1,4 +1,3 @@
-const CACHE_NAME = 'siav-v6';
 const CACHE_NAME = 'siav-v8';
 const ASSETS_TO_CACHE = [
   '/index.html',
