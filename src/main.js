@@ -259,6 +259,7 @@ Object.assign(window, { showStudyDetail, downloadProtocolPDF, showProtocolDetail
 Object.assign(window, { showPatientModal, savePatientData, startPCRWithUninformedData, cancelPatientSetup });
 Object.assign(window, { showGlasgowModal, updateGlasgowScore, saveGlasgow });
 Object.assign(window, { updatePcrGuidance, feedbackCritico });
+Object.assign(window, { showScreen, closeModal, openModal, showTransientAlert, playNotification, showToast });
 
 window.MedicalBrain = MedicalBrain;
 

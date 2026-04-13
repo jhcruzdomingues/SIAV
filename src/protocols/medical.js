@@ -94,49 +94,65 @@ export function getProtocolNextStep(pcrState, currentTime = Date.now()) {
     const medAdrenalineCount = medications.filter(m => m.name.includes('Adrenalina')).length;
     const medAntiarrhythmicCount = medications.filter(m => m.name.includes('Amiodarona') || m.name.includes('Lidocaína')).length;
 
-    let nextStep = { message: 'Continuar RCP de Alta Qualidade', style: 'success', icon: 'fas fa-heartbeat', criticalAction: null, details: '', dose: '', route: 'EV/IO' };
+    // ESTADO PADRÃO: RCP de Alta Qualidade
+    let nextStep = { message: 'RCP DE ALTA QUALIDADE — 100 A 120 BPM', style: 'success', icon: 'fas fa-heartbeat', criticalAction: null, details: 'Profundidade de 5cm e retorno total do tórax. Revezar compressor a cada ciclo.', dose: '', route: 'EV/IO' };
 
     if (currentPhase === 'preparation') {
-        nextStep.message = 'Iniciar Atendimento de PCR'; nextStep.style = 'primary'; nextStep.icon = 'fas fa-hand-rock'; nextStep.details = '<div class="protocol-checklist"><div class="protocol-step"><i class="fas fa-shield-alt"></i> Segurança da cena</div><div class="protocol-step"><i class="fas fa-user-injured"></i> Verificar responsividade</div><div class="protocol-step"><i class="fas fa-phone-alt"></i> Ativar emergência (192)</div><div class="protocol-step"><i class="fas fa-hand-holding-medical"></i> Verificar pulso (≤10s)</div><div class="protocol-step"><i class="fas fa-heartbeat"></i> Iniciar RCP imediatamente</div></div>';
+        nextStep.message = 'SUPORTE BÁSICO — INICIAR ATENDIMENTO'; nextStep.style = 'primary'; nextStep.icon = 'fas fa-hand-rock'; nextStep.details = 'Segurança da cena, checar responsividade, chamar ajuda, checar pulso/respiração e iniciar RCP 30:2.';
         return nextStep;
     }
 
     if (currentPhase === 'rhythm_check' || currentPhase === 'shock_advised') {
-        nextStep.message = 'Pausa: avaliar ritmo e pulso (≤10s)'; nextStep.style = 'danger'; nextStep.icon = 'fas fa-exclamation-triangle'; nextStep.details = isShockable ? 'Chocável — preparar desfibrilador.' : 'Não-chocável — retomar compressões.'; nextStep.criticalAction = isShockable ? 'SHOCK' : null;
+        nextStep.message = 'PAUSA DE RCP — AVALIAR RITMO E PULSO'; nextStep.style = 'danger'; nextStep.icon = 'fas fa-exclamation-triangle'; nextStep.details = isShockable ? 'Ritmo CHOCÁVEL: Preparar desfibrilador, afastar todos e chocar.' : 'Ritmo NÃO-CHOCÁVEL: Retomar compressões imediatamente.'; nextStep.criticalAction = isShockable ? 'SHOCK' : null;
         return nextStep;
     }
 
     if (isShockable === undefined) {
-        nextStep.message = 'Aguardando checagem de ritmo'; nextStep.style = 'warning'; nextStep.icon = 'fas fa-hourglass'; return nextStep;
+        nextStep.message = 'AVALIAÇÃO INICIAL — AGUARDANDO RITMO'; nextStep.style = 'warning'; nextStep.icon = 'fas fa-hourglass'; nextStep.details = ''; return nextStep;
     }
 
-    // 1️⃣ ADRENALINA
+    // 1️⃣ AVALIAÇÃO DE DROGAS (Substitui o estado de RCP se for urgente)
+    let drugAction = null;
+
+    // A. ADRENALINA
     if (medAdrenalineCount === 0) {
-        let shouldGiveAdrenaline = false, adrenalineReason = '';
-        if (!isShockable && currentCycle >= 1) { shouldGiveAdrenaline = true; adrenalineReason = '<div class="alert-box alert-danger"><div class="alert-content"><div class="alert-title"><i class="fas fa-exclamation-triangle"></i> AESP/Assistolia</div><div class="alert-text">RCP contínua + Identificar 5 H\'s e 5 T\'s</div></div></div>'; }
-        else if (isShockable && currentCycle >= 3) { shouldGiveAdrenaline = true; adrenalineReason = '<div class="alert-box alert-danger"><div class="alert-content"><div class="alert-title"><i class="fas fa-heartbeat"></i> FV/TVSP Persistente</div><div class="alert-text">Após 2º choque • Considerar Amiodarona</div></div></div>'; }
-        else if (isShockable && currentCycle >= 1 && shockCount < 2) { adrenalineReason = `<div class="alert-box alert-danger"><div class="alert-content"><div class="alert-title"><i class="fas fa-clock"></i> FV/TVSP Detectada</div><div class="alert-text">Aguardar 2 choques (${shockCount}/2)</div></div></div>`; }
-        
-        if (shouldGiveAdrenaline) {
-            nextStep.message = !isShockable ? '🚨 Adrenalina — URGENTE (1º CICLO)' : 'Adrenalina — ADMINISTRAR AGORA'; nextStep.style = 'danger'; nextStep.icon = 'fas fa-syringe'; nextStep.criticalAction = 'DRUG'; nextStep.dose = !isShockable ? '1 mg EV/IO - IMEDIATO no 1º ciclo. Repetir a cada 3-5 min.' : '1 mg EV/IO - administrar agora (após 2º choque). Repetir a cada 3-5 min.'; nextStep.details = adrenalineReason;
-        } else if (adrenalineReason) {
-            nextStep.message = 'Adrenalina: aguardar indicação'; nextStep.style = 'warning'; nextStep.icon = 'fas fa-hourglass-half'; nextStep.details = adrenalineReason;
+        if (!isShockable && currentCycle >= 1) {
+            drugAction = { message: 'ADRENALINA — ADMINISTRAR IMEDIATAMENTE', dose: '1 mg EV/IO', details: 'Na AESP/Assistolia, administre o mais rápido possível.' };
+        } else if (isShockable && currentCycle >= 3) {
+            drugAction = { message: 'ADRENALINA — ADMINISTRAR AGORA', dose: '1 mg EV/IO', details: 'Em FV/TVSP, a primeira dose é feita após o 2º choque.' };
         }
     } else {
         const adrenalineStatus = getMedicationDueStatus('Adrenalina', 180, medications, currentTime);
-        if (adrenalineStatus.isDue) { nextStep.message = 'Adrenalina — DOSE DEVIDA'; nextStep.style = 'danger'; nextStep.icon = 'fas fa-syringe'; nextStep.criticalAction = 'DRUG'; nextStep.dose = '1 mg EV/IO - administrar agora. Repetir a cada 3-5 min.'; }
-        else { nextStep.message = `⏰ ${adrenalineStatus.message}`; nextStep.style = 'warning'; nextStep.icon = 'fas fa-hourglass-half'; nextStep.details = `Próxima dose em ~${Math.ceil(adrenalineStatus.secondsUntilDue / 60)} minuto(s)`; }
+        if (adrenalineStatus.isDue) {
+            drugAction = { message: 'ADRENALINA — DOSE DEVIDA', dose: '1 mg EV/IO', details: 'Repetir a cada 3 a 5 minutos durante a PCR.' };
+        }
     }
 
-    // 2️⃣ AMIODARONA (Correção do bug do singular/plural aqui)
-    if (isShockable && (currentPhase === 'compressions' || currentPhase === 'compression') && nextStep.criticalAction !== 'DRUG') {
-        if (shockCount >= 2 && medAntiarrhythmicCount === 0) { nextStep.message = 'Amiodarona 300 mg — CONSIDERAR/ADMINISTRAR'; nextStep.style = 'primary'; nextStep.icon = 'fas fa-syringe'; nextStep.criticalAction = 'DRUG'; nextStep.dose = '300 mg IV/IO'; nextStep.details = 'FV/TVSP persistente após 2 choques. Administrar durante compressões.'; }
-        else if (shockCount >= 3 && medAntiarrhythmicCount === 1) { nextStep.message = 'Amiodarona 150 mg — CONSIDERAR'; nextStep.style = 'warning'; nextStep.icon = 'fas fa-syringe'; nextStep.criticalAction = 'DRUG'; nextStep.dose = '150 mg IV/IO'; nextStep.details = 'Se FV/TVSP persistir após choques adicionais.'; }
+    // B. AMIODARONA / LIDOCAÍNA (Só avalia se não houver Adrenalina pendente)
+    if (!drugAction && isShockable && (currentPhase === 'compressions' || currentPhase === 'compression')) {
+        if (shockCount >= 2 && medAntiarrhythmicCount === 0) {
+            drugAction = { message: 'AMIODARONA — PREPARAR E ADMINISTRAR', dose: '300 mg EV/IO', details: 'Indicada para FV/TVSP refratária após o 2º choque.' };
+        } else if (shockCount >= 3 && medAntiarrhythmicCount === 1) {
+            drugAction = { message: 'AMIODARONA — 2ª DOSE DEVIDA', dose: '150 mg EV/IO', details: 'Dose adicional se a FV/TVSP persistir após novos choques.' };
+        }
     }
 
-    if (nextStep.message === 'Continuar RCP de Alta Qualidade') {
-        if (!isShockable && (currentPhase === 'compressions' || currentPhase === 'compression')) { nextStep.message = 'Não-chocável: investigar causas (5H/5T)'; nextStep.style = 'warning'; nextStep.icon = 'fas fa-list-check'; nextStep.details = '5H: Hipovolemia, Hipóxia, Acidose, Hipo/HiperK, Hipotermia. 5T: Tamponamento, Tensão, Toxinas, Trombose, Trauma.'; }
-        else if (currentPhase === 'compressions' || currentPhase === 'compression') { nextStep.message = '✓ MANTENHA RCP de Alta Qualidade'; nextStep.style = 'success'; nextStep.icon = 'fas fa-heartbeat'; nextStep.details = `Ciclo ${currentCycle} (${currentCycle * 2}min): Próxima verificação de ritmo em ~2 minutos`; }
+    if (drugAction) {
+        nextStep.message = drugAction.message;
+        nextStep.style = 'danger';
+        nextStep.icon = 'fas fa-syringe';
+        nextStep.criticalAction = 'DRUG';
+        nextStep.dose = drugAction.dose;
+        nextStep.details = drugAction.details;
+        return nextStep;
+    }
+
+    // 2️⃣ MENSAGENS ESPECÍFICAS DE RCP (Se não há droga pendente)
+    if (!isShockable && (currentPhase === 'compressions' || currentPhase === 'compression')) {
+        nextStep.message = 'RCP CONTÍNUA — BUSCAR CAUSAS (5H/5T)';
+        nextStep.style = 'warning';
+        nextStep.icon = 'fas fa-list-check';
+        nextStep.details = 'Considere Via Aérea Avançada e Capnografia. Identifique e trate causas reversíveis.';
     }
 
     return nextStep;

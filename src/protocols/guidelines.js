@@ -1,5 +1,6 @@
 import { state } from '../config/state.js';
 import { checkAccess } from '../services/permissions.js';
+import { openModal } from '../ui/dom.js';
 
 export const HTS_INSTRUCTIONS = {
     "Hipovolemia": { instruction: "Reconhecimento: Pulso fraco/ausente, colapso de veias, histórico de hemorragia. Ação: Reposição rápida de volume com cristaloides ou sangue. Controlar foco de sangramento.", action_short: "Reposição rápida de fluidos IV/IO e controle de sangramento.", icon: '🩸' },
@@ -33,7 +34,6 @@ export function showStudyDetail(studyKey) {
     if (!study) { alert("Guia de estudo não encontrado!"); return; }
     const titleDisplay = document.getElementById('study-title-display');
     const contentContainer = document.getElementById('study-content');
-    const modal = document.getElementById('study-detail-modal');
     if (titleDisplay) titleDisplay.textContent = study.title;
     if (contentContainer) {
         contentContainer.innerHTML = '';
@@ -43,7 +43,7 @@ export function showStudyDetail(studyKey) {
             contentContainer.appendChild(sectionDiv);
         });
     }
-    if (modal) modal.classList.add('show');
+    openModal('study-detail-modal');
 }
 
 export function downloadProtocolPDF(protocolKey) {
@@ -75,7 +75,6 @@ export function showProtocolDetail(protocolKey) {
     if (!protocol) { alert("Protocolo não encontrado!"); return; }
     const titleDisplay = document.getElementById('protocol-title-display');
     const content = document.getElementById('protocol-content');
-    const modal = document.getElementById('protocol-detail-modal');
     const downloadBtn = document.getElementById('protocol-download-btn');
     if(downloadBtn) {
         downloadBtn.onclick = () => downloadProtocolPDF(protocolKey);
@@ -84,7 +83,7 @@ export function showProtocolDetail(protocolKey) {
     }
     if(titleDisplay) titleDisplay.textContent = protocol.title;
     if(content) content.innerHTML = protocol.content;
-    if(modal) modal.classList.add('show');
+    openModal('protocol-detail-modal');
 }
 
 export function getTreatmentRecommendation(cause, patientData) {
@@ -104,7 +103,7 @@ export function getTreatmentRecommendation(cause, patientData) {
         'Tóxicos': () => { const charcoalDose = isPediatric ? Math.round(weight * 1) : 50; return `🧪 IDENTIFICAR A INTOXICAÇÃO:\n\n💊 ANTÍDOTOS: Naloxona, Atropina, Glucagon, Flumazenil.\n🥄 DESCONTAMINAÇÃO: Carvão ativado ${charcoalDose}g.\n💉 TRATAMENTOS: Bicarbonato, Emulsão lipídica.`; },
         'Trauma': () => { return `🩹 CONTROLE DE HEMORRAGIA:\n1️⃣ Compressão direta.\n2️⃣ Garrote.\n🔪 TORACOTOMIA DE RESSUSCITAÇÃO se trauma penetrante.\n🫁 AVALIAR Pneumotórax, Tamponamento.\n🚑 TRANSPORTE RÁPIDO.`; }
     };
-    return treatments[cause] ? treatmentscause : 'Tratamento não disponível para esta causa.';
+    return treatments[cause] ? treatments[cause]() : 'Tratamento não disponível para esta causa.';
 }
 
 export function toggleCause(element) {

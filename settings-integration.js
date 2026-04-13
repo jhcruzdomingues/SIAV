@@ -5,35 +5,6 @@
 // com o código legado em script.js
 
 // =============================================
-// FUNÇÕES UTILITÁRIAS
-// =============================================
-
-/**
- * Abre um modal (se não existir no script.js)
- */
-function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.add('show');
-    } else {
-        console.error(`Modal não encontrado: ${modalId}`);
-    }
-}
-
-/**
- * Fecha um modal (fallback se não existir no script.js)
- * A função closeModal já existe no script.js, mas garantimos aqui
- */
-if (typeof closeModal === 'undefined') {
-    function closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.remove('show');
-        }
-    }
-}
-
-// =============================================
 // FUNÇÕES GLOBAIS (Compatibilidade)
 // =============================================
 
@@ -337,4 +308,3 @@ function openPlanSettings() {
         }
     }
 }
-

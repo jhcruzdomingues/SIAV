@@ -1,6 +1,6 @@
 import { state } from '../config/state.js';
 import { supabase } from '../config/supabase.js';
-import { closeModal, showScreen } from './dom.js';
+import { closeModal, openModal, showScreen } from './dom.js';
 import { fetchPcrLogs } from '../pcr/log.js';
 
 const DEFAULT_USER_DATA = {
@@ -348,7 +348,7 @@ export function showProfileModal() {
         if (document.getElementById('profile-actions')) document.getElementById('profile-actions').style.display = 'block';
         if (document.getElementById('logout-btn')) document.getElementById('logout-btn').style.display = 'none';
     }
-    profileModal.classList.add('show');
+    openModal('profile-modal');
 }
 
 export function updateGreetingsAndHeader() {

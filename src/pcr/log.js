@@ -1,25 +1,24 @@
 import { state } from '../config/state.js';
 import { supabase } from '../config/supabase.js';
 import { formatTime } from '../utils/formatters.js';
-import { showScreen, closeModal, showTransientAlert } from '../ui/dom.js';
+import { showScreen, closeModal, openModal, showTransientAlert } from '../ui/dom.js';
 
 export function showNotesModal() {
-    const notesModal = document.getElementById('notes-modal');
-    if(notesModal) notesModal.classList.add('show');
+    openModal('notes-modal');
 }
 
 export function saveNotes() {
     try {
         const notesInput = document.getElementById('clinical-notes');
         if (!notesInput) {
-            alert('Erro: Campo de anotacoes nao encontrado.');
+            showTransientAlert('Erro: Campo de anotações não encontrado.', 'danger');
             return;
         }
         const notes = notesInput.value || '';
         const sanitizedNotes = notes.trim().replace(/[<>]/g, '');
 
-        if (!sanitizedNotes) { alert('Digite alguma anotacao antes de salvar.'); return; }
-        if (sanitizedNotes.length > 5000) { alert('Anotacao muito longa! Maximo de 5000 caracteres.'); return; }
+        if (!sanitizedNotes) { showTransientAlert('Digite alguma anotação antes de salvar.', 'warning'); return; }
+        if (sanitizedNotes.length > 5000) { showTransientAlert('Anotação muito longa! Máximo de 5000 caracteres.', 'warning'); return; }
 
         if (typeof window.checkAccess === 'function' && !window.checkAccess('notes_logging', false)) {
             if (confirm("Anotacoes salvas temporariamente na sessao. Faca upgrade para o Plano Profissional para salvar no log permanente.\n\nDeseja ver os planos disponíveis?")) {
@@ -35,10 +34,10 @@ export function saveNotes() {
         
         closeModal('notes-modal');
         notesInput.value = '';
-        alert('Anotacoes salvas com sucesso!');
+        showTransientAlert('Anotações salvas com sucesso!', 'success');
     } catch (error) {
-        console.error('Erro ao salvar anotacoes:', error);
-        alert('Erro ao salvar anotacoes. Por favor, tente novamente.');
+        console.error('Erro ao salvar anotações:', error);
+        showTransientAlert('Erro ao salvar anotações. Por favor, tente novamente.', 'danger');
     }
 }
 
@@ -281,9 +280,8 @@ export function viewLogDetail(logId) {
     if (!logItem) { alert('Registro não encontrado!'); return; }
     const detailId = document.getElementById('log-detail-id');
     const detailContent = document.getElementById('log-detail-content');
-    const modal = document.getElementById('log-detail-modal');
     if (detailId) detailId.textContent = logId.substring(0, 8);
     const report = logItem.evolutionText || logItem.report_html || logItem.evolution_text || logItem.notes || '<em>Sem relatório detalhado.</em>';
     if (detailContent) detailContent.innerHTML = report;
-    if (modal) modal.classList.add('show');
+    openModal('log-detail-modal');
 }

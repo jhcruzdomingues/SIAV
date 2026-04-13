@@ -47,7 +47,8 @@ export function startTimer() {
 export function startCycleProgress() {
     if (!compressionCycle.active) return;
     
-    const progressBar = document.getElementById('cycle-progress');
+    const progressBar = document.getElementById('ac-cycle-progress');
+    const timerDisplay = document.getElementById('ac-cycle-timer-display');
     
     if (intervals.progress) {
         clearInterval(intervals.progress);
@@ -55,6 +56,7 @@ export function startCycleProgress() {
     }
     
     if (progressBar) progressBar.style.width = '0%';
+    if (timerDisplay) timerDisplay.textContent = '02:00';
     
     compressionCycle.cycleProgress = 0;
     compressionCycle.startTime = Date.now();
@@ -64,16 +66,26 @@ export function startCycleProgress() {
             clearInterval(intervals.progress);
             intervals.progress = null;
             if (progressBar) progressBar.style.width = '0%';
+            if (timerDisplay) timerDisplay.textContent = '--:--';
             return;
         }
         
         const elapsed = Date.now() - compressionCycle.startTime;
         let progress = (elapsed / TIMINGS.CYCLE_DURATION) * 100;
         
+        let remainingMs = TIMINGS.CYCLE_DURATION - elapsed;
+        if (remainingMs < 0) remainingMs = 0;
+        let remainingSecs = Math.ceil(remainingMs / 1000);
+        let mins = Math.floor(remainingSecs / 60);
+        let secs = remainingSecs % 60;
+        
+        if (timerDisplay) timerDisplay.textContent = `0${mins}:${secs.toString().padStart(2, '0')}`;
+        
         if (progress >= 100) {
             progress = 100;
             clearInterval(intervals.progress);
             intervals.progress = null;
+            if (timerDisplay) timerDisplay.textContent = '00:00';
         }
         
         if (progressBar) {
@@ -104,7 +116,7 @@ export function startCompressions() {
     
     if (typeof window.updatePcrGuidance === 'function') window.updatePcrGuidance(); 
     
-    if (!state.metronomeActive) {
+    if (!state.metronomeActive && !state.metronomeUserDisabled) {
         if (typeof window.toggleMetronome === 'function') window.toggleMetronome();
     }
 
@@ -140,11 +152,6 @@ export function promptRhythmCheck() {
     if (typeof window.playNotification === 'function') window.playNotification('CHECK_RHYTHM');
     if (typeof window.addEvent === 'function') window.addEvent('PAUSA DE RCP: Fim do ciclo de 2 min. Analisar Ritmo e Pulso.', 'critical');
     
-    const hintBox = document.getElementById('protocol-hint-box');
-    if (hintBox) {
-        hintBox.classList.add('rhythm-check-alert');
-    }
-    
     setTimeout(() => {
         if (compressionCycle.currentPhase === 'rhythm_check' && compressionCycle.rhythmCheckTriggered) {
             if (typeof window.showRhythmSelectorScreen === 'function') window.showRhythmSelectorScreen(true);
@@ -169,6 +176,7 @@ export function startPCR() {
     state.causesChecked = [];
     state.totalCompressionSeconds = 0; 
     state.roscAchieved = false; 
+    state.metronomeUserDisabled = false;
     
     compressionCycle.active = false;
     compressionCycle.startTime = null;
@@ -182,8 +190,16 @@ export function startPCR() {
     compressionCycle.rhythmCheckTriggered = false;
 
     if (intervals.progress) clearInterval(intervals.progress);
-    const progressBar = document.getElementById('cycle-progress');
+    const progressBar = document.getElementById('ac-cycle-progress');
     if(progressBar) progressBar.style.width = '0%';
+
+    const cycleTimerDisplay = document.getElementById('ac-cycle-timer-display');
+    if(cycleTimerDisplay) cycleTimerDisplay.textContent = '--:--';
+
+    const pcrTimerDisplay = document.getElementById('pcr-timer');
+    if(pcrTimerDisplay) pcrTimerDisplay.textContent = '00:00';
+
+    if (typeof window.updateTimeline === 'function') window.updateTimeline();
 
     const compBtn = document.getElementById('compressions-btn');
     if(compBtn){
@@ -236,15 +252,5 @@ export function executePCRFinish() {
     
     events.emit('PCR_FINISHED');
     
-    if (typeof window.checkAccess === 'function') {
-        if (window.checkAccess('log_history', false)) {
-            if (typeof window.generateEvolution === 'function') window.generateEvolution(true);
-        } else {
-            if (typeof window.generateEvolution === 'function') window.generateEvolution(false);
-            if (confirm("Atendimento finalizado. Faça upgrade para o Plano Profissional para salvar o histórico e os logs de PCR!\n\nDeseja ver os planos disponíveis?")) {
-                if (typeof window.openPlansModal === 'function') window.openPlansModal();
-            }
-            if (typeof window.showScreen === 'function') window.showScreen('home');
-        }
-    }
+    if (typeof window.generateEvolution === 'function') window.generateEvolution(true);
 }

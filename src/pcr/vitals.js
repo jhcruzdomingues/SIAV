@@ -1,15 +1,8 @@
 import { state } from '../config/state.js';
-import { closeModal } from '../ui/dom.js';
+import { closeModal, openModal, showTransientAlert } from '../ui/dom.js';
 
 export function showVitalsModal() {
-    const modal = document.getElementById('vitals-modal');
-    if (modal) modal.classList.add('show');
-    
-    const recordBtn = document.getElementById('record-vitals-btn');
-    if (recordBtn) {
-        recordBtn.removeEventListener('click', recordVitals);
-        recordBtn.addEventListener('click', recordVitals);
-    }
+    openModal('vitals-modal');
 
     const statusBox = document.querySelector('.vitals-modal .vitals-status');
     if (statusBox) statusBox.remove();
@@ -60,10 +53,10 @@ export function recordVitals() {
     const statusBox = document.querySelector('#vitals-modal .vitals-status');
     if (statusBox) statusBox.remove();
 
-    if (paSistolica && (paSistolica < 30 || paSistolica > 300)) { alert("PA Sistólica inválida. Valores válidos: 30-300 mmHg"); return; }
-    if (paDiastolica && (paDiastolica < 20 || paDiastolica > 200)) { alert("PA Diastólica inválida. Valores válidos: 20-200 mmHg"); return; }
-    if (fc && (fc < 0 || fc > 300)) { alert("FC inválida. Valores válidos: 0-300 bpm"); return; }
-    if (!paSistolica && !fc && !fr && !spo2 && !temp) { alert("Preencha pelo menos um sinal vital para registrar."); return; }
+    if (paSistolica && (paSistolica < 30 || paSistolica > 300)) { showTransientAlert("PA Sistólica inválida. Valores válidos: 30-300 mmHg", "warning"); return; }
+    if (paDiastolica && (paDiastolica < 20 || paDiastolica > 200)) { showTransientAlert("PA Diastólica inválida. Valores válidos: 20-200 mmHg", "warning"); return; }
+    if (fc && (fc < 0 || fc > 300)) { showTransientAlert("FC inválida. Valores válidos: 0-300 bpm", "warning"); return; }
+    if (!paSistolica && !fc && !fr && !spo2 && !temp) { showTransientAlert("Preencha pelo menos um sinal vital para registrar.", "warning"); return; }
     
     let vitalText = `SINAIS VITAIS: `;
     let type = 'normal';
@@ -97,9 +90,12 @@ export function recordVitals() {
         if (typeof window.addEvent === 'function') window.addEvent(vitalText, 'critical');
     } else if (state.pcrActive) {
         if (typeof window.addEvent === 'function') window.addEvent(vitalText, 'normal');
-    } else { alert("Sinais vitais registrados. Inicie um atendimento de PCR para salvá-los no log."); }
+    } else { showTransientAlert("Sinais vitais registrados. Inicie um atendimento de PCR para salvá-los no log.", "info"); }
     
     if (!state.pcrActive || state.roscAchieved) { closeModal('vitals-modal'); return; }
     
-    setTimeout(() => { closeModal('vitals-modal'); alert('Sinais Vitais registrados com sucesso na Linha do Tempo!'); }, 2000);
+    setTimeout(() => { 
+        closeModal('vitals-modal'); 
+        showTransientAlert('Sinais Vitais registrados com sucesso!', 'success');
+    }, 500);
 }

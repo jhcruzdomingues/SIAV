@@ -1,4 +1,4 @@
-const CACHE_NAME = 'siav-v8';
+const CACHE_NAME = 'siav-v13';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -62,51 +62,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network first for HTML, CSS, and JSON to always get latest version
-  if (event.request.url.includes('.html') || event.request.url.includes('.css') || event.request.url.includes('.json')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-          return response;
-        })
-        .catch(() => {
-          return caches.match(event.request);
-        })
-    );
-    return;
-  }
-
-  // Cache first for static assets
+  // FORÇA TODAS AS REQUISIÇÕES (JS, HTML, CSS) A BUSCAREM DA REDE PRIMEIRO
+  // Isso previne que o código antigo fique preso no Cache do navegador
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then((response) => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request).then((response) => {
-          // Don't cache if not a valid response
-          if (!response || response.status !== 200 || response.type === 'error') {
-            return response;
-          }
-
-          // Clone response to cache and return
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-
-          return response;
+        const responseToCache = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
         });
+        return response;
       })
       .catch(() => {
-        // Return offline page for navigation requests
-        if (event.request.mode === 'navigate') {
-          return caches.match('/index.html');
-        }
+        // Se estiver sem internet, busca do cache
+        return caches.match(event.request);
       })
   );
 });

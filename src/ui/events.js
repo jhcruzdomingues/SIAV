@@ -41,6 +41,40 @@ export function registerAllEvents() {
     document.getElementById('glasgow-tool')?.addEventListener('click', showGlasgowModal);
 
     // 3. Modais e Fluxo de PCR
+    document.getElementById('patient-info-display')?.addEventListener('click', () => {
+        const patientNameInput = document.getElementById('patient-name');
+        if(patientNameInput) patientNameInput.value = state.patient.name !== 'N/I' ? state.patient.name : '';
+        
+        const patientAgeInput = document.getElementById('patient-age');
+        if(patientAgeInput) patientAgeInput.value = state.patient.age !== 'N/I' ? state.patient.age : '';
+        
+        const patientWeightInput = document.getElementById('patient-weight');
+        if(patientWeightInput) patientWeightInput.value = state.patient.weight !== 'N/I' ? state.patient.weight : '';
+        
+        const sexRadios = document.querySelectorAll('input[name="sex"]');
+        sexRadios.forEach(radio => {
+            radio.checked = (radio.value === state.patient.sex);
+        });
+        
+        const patientAllergiesInput = document.getElementById('patient-allergies');
+        if(patientAllergiesInput) patientAllergiesInput.value = (state.patient.allergies !== 'Nenhuma informada' && state.patient.allergies !== 'N/I') ? state.patient.allergies : '';
+        
+        const patientComorbiditiesInput = document.getElementById('patient-comorbidities');
+        if(patientComorbiditiesInput) patientComorbiditiesInput.value = state.patient.comorbidities !== 'N/I' ? state.patient.comorbidities : '';
+        
+        const noDataBtn = document.getElementById('start-pcr-no-data-btn');
+        const submitBtn = document.querySelector('#patient-form .primary-btn');
+        if (state.pcrActive) {
+            if (noDataBtn) noDataBtn.style.display = 'none';
+            if (submitBtn) submitBtn.textContent = 'SALVAR ALTERAÇÕES';
+        } else {
+            if (noDataBtn) noDataBtn.style.display = 'inline-block';
+            if (submitBtn) submitBtn.textContent = 'INICIAR ATENDIMENTO';
+        }
+        
+        showPatientModal();
+    });
+
     const patientForm = document.getElementById('patient-form');
     if(patientForm) patientForm.addEventListener('submit', savePatientData);
     document.getElementById('start-pcr-no-data-btn')?.addEventListener('click', startPCRWithUninformedData);
@@ -67,7 +101,22 @@ export function registerAllEvents() {
     document.getElementById('apply-shock-btn')?.addEventListener('click', applyShockAndResume);
 
     document.getElementById('med-btn')?.addEventListener('click', showMedModal);
-    document.getElementById('medication-select')?.addEventListener('change', updateMedicationDose);
+    
+    document.querySelectorAll('.med-btn-pro').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const medId = this.getAttribute('data-med');
+            if (this.classList.contains('selected')) {
+                recordMedication();
+            } else {
+                document.querySelectorAll('.med-btn-pro').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+                const medSelect = document.getElementById('medication-select');
+                if (medSelect) medSelect.value = medId;
+                updateMedicationDose();
+            }
+        });
+    });
+
     document.getElementById('record-med-btn')?.addEventListener('click', recordMedication);
     document.getElementById('cancel-med-btn')?.addEventListener('click', () => closeModal('med-modal'));
 
@@ -94,19 +143,6 @@ export function registerAllEvents() {
     document.getElementById('dashboard-user-info')?.addEventListener('click', showProfileModal);
     
     document.getElementById('view-full-log-btn')?.addEventListener('click', () => {
-        if (checkAccess('log_history', false)) {
-            showScreen('log');
-        } else {
-            if (confirm('Acesso ao log restrito ao Plano Profissional.\n\nDeseja ver os planos disponíveis?')) {
-                if (typeof window.openPlansModal === 'function') window.openPlansModal();
-            }
-        }
-    });
-    
-    document.getElementById('upgrade-plan-btn')?.addEventListener('click', startSubscriptionFlow);
-    document.getElementById('btn-manage-plan')?.addEventListener('click', () => {
-        closeModal('settings-menu-modal');
-        closeModal('profile-modal');
         if (typeof window.openPlansModal === 'function') window.openPlansModal();
     });
 

@@ -12,8 +12,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SIAV">
 
-    <link rel="preload" href="style.css?v=4" as="style">
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="preload" href="style.css?v=6" as="style">
+    <link rel="stylesheet" href="style.css?v=6">
     <link rel="stylesheet" href="shock-styles.css?v=2" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="sound-settings-styles.css?v=2" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="settings-menu-styles.css?v=2" media="print" onload="this.media='all'">
@@ -91,10 +91,6 @@
             
             <section id="pcr-screen" class="screen">
                 <div class="pcr-header">
-                    <div class="pcr-timer-box">
-                        <span id="pcr-timer">00:00</span>
-                        <small>Tempo Total</small>
-                    </div>
                     <div id="patient-info-display" class="patient-info-display" style="display: none;">
                         <span id="display-name" class="info-name">N/I</span>
                         <span id="display-age" class="info-age">N/I</span>
@@ -106,29 +102,51 @@
                     </div>
                 </div>
 
-                <div id="floating-cycle-badge" class="floating-cycle-badge">
-                    <span id="cycle-info">Ciclo 0</span>
+                <!-- SMART FEEDBACK BANNER (Substitui pop-ups voadores) -->
+                <div id="pcr-feedback-banner" class="pcr-feedback-banner">
+                    <div class="pcr-feedback-icon"><i class="fas fa-info-circle"></i></div>
+                    <div class="pcr-feedback-text" id="pcr-feedback-text"></div>
                 </div>
 
-                <div id="protocol-hint-box" class="protocol-hint-box improved-panel">
-                    <div class="protocol-panel-mobile improved-panel-mobile">
-                        <div class="protocol-panel-header improved-panel-header">
-                            <span id="hint-icon" class="protocol-panel-icon dynamic-icon"><i class="fas fa-heartbeat"></i></span>
-                            <div class="protocol-panel-main">
-                                <p id="hint-message" class="protocol-panel-message highlight-message">Pronto para iniciar!</p>
-                                <span id="current-step" class="protocol-panel-step step-highlight">Aguardando início do atendimento</span>
-                            </div>
+                <!-- NOVO CENTRO DE AÇÃO UNIFICADO (UX Revolucionária) -->
+                <div id="pcr-action-center" class="pcr-action-center status-preparation">
+                    <!-- O HUD DE CRONÔMETROS -->
+                    <div class="ac-timers-dashboard">
+                        <div class="ac-timer-box total-time">
+                            <span class="ac-timer-label">TEMPO TOTAL</span>
+                            <span id="pcr-timer" class="ac-timer-value">00:00</span>
                         </div>
-                        <div class="protocol-panel-body improved-panel-body">
-                            <div id="protocol-alerts-panel" class="protocol-alerts-panel improved-alerts-panel">
-                                <div class="alert-tip" id="alert-tip" style="display:none;"><i class="fas fa-lightbulb"></i> Lembre-se: registre o tempo de início!</div>
-                            </div>
-                            <div id="hint-details" class="protocol-details"></div>
-                            <div id="protocol-checklist" class="protocol-checklist"></div>
+                        <div class="ac-timer-box cycle-time">
+                            <span id="ac-cycle-counter" class="ac-timer-label">CICLO 0</span>
+                            <span id="ac-cycle-timer-display" class="ac-timer-value">--:--</span>
                         </div>
-                        <div class="protocol-panel-footer improved-panel-footer">
-                            <div class="progress-container improved-progress-container">
-                                <div id="cycle-progress" class="progress-bar improved-progress-bar"></div>
+                        <div class="ac-timer-box drug-time" id="ac-drug-timer-container">
+                            <span id="ac-drug-timer-label" class="ac-timer-label">MEDICAÇÃO</span>
+                            <span id="ac-drug-countdown" class="ac-timer-value">--:--</span>
+                        </div>
+                    </div>
+
+                    <div class="ac-progress-track">
+                        <div id="ac-cycle-progress" class="ac-progress-fill"></div>
+                    </div>
+
+                    <div class="ac-main-display">
+                        <div id="ac-icon" class="ac-icon"><i class="fas fa-heartbeat"></i></div>
+                        <div class="ac-instruction-panel">
+                            <div id="ac-status-badge" class="ac-badge">PREPARAÇÃO</div>
+                            <h2 id="ac-primary-text" class="ac-hud-title">Pronto para iniciar!</h2>
+                            
+                            <div id="ac-dose-container" class="ac-hud-dose" style="display: none;">
+                                <div class="ac-dose-icon"><i class="fas fa-prescription-bottle-alt"></i></div>
+                                <div class="ac-dose-content">
+                                    <span class="ac-dose-label">DOSE RECOMENDADA</span>
+                                    <span id="ac-dose-text" class="ac-dose-value">--</span>
+                                </div>
+                            </div>
+                            
+                            <div id="ac-details-container" class="ac-hud-details">
+                                <div class="ac-details-icon"><i class="fas fa-info-circle"></i></div>
+                                <div id="ac-details-text" class="ac-details-content">Aguardando início do atendimento</div>
                             </div>
                         </div>
                     </div>
@@ -165,10 +183,6 @@
                         <i class="fas fa-syringe"></i>
                         <span>Droga</span>
                     </button>
-                    <button id="vitals-btn" class="btn-action btn-vitals">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Sinais Vitais</span>
-                    </button>
                     <button id="notes-btn" class="btn-action btn-notes">
                         <i class="fas fa-clipboard"></i>
                         <span>Anotar</span>
@@ -176,6 +190,10 @@
                     <button id="hs-ts-btn" class="btn-action btn-causes">
                         <i class="fas fa-vials"></i>
                         <span>5H's & 5T's</span>
+                    </button>
+                    <button id="vitals-btn" class="btn-action btn-vitals">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Sinais Vitais</span>
                     </button>
                 </div>
 
@@ -977,35 +995,73 @@
     </div>
     
     <div id="med-modal" class="modal">
-        <div class="modal-content">
-            <h3>Registrar Medicamento</h3>
+        <div class="modal-content med-modal-custom">
+            <div class="med-modal-header">
+                <div class="med-icon-wrapper">
+                    <i class="fas fa-syringe"></i>
+                </div>
+                <h3>Administrar Droga</h3>
+                <p>Diretrizes AHA 2025</p>
+            </div>
             
-            <label for="medication-select">Medicação:</label>
-            <select id="medication-select">
-                <option value="">Selecione...</option>
-                <option value="adrenalina">Adrenalina (Epinefrina)</option>
-                <option value="amiodarona">Amiodarona</option>
-                <option value="atropina">Atropina</option>
-                <option value="lidocaina">Lidocaína</option>
-                <option value="bicarbonato">Bicarbonato de Sódio</option>
-                <option value="sulfato">Sulfato de Magnésio</option>
-            </select>
+            <div class="med-grid-pro">
+                <button type="button" class="med-btn-pro" data-med="adrenalina">
+                    <span class="med-pro-title">Adrenalina</span>
+                    <span class="med-pro-subtitle">Vasopressor</span>
+                </button>
+                <button type="button" class="med-btn-pro" data-med="amiodarona">
+                    <span class="med-pro-title">Amiodarona</span>
+                    <span class="med-pro-subtitle">Antiarrítmico</span>
+                </button>
+                <button type="button" class="med-btn-pro" data-med="lidocaina">
+                    <span class="med-pro-title">Lidocaína</span>
+                    <span class="med-pro-subtitle">Antiarrítmico</span>
+                </button>
+                <button type="button" class="med-btn-pro" data-med="atropina">
+                    <span class="med-pro-title">Atropina</span>
+                    <span class="med-pro-subtitle">Bradicardia</span>
+                </button>
+                <button type="button" class="med-btn-pro" data-med="bicarbonato">
+                    <span class="med-pro-title">Bicarbonato</span>
+                    <span class="med-pro-subtitle">Acidose/HiperK</span>
+                </button>
+                <button type="button" class="med-btn-pro" data-med="sulfato">
+                    <span class="med-pro-title">Sulfato de Mg</span>
+                    <span class="med-pro-subtitle">Torsades</span>
+                </button>
+            </div>
+            
+            <input type="hidden" id="medication-select" value="">
+            <input type="hidden" id="medication-dose" value="">
 
-            <label for="medication-dose">Dose Sugerida (Auto-calculada):</label>
-            <input type="text" id="medication-dose" readonly placeholder="A dose será calculada aqui">
-            
-            <label>Via de Administração:</label>
-            <div class="radio-group">
-                <input type="radio" id="route-ev" name="administration-route" value="EV" checked>
-                <label for="route-ev">EV</label>
-                <input type="radio" id="route-io" name="administration-route" value="IO">
-                <label for="route-io">IO</label>
-                <input type="radio" id="route-et" name="administration-route" value="ET">
-                <label for="route-et">ET (se aplicável)</label>
+            <div class="med-preview-panel" id="med-preview-panel" style="display: none;">
+                <div class="med-preview-header">
+                    <i class="fas fa-prescription-bottle-alt"></i>
+                    <span id="med-preview-name">Adrenalina</span>
+                </div>
+                <span id="med-preview-value" class="med-preview-value">1 mg</span>
+                
+                <div class="route-selector-pro">
+                    <div class="route-options">
+                        <input type="radio" id="route-ev" name="administration-route" value="EV" checked>
+                        <label for="route-ev">EV</label>
+                        <input type="radio" id="route-io" name="administration-route" value="IO">
+                        <label for="route-io">IO</label>
+                        <input type="radio" id="route-et" name="administration-route" value="ET">
+                        <label for="route-et">ET</label>
+                    </div>
+                </div>
             </div>
 
-            <button id="record-med-btn" class="primary-btn">REGISTRAR ADMINISTRAÇÃO</button>
-            <button id="cancel-med-btn" class="cancel-btn">Cancelar</button>
+            <button id="record-med-btn" class="med-action-btn" disabled>
+                <i class="fas fa-check-circle"></i>
+                <div class="med-action-text">
+                    <span class="main-text">ADMINISTRAR AGORA</span>
+                    <span class="sub-text">Selecione uma droga</span>
+                </div>
+            </button>
+            
+            <button id="cancel-med-btn" class="cancel-btn wide-btn" style="margin-top: 12px; background: transparent; border: 2px solid var(--border-color); color: var(--text-primary); font-weight: 700; box-shadow: none;">CANCELAR</button>
         </div>
     </div>
 

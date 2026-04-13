@@ -119,8 +119,7 @@ export class QuizEngine {
             offline: usedFallback
         };
 
-        const quizRunningModal = document.getElementById('quiz-running-modal');
-        if(quizRunningModal) quizRunningModal.classList.add('show');
+        if (window.openModal) window.openModal('quiz-running-modal');
 
         // Mostrar aviso se estiver usando questões offline
         if (usedFallback) {
@@ -227,8 +226,7 @@ export class QuizEngine {
     finishQuiz() {
         this.closeModal('quiz-running-modal');
 
-        const resultModal = document.getElementById('quiz-result-modal');
-        if(resultModal) resultModal.classList.add('show');
+        if (window.openModal) window.openModal('quiz-result-modal');
         
         const total = this.state.quiz.questions.length;
         const score = this.state.quiz.score;

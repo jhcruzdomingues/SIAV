@@ -90,7 +90,26 @@ export function showScreen(screenName) {
 export function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
-        modal.style.display = 'none';
+        modal.classList.remove('show');
+        
+        // Aguarda a transição CSS de opacidade terminar
+        setTimeout(() => {
+            if (!modal.classList.contains('show')) {
+                modal.style.display = 'none';
+            }
+        }, 300);
+        
+        // Limpa inputs e textareas esquecidos no modal para evitar dados fantasmas
+        const forms = modal.querySelectorAll('form');
+        forms.forEach(form => {
+            if (form.id !== 'login-form' && form.id !== 'profile-update-form' && form.id !== 'login-form-simple' && form.id !== 'register-form-full') {
+                const inputs = form.querySelectorAll('input:not([type="radio"]), textarea, select');
+                inputs.forEach(input => {
+                    if (input.type === 'checkbox') input.checked = false;
+                    else input.value = '';
+                });
+            }
+        });
     }
 }
 
@@ -101,7 +120,10 @@ export function closeModal(modalId) {
 export function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
-        modal.style.display = 'block';
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            modal.classList.add('show');
+        }, 10);
     }
 }
 
@@ -112,6 +134,27 @@ export function openModal(modalId) {
  * @param {number} timeout - Tempo em ms até o alerta desaparecer
  */
 export function showTransientAlert(message, style = 'warning', timeout = 4000) {
+    // Sequestra alertas durante a PCR para manter a UX limpa
+    if (window.SIAV?.state?.pcrActive && document.getElementById('pcr-screen')?.classList.contains('active')) {
+        const banner = document.getElementById('pcr-feedback-banner');
+        const icon = banner?.querySelector('.pcr-feedback-icon i');
+        const text = banner?.querySelector('.pcr-feedback-text');
+        
+        if (banner && text && icon) {
+            banner.className = `pcr-feedback-banner show ${style}`;
+            text.innerHTML = message;
+            
+            if(style === 'success') icon.className = 'fas fa-check-circle';
+            else if(style === 'danger') icon.className = 'fas fa-exclamation-triangle';
+            else if(style === 'warning') icon.className = 'fas fa-exclamation-circle';
+            else icon.className = 'fas fa-info-circle';
+            
+            if (window.pcrFeedbackTimeout) clearTimeout(window.pcrFeedbackTimeout);
+            window.pcrFeedbackTimeout = setTimeout(() => { banner.classList.remove('show'); }, timeout);
+            return;
+        }
+    }
+
     const alertDiv = document.createElement('div');
     alertDiv.className = `transient-alert alert-${style}`;
     alertDiv.innerHTML = `

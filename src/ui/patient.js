@@ -1,14 +1,15 @@
 import { state } from '../config/state.js';
-import { closeModal, showScreen } from './dom.js';
+import { closeModal, openModal, showScreen } from './dom.js';
 
 export function showPatientModal() {
-    const patientModal = document.getElementById('patient-modal');
-    if (patientModal) patientModal.classList.add('show');
+    openModal('patient-modal');
 }
 
 export function cancelPatientSetup() {
     closeModal('patient-modal');
-    showScreen('home');
+    if (!state.pcrActive) {
+        showScreen('home');
+    }
 }
 
 export function savePatientData(e) {
@@ -48,14 +49,19 @@ export function savePatientData(e) {
     }
     updatePatientDisplay();
     closeModal('patient-modal');
-    if (typeof window.startPCR === 'function') window.startPCR();
+    
+    if (!state.pcrActive && typeof window.startPCR === 'function') {
+        window.startPCR();
+    }
 }
 
 export function startPCRWithUninformedData() {
     state.patient = { name: 'N/I', age: 'N/I', sex: 'N/I', weight: 'N/I', allergies: 'Nenhuma informada', comorbidities: 'N/I' };
     updatePatientDisplay();
     closeModal('patient-modal');
-    if (typeof window.startPCR === 'function') window.startPCR();
+    if (!state.pcrActive && typeof window.startPCR === 'function') {
+        window.startPCR();
+    }
 }
 
 function updatePatientDisplay() {

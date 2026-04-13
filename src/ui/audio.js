@@ -99,8 +99,10 @@ export function createMetronomeSound() {
 export function toggleMetronome() {
     if (state.metronomeActive) {
         stopMetronome();
+        state.metronomeUserDisabled = true;
     } else {
         startMetronome();
+        state.metronomeUserDisabled = false;
     }
 }
 

@@ -1,5 +1,5 @@
 import { state } from '../config/state.js';
-import { closeModal } from './dom.js';
+import { closeModal, openModal } from './dom.js';
 
 export function showGlasgowModal() {
     const ocular = document.getElementById('glasgow-ocular');
@@ -11,8 +11,7 @@ export function showGlasgowModal() {
     if (motora) motora.value = '0';
     
     updateGlasgowScore();
-    const modal = document.getElementById('glasgow-modal');
-    if (modal) modal.classList.add('show');
+    openModal('glasgow-modal');
 }
 
 export function updateGlasgowScore() {

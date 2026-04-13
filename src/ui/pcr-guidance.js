@@ -13,18 +13,15 @@ export function feedbackCritico(btnId) {
 }
 
 export function updatePcrGuidance() {
-    const checklistEl = document.getElementById('protocol-checklist');
-    if (checklistEl) checklistEl.innerHTML = '';
-
-    const hintBox = document.getElementById('protocol-hint-box');
-    const hintMessage = document.getElementById('hint-message');
-    const hintIcon = document.getElementById('hint-icon');
-    const currentStep = document.getElementById('current-step');
-    const cycleInfo = document.getElementById('cycle-info');
-    const progressBar = document.getElementById('cycle-progress');
+    const actionCenter = document.getElementById('pcr-action-center');
+    const badge = document.getElementById('ac-status-badge');
+    const cycleCounter = document.getElementById('ac-cycle-counter');
+    const iconContainer = document.getElementById('ac-icon');
+    const primaryText = document.getElementById('ac-primary-text');
+    
     const compBtn = document.getElementById('compressions-btn');
     
-    if (!hintBox || !hintMessage || !hintIcon || !currentStep || !cycleInfo || !progressBar || !compBtn) return;
+    if (!actionCenter || !compBtn) return;
 
     const pcrStateSnapshot = {
         currentPhase: compressionCycle.currentPhase,
@@ -37,57 +34,81 @@ export function updatePcrGuidance() {
 
     const protocolStep = window.MedicalBrain.getProtocolNextStep(pcrStateSnapshot);
     
-    let iconClass = 'fas fa-heartbeat', iconColor = '#e74c3c';
-    switch(compressionCycle.currentPhase) {
-        case 'preparation': iconClass = 'fas fa-heartbeat'; iconColor = '#e74c3c'; break;
-        case 'compressions': iconClass = 'fas fa-hands-helping'; iconColor = '#27ae60'; break;
-        case 'rhythm_check': iconClass = 'fas fa-wave-square'; iconColor = '#2980b9'; break;
-        case 'shock_advised': iconClass = 'fas fa-bolt'; iconColor = '#f1c40f'; break;
-    }
-
-    hintBox.className = `protocol-hint-box improved-panel protocol-panel-mobile improved-panel-mobile ${protocolStep.style || ''}`;
-    hintMessage.textContent = protocolStep.message;
-    hintMessage.className = `protocol-panel-message highlight-message`;
-    hintIcon.innerHTML = `<i class="${iconClass}" style="color:${iconColor}"></i>`;
-    currentStep.textContent = '';
-    currentStep.className = `protocol-panel-step step-highlight`;
-    
-    const alertTip = document.getElementById('alert-tip');
-    if (alertTip) alertTip.style.display = 'none';
-    const hintDetails = document.getElementById('hint-details');
-    if (hintDetails) hintDetails.innerHTML = '';
-
-    let currentStepMessage = '', cycleInfoText = '', progressBarColor = 'var(--primary)', compBtnText = '', compBtnStyle = '';
+    let phaseClass = 'status-preparation';
+    let badgeText = 'PREPARAÇÃO';
+    let iconClass = 'fas fa-heartbeat';
+    let compBtnText = 'INICIAR COMPRESSÕES';
+    let compBtnStyle = 'linear-gradient(135deg, var(--success), #219a52)';
 
     switch(compressionCycle.currentPhase) {
         case 'preparation':
-            currentStepMessage = 'Aguardando início'; cycleInfoText = 'Ciclo 0'; progressBar.style.width = '0%';
-            progressBarColor = 'var(--primary)'; compBtnText = 'INICIAR COMPRESSÕES'; compBtnStyle = 'linear-gradient(135deg, var(--success), #219a52)';
+            phaseClass = 'status-preparation'; badgeText = 'PREPARAÇÃO'; iconClass = 'fas fa-heartbeat';
+            compBtnText = 'INICIAR COMPRESSÕES'; compBtnStyle = 'linear-gradient(135deg, var(--success), #219a52)';
             compBtn.disabled = false; break;
         case 'compressions':
-            currentStepMessage = `Compressões contínuas • ${state.bpm} BPM`; cycleInfoText = `Ciclo ${compressionCycle.cycleCount}`;
-            progressBar.style.width = `${compressionCycle.cycleProgress}%`; progressBarColor = 'var(--primary)';
+            phaseClass = 'status-compressions'; badgeText = 'RCP ATIVA'; iconClass = 'fas fa-hands-helping';
             compBtnText = 'RCP EM ANDAMENTO'; compBtnStyle = 'linear-gradient(135deg, var(--warning), #e67e22)';
-            compBtn.disabled = true; hintBox.classList.add('compressions'); break;
+            compBtn.disabled = true; break;
         case 'rhythm_check':
-            currentStepMessage = 'Avaliar ritmo e pulso (≤10s)'; cycleInfoText = `Ciclo ${compressionCycle.cycleCount}`;
-            progressBar.style.width = '0%'; progressBarColor = 'var(--danger)'; compBtnText = 'RETOMAR COMPRESSÕES';
-            compBtnStyle = 'linear-gradient(135deg, var(--success), #219a52)'; compBtn.disabled = false;
-            hintBox.classList.add('rhythm-check'); break;
+            phaseClass = 'status-rhythm'; badgeText = 'AVALIAÇÃO'; iconClass = 'fas fa-wave-square';
+            compBtnText = 'RETOMAR COMPRESSÕES'; compBtnStyle = 'linear-gradient(135deg, var(--success), #219a52)'; 
+            compBtn.disabled = false; break;
         case 'shock_advised':
-            currentStepMessage = 'Afastar e desfibrilar'; cycleInfoText = `Ciclo ${compressionCycle.cycleCount}`;
-            progressBar.style.width = '0%'; progressBarColor = 'var(--danger)'; compBtnText = 'RETOMAR COMPRESSÕES';
-            compBtnStyle = 'linear-gradient(135deg, var(--success), #219a52)'; compBtn.disabled = false;
-            hintBox.classList.add('shock-advised'); break;
+            phaseClass = 'status-shock'; badgeText = 'AFASTAR!'; iconClass = 'fas fa-bolt';
+            compBtnText = 'RETOMAR COMPRESSÕES'; compBtnStyle = 'linear-gradient(135deg, var(--success), #219a52)'; 
+            compBtn.disabled = false; break;
     }
     
-    currentStep.textContent = currentStepMessage;
-    cycleInfo.textContent = cycleInfoText;
-    progressBar.style.backgroundColor = progressBarColor;
+    // Override visual se for ação crítica de protocolo (Ex: Adrenalina Imediata)
+    if (protocolStep.criticalAction === 'DRUG') {
+        phaseClass = 'status-danger';
+        badgeText = 'AÇÃO CRÍTICA';
+        iconClass = 'fas fa-syringe';
+    }
+
+    // Aplica no DOM
+    actionCenter.className = `pcr-action-center ${phaseClass}`;
+    badge.textContent = badgeText;
+    iconContainer.innerHTML = `<i class="${iconClass}"></i>`;
+    
+    // Formata o texto principal (HUD style)
+    let mainTitle = protocolStep.message;
+    if (mainTitle.includes('—')) {
+        const parts = mainTitle.split('—');
+        primaryText.innerHTML = `<span class="ac-title-main">${parts[0].trim()}</span> <span class="ac-title-sub">${parts[1].trim()}</span>`;
+    } else if (mainTitle.includes(':')) {
+        const parts = mainTitle.split(':');
+        primaryText.innerHTML = `<span class="ac-title-main">${parts[0].trim()}</span> <span class="ac-title-sub">${parts[1].trim()}</span>`;
+    } else {
+        primaryText.textContent = mainTitle;
+    }
+
+    // Pega os containers fixos
+    const doseContainer = document.getElementById('ac-dose-container');
+    const doseText = document.getElementById('ac-dose-text');
+    const detailsContainer = document.getElementById('ac-details-container');
+    const detailsText = document.getElementById('ac-details-text');
+    
+    if (doseContainer && doseText) {
+        if (protocolStep.dose) {
+            doseText.textContent = protocolStep.dose;
+            doseContainer.style.display = 'flex';
+        } else {
+            doseContainer.style.display = 'none';
+        }
+    }
+    
+    if (detailsContainer && detailsText) {
+        if (protocolStep.details) {
+            detailsText.textContent = protocolStep.details;
+            detailsContainer.style.display = 'flex';
+        } else {
+            detailsContainer.style.display = 'none';
+        }
+    }
+
+    cycleCounter.textContent = `CICLO ${compressionCycle.cycleCount}`;
+
     compBtn.innerHTML = `<span>💪</span><span>${compBtnText}</span>`;
     compBtn.style.background = compBtnStyle;
-
-    if (compressionCycle.currentPhase !== 'compressions') hintBox.classList.remove('compressions');
-    if (compressionCycle.currentPhase !== 'rhythm_check') hintBox.classList.remove('rhythm-check');
-    if (compressionCycle.currentPhase !== 'shock_advised') hintBox.classList.remove('shock-advised');
 }

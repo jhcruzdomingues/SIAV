@@ -76,12 +76,9 @@ export function processRhythmSelection() {
         showScreen('shock-action');
         
     } else {
-        compressionCycle.currentPhase = 'compressions';
-        if (typeof window.updatePcrGuidance === 'function') window.updatePcrGuidance(); 
         if (typeof window.playNotification === 'function') window.playNotification('DRUG'); 
         const msg = `Ritmo Não-Chocável Detectado (${rhythmNames[rhythm]}). 1. Retomar compressões IMEDIATAMENTE. 2. Foco nos 5 H's e 5 T's.`;
         if (typeof window.addEvent === 'function') window.addEvent(msg, 'critical');
-        if (typeof window.showTransientAlert === 'function') window.showTransientAlert(msg, 'danger', 6000);
         if (typeof window.startCompressions === 'function') window.startCompressions();
         showScreen('pcr');
     }
@@ -183,9 +180,9 @@ export function applyShockAndResume() {
         let shockText = `CHOQUE #${state.shockCount} - ${rhythmType} - ${energyValue}J`;
         if (typeof window.addEvent === 'function') window.addEvent(shockText, 'critical');
 
-        const shockMsg = `CHOQUE ADMINISTRADO! (${energyValue}J) - RETOMAR COMPRESSOES IMEDIATAMENTE.`;
+        const shockMsg = `CHOQUE APLICADO (${energyValue}J) - Retomar RCP!`;
         if (typeof window.addEvent === 'function') window.addEvent(shockMsg, 'critical');
-        if (typeof window.showTransientAlert === 'function') window.showTransientAlert(shockMsg, 'danger', 5000);
+        if (typeof window.showTransientAlert === 'function') window.showTransientAlert(shockMsg, 'success', 4000);
 
         if (typeof window.updatePcrGuidance === 'function') window.updatePcrGuidance();
         if (typeof window.startCompressions === 'function') window.startCompressions(); 
