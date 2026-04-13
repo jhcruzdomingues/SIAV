@@ -247,22 +247,26 @@ export function registerAllEvents() {
         if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
 
         switch (e.code) {
-            case 'KeyC':
+            case 'KeyC': {
                 const compBtn = document.getElementById('compressions-btn');
                 if (compBtn && !compBtn.disabled) startCompressions();
                 break;
-            case 'KeyM':
+            }
+            case 'KeyM': {
                 toggleMetronome();
                 break;
-            case 'KeyS':
+            }
+            case 'KeyS': {
                 const shockBtn = document.getElementById('apply-shock-btn');
                 if (shockBtn && !shockBtn.disabled) shockBtn.click();
                 break;
+            }
             case 'Digit1':
-            case 'Numpad1':
+            case 'Numpad1': {
                 const medBtn = document.getElementById('med-btn');
                 if (medBtn) showMedModal();
                 break;
+            }
             default:
                 break;
         }

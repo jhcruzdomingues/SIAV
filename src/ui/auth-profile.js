@@ -163,9 +163,9 @@ export async function handleLogin(e) {
     e.preventDefault();
     const form = e.target;
     const loginBtn = form.querySelector('button[type="submit"]');
+    const emailInput = form.querySelector('input[type="email"]') || document.getElementById('login-email');
+    const passwordInput = form.querySelector('input[type="password"]') || document.getElementById('login-password');
     try {
-        const emailInput = form.querySelector('input[type="email"]') || document.getElementById('login-email');
-        const passwordInput = form.querySelector('input[type="password"]') || document.getElementById('login-password');
         if (!emailInput || !passwordInput) return;
         const email = emailInput.value.trim();
         const password = passwordInput.value;
