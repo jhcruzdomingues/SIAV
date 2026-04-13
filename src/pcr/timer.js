@@ -98,7 +98,6 @@ export function stopPCRTimer() {
     releaseWakeLock();
     console.log('⏱️ Timer PCR parado');
 }
-}
 
 /**
  * Reseta o timer de PCR
