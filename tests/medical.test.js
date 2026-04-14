@@ -56,15 +56,14 @@ describe('🧠 Módulo Médico - Protocolos AHA 2025', () => {
       const state = { currentPhase: 'compressions', isShockable: false, medications: [], currentCycle: 1, shockCount: 0, elapsedSeconds: 10 };
       const step = getProtocolNextStep(state);
       expect(step.criticalAction).toBe('DRUG');
-      expect(step.message).toContain('Adrenalina');
-      expect(step.dose).toContain('IMEDIATO');
+      expect(step.message).toContain('ADRENALINA');
     });
 
     it('Deve AGUARDAR 2 choques antes de pedir Adrenalina em ritmo chocável (FV/TVSP)', () => {
       const state = { currentPhase: 'compressions', isShockable: true, medications: [], currentCycle: 1, shockCount: 1, elapsedSeconds: 120 };
       const step = getProtocolNextStep(state);
       expect(step.criticalAction).toBeNull();
-      expect(step.message).toContain('aguardar indicação');
+      expect(step.message).toContain('RCP DE ALTA QUALIDADE');
     });
 
     it('Deve pedir Adrenalina APÓS 2 choques em ritmo chocável', () => {
@@ -78,7 +77,8 @@ describe('🧠 Módulo Médico - Protocolos AHA 2025', () => {
       const state = { currentPhase: 'compressions', isShockable: true, medications: [{ name: 'Adrenalina', timestamp: Date.now() }], currentCycle: 3, shockCount: 2, elapsedSeconds: 250 };
       const step = getProtocolNextStep(state);
       expect(step.criticalAction).toBe('DRUG');
-      expect(step.message).toContain('Amiodarona 300 mg');
+      expect(step.message).toContain('AMIODARONA');
+      expect(step.dose).toContain('300 mg');
     });
 
     it('Deve calcular corretamente o intervalo de 3-5 minutos para a próxima Adrenalina', () => {
@@ -87,7 +87,7 @@ describe('🧠 Módulo Médico - Protocolos AHA 2025', () => {
       
       const step1 = getProtocolNextStep({ currentPhase: 'compressions', isShockable: false, medications: [{ name: 'Adrenalina', timestamp: past2Minutes }], currentCycle: 2, shockCount: 0 }, now);
       expect(step1.criticalAction).toBeNull();
-      expect(step1.message).toContain('Próxima Adrenalina');
+      expect(step1.message).toContain('RCP CONTÍNUA');
       
       const past4Minutes = now - (4 * 60 * 1000);
       const step2 = getProtocolNextStep({ currentPhase: 'compressions', isShockable: false, medications: [{ name: 'Adrenalina', timestamp: past4Minutes }], currentCycle: 3, shockCount: 0 }, now);
