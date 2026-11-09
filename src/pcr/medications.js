@@ -1,5 +1,7 @@
 import { state, intervals, compressionCycle } from '../config/state.js';
 import { closeModal, openModal, showTransientAlert } from '../ui/dom.js';
+import { addMedication } from './events.js';
+import { getAntiarrhythmicHistory, getAdultAntiarrhythmicDose } from '../protocols/medical.js';
 
 const MEDICATION_DOSES = {
     adrenalina: { adult: '1 mg EV/IO a cada 3-5 minutos', pediatric: '0.01 mg/kg EV/IO' },
@@ -55,9 +57,14 @@ export function updateMedicationDose() {
             }
         } else {
             doseText = MEDICATION_DOSES[medication].adult;
-             if (medication === 'lidocaina') {
-                const attackDose = (weight * 1.5).toFixed(0);
-                doseText = `Ataque: ${attackDose} mg (1-1.5 mg/kg)`;
+            if (medication === 'amiodarona' || medication === 'lidocaina') {
+                const count = getAntiarrhythmicHistory(state.medications)[medication].length;
+                doseText = getAdultAntiarrhythmicDose(medication, count + 1) || '--';
+                if (medication === 'lidocaina' && count < 2) {
+                    const minDose = Number((weight * (count === 0 ? 1 : 0.5)).toFixed(2));
+                    const maxDose = Number((weight * (count === 0 ? 1.5 : 0.75)).toFixed(2));
+                    doseText = `${minDose}-${maxDose} mg (${doseText})`;
+                }
             }
         }
     }
@@ -78,9 +85,9 @@ export function updateMedicationDose() {
         }
         if(previewPanel) previewPanel.style.display = 'block';
         if(recordBtn) {
-            recordBtn.disabled = false;
+            recordBtn.disabled = doseText === '--';
             const subText = recordBtn.querySelector('.sub-text');
-            if(subText) subText.textContent = 'Clique para confirmar';
+            if(subText) subText.textContent = doseText === '--' ? 'Esquema de duas doses já registrado' : 'Clique para confirmar';
         }
     }
 }
@@ -109,14 +116,14 @@ export function recordMedication() {
 
         const medNames = {
             'adrenalina': 'Adrenalina', 'amiodarona': 'Amiodarona', 'atropina': 'Atropina',
-            'bicarbonato': 'Bicarbonato de Sodio', 'lidocaina': 'Lidocaina', 'sulfato': 'Sulfato de Magnesio'
+            'bicarbonato': 'Bicarbonato de Sodio', 'lidocaina': 'Lidocaína', 'sulfato': 'Sulfato de Magnesio'
         };
 
         const medicationName = medNames[medication] || medication;
 
-        state.medications.push({
+        addMedication({
             name: medicationName, dose: dose, route: route,
-            time: new Date(), timestamp: Date.now()
+            time: new Date()
         });
 
         if (typeof window.playNotification === 'function') window.playNotification('DRUG');

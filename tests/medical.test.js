@@ -73,8 +73,8 @@ describe('🧠 Módulo Médico - Protocolos AHA 2025', () => {
       expect(step.message).toContain('ADMINISTRAR AGORA');
     });
 
-    it('Deve recomendar Amiodarona 300mg após o 2º choque em FV/TVSP', () => {
-      const state = { currentPhase: 'compressions', isShockable: true, medications: [{ name: 'Adrenalina', timestamp: Date.now() }], currentCycle: 3, shockCount: 2, elapsedSeconds: 250 };
+    it('Deve recomendar Amiodarona 300mg após o 3º choque em FV/TVSP', () => {
+      const state = { currentPhase: 'compressions', isShockable: true, medications: [{ name: 'Adrenalina', timestamp: Date.now() }], currentCycle: 4, shockCount: 3, elapsedSeconds: 250 };
       const step = getProtocolNextStep(state);
       expect(step.criticalAction).toBe('DRUG');
       expect(step.message).toContain('AMIODARONA');

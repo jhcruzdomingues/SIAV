@@ -88,11 +88,31 @@ export function getMedicationDueStatus(medicationName, intervalSeconds, medicati
     }
 }
 
+// Accept historical records with or without accents, preserving separate histories.
+export function getAntiarrhythmicHistory(medications) {
+    const history = { amiodarona: [], lidocaina: [] };
+    for (const medication of medications) {
+        const name = (medication.name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        for (const id of Object.keys(history)) {
+            if (name.includes(id)) history[id].push(medication);
+        }
+    }
+    return history;
+}
+
+export function getAdultAntiarrhythmicDose(medication, doseNumber) {
+    const doses = {
+        amiodarona: ['300 mg EV/IO', '150 mg EV/IO'],
+        lidocaina: ['1-1.5 mg/kg EV/IO', '0.5-0.75 mg/kg EV/IO']
+    };
+    return doses[medication]?.[doseNumber - 1] || null;
+}
+
 export function getProtocolNextStep(pcrState, currentTime = Date.now()) {
     const { currentPhase, isShockable, medications, currentCycle, shockCount, elapsedSeconds } = pcrState;
     
     const medAdrenalineCount = medications.filter(m => m.name.includes('Adrenalina')).length;
-    const medAntiarrhythmicCount = medications.filter(m => m.name.includes('Amiodarona') || m.name.includes('Lidocaína')).length;
+    const antiarrhythmics = getAntiarrhythmicHistory(medications);
 
     // ESTADO PADRÃO: RCP de Alta Qualidade
     let nextStep = { message: 'RCP DE ALTA QUALIDADE — 100 A 120 BPM', style: 'success', icon: 'fas fa-heartbeat', criticalAction: null, details: 'Profundidade de 5cm e retorno total do tórax. Revezar compressor a cada ciclo.', dose: '', route: 'EV/IO' };
@@ -118,7 +138,7 @@ export function getProtocolNextStep(pcrState, currentTime = Date.now()) {
     if (medAdrenalineCount === 0) {
         if (!isShockable && currentCycle >= 1) {
             drugAction = { message: 'ADRENALINA — ADMINISTRAR IMEDIATAMENTE', dose: '1 mg EV/IO', details: 'Na AESP/Assistolia, administre o mais rápido possível.' };
-        } else if (isShockable && currentCycle >= 3) {
+        } else if (isShockable && shockCount >= 2) {
             drugAction = { message: 'ADRENALINA — ADMINISTRAR AGORA', dose: '1 mg EV/IO', details: 'Em FV/TVSP, a primeira dose é feita após o 2º choque.' };
         }
     } else {
@@ -130,10 +150,22 @@ export function getProtocolNextStep(pcrState, currentTime = Date.now()) {
 
     // B. AMIODARONA / LIDOCAÍNA (Só avalia se não houver Adrenalina pendente)
     if (!drugAction && isShockable && (currentPhase === 'compressions' || currentPhase === 'compression')) {
-        if (shockCount >= 2 && medAntiarrhythmicCount === 0) {
-            drugAction = { message: 'AMIODARONA — PREPARAR E ADMINISTRAR', dose: '300 mg EV/IO', details: 'Indicada para FV/TVSP refratária após o 2º choque.' };
-        } else if (shockCount >= 3 && medAntiarrhythmicCount === 1) {
-            drugAction = { message: 'AMIODARONA — 2ª DOSE DEVIDA', dose: '150 mg EV/IO', details: 'Dose adicional se a FV/TVSP persistir após novos choques.' };
+        const amiodaronaCount = antiarrhythmics.amiodarona.length;
+        const lidocainaCount = antiarrhythmics.lidocaina.length;
+        if (shockCount >= 3 && amiodaronaCount === 0 && lidocainaCount === 0) {
+            drugAction = { message: 'AMIODARONA OU LIDOCAÍNA — PREPARAR E ADMINISTRAR', dose: `Amiodarona: ${getAdultAntiarrhythmicDose('amiodarona', 1)} OU Lidocaína: ${getAdultAntiarrhythmicDose('lidocaina', 1)}`, details: 'Para FV/TVSP persistente após o 3º choque. Escolher um dos antiarrítmicos.' };
+        } else if (amiodaronaCount > 0 && lidocainaCount > 0) {
+            // Mixed records must not trigger an automatic switch or another dose.
+            nextStep.details = 'Amiodarona e lidocaína já registradas. Reavaliar a conduta clínica antes de novas doses.';
+        } else {
+            const medication = amiodaronaCount > 0 ? 'amiodarona' : 'lidocaina';
+            const history = antiarrhythmics[medication];
+            // Repeat in the subsequent antiarrhythmic loop (normally after shock 5).
+            // New records also prevent an immediate repeat after a delayed first dose.
+            const firstDoseShock = history[0]?.shockCount ?? 3;
+            if (history.length === 1 && shockCount >= 5 && shockCount >= firstDoseShock + 2) {
+                drugAction = { message: `${medication === 'amiodarona' ? 'AMIODARONA' : 'LIDOCAÍNA'} — 2ª DOSE DEVIDA`, dose: getAdultAntiarrhythmicDose(medication, 2), details: 'Dose adicional se a FV/TVSP persistir após novos choques, no ciclo de antiarrítmico.' };
+            }
         }
     }
 

@@ -22,7 +22,7 @@ export function addNote(text) {
 
 export function addMedication(medication) {
   if (!state.medications) state.medications = [];
-  state.medications.push({ ...medication, timestamp: Date.now() });
+  state.medications.push({ ...medication, timestamp: Date.now(), shockCount: state.shockCount });
 }
 
 export function getTimeline() {
