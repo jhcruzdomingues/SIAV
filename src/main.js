@@ -82,6 +82,10 @@ async function initApp() {
   state.soundsEnabled = settings.soundsEnabled;
   state.soundVolume = settings.soundVolume;
 
+  // Bind navigation before waiting for session/network work.
+  registerAllEvents();
+  showScreen('home');
+
   // 6. Verificar sessão ativa
   const user = await checkSession();
   if (user) {
@@ -149,8 +153,6 @@ async function initApp() {
     }, 500);
   });
 
-  // Vincula TODOS os listeners da interface da aplicação
-  registerAllEvents();
   
   // Registra Service Worker (PWA)
   if ('serviceWorker' in navigator) {
@@ -160,8 +162,7 @@ async function initApp() {
               .catch((err) => console.log('Falha ao registrar Service Worker:', err));
       });
   }
-  
-  showScreen('home');
+
 }
 
 // ===== EXPORTS GLOBAIS (Para compatibilidade com código legado) =====

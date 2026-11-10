@@ -5,6 +5,8 @@
  * Gerencia elementos DOM, cache e atualizações de UI
  */
 
+const modalTransitions = new WeakMap();
+
 // Cache de elementos DOM para performance
 const DOM_CACHE = {
     pcrTimer: null,
@@ -90,14 +92,15 @@ export function showScreen(screenName) {
 export function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
+        clearTimeout(modalTransitions.get(modal));
         modal.classList.remove('show');
         
         // Aguarda a transição CSS de opacidade terminar
-        setTimeout(() => {
+        modalTransitions.set(modal, setTimeout(() => {
             if (!modal.classList.contains('show')) {
                 modal.style.display = 'none';
             }
-        }, 300);
+        }, 300));
         
         // Limpa inputs e textareas esquecidos no modal para evitar dados fantasmas
         const forms = modal.querySelectorAll('form');
@@ -120,10 +123,11 @@ export function closeModal(modalId) {
 export function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
+        clearTimeout(modalTransitions.get(modal));
         modal.style.display = 'flex';
-        setTimeout(() => {
+        modalTransitions.set(modal, setTimeout(() => {
             modal.classList.add('show');
-        }, 10);
+        }, 10));
     }
 }
 

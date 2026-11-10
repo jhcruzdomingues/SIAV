@@ -14,27 +14,34 @@ export function showRhythmSelectorScreen(isCycleCheck = false) {
     
     document.querySelectorAll('#rhythm-selector-screen .rhythm-option-btn').forEach(btn => {
         btn.classList.remove('selected');
+        btn.setAttribute('aria-pressed', 'false');
     });
     
     state.tempRhythmData.rhythm = null;
     state.tempRhythmData.notes = null;
+    updateRhythmConfirmation();
 
     showScreen('rhythm-selector');
 }
 
+function updateRhythmConfirmation(element = null) {
+    const button = document.getElementById('submit-rhythm-selection-btn');
+    if (!button) return;
+    button.disabled = !element;
+    button.textContent = element
+        ? `CONFIRMAR: ${element.dataset.rhythm}`
+        : 'SELECIONE UM RITMO';
+}
+
 export function selectRhythmOption(element) {
-    const rhythm = element.getAttribute('data-rhythm');
-    const isAlreadySelected = element.classList.contains('selected');
-    
-    if (isAlreadySelected) {
-        processRhythmSelection();
-    } else {
-        document.querySelectorAll('#rhythm-selector-screen .rhythm-option-btn').forEach(btn => {
-            btn.classList.remove('selected');
-        });
-        element.classList.add('selected');
-        state.tempRhythmData.rhythm = rhythm;
-    }
+    if (!isClinicalArrestActive()) return;
+    document.querySelectorAll('#rhythm-selector-screen .rhythm-option-btn').forEach(button => {
+        const selected = button === element;
+        button.classList.toggle('selected', selected);
+        button.setAttribute('aria-pressed', String(selected));
+    });
+    state.tempRhythmData.rhythm = element.getAttribute('data-rhythm');
+    updateRhythmConfirmation(element);
 }
 
 export function processRhythmSelection() {
@@ -50,6 +57,7 @@ export function processRhythmSelection() {
     if (rhythm === 'Ritmo') { roscObtido(); return; }
     if (!assessClinicalRhythm(rhythm)) return;
     state.tempRhythmData.rhythm = null;
+    updateRhythmConfirmation();
     compressionCycle.currentPhase = 'rhythm_check';
     
     const rhythmNames = {

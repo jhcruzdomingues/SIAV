@@ -1,3 +1,5 @@
+import { openModal, closeModal } from './src/ui/dom.js';
+
 // =============================================
 // INTEGRAÇÃO DO MENU DE CONFIGURAÇÕES COM CÓDIGO LEGADO
 // =============================================
@@ -51,14 +53,6 @@ function openThemeSettings() {
     closeModal('settings-menu-modal');
     openModal('theme-settings-modal');
     loadCurrentTheme();
-}
-
-/**
- * Abre configurações de plano
- */
-function openPlanSettings() {
-    closeModal('settings-menu-modal');
-    showPlanInfo();
 }
 
 /**
@@ -269,7 +263,7 @@ function showAboutInfo() {
 // =============================================
 
 // Executar quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', function() {
+function initSettings() {
     // Inicializar tema
     loadCurrentTheme();
 
@@ -281,9 +275,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Botão já configurado via onclick no HTML
-    // Não precisa de addEventListener aqui
-});
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSettings, { once: true });
+else initSettings();
 
 // Função para abrir modal de planos/assinatura
 function openPlanSettings() {
@@ -308,3 +303,5 @@ function openPlanSettings() {
         }
     }
 }
+
+Object.assign(window, { openModal, closeModal, openSettingsMenu, openProfileSettings, openSoundSettings, backToSettingsMenu, openThemeSettings, openPlanSettings, openDataSettings, openAboutSettings, setTheme });

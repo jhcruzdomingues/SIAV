@@ -1,6 +1,6 @@
 import { restartPCRAfterROSC } from '../pcr/core.js';
 import { state } from '../config/state.js';
-import { showScreen, closeModal, showTransientAlert } from './dom.js';
+import { showScreen, openModal, closeModal, showTransientAlert } from './dom.js';
 import { showPatientModal, savePatientData, startPCRWithUninformedData, cancelPatientSetup } from './patient.js';
 import { startCompressions, finishPCR } from '../pcr/core.js';
 import { toggleMetronome, adjustBPM } from './audio.js';
@@ -25,7 +25,9 @@ export function registerAllEvents() {
     });
     document.getElementById('nav-dashboard')?.addEventListener('click', () => {
         updateDashboard();
-        if (checkAccess('advanced_dashboard', false)) {
+        if (!state.currentUser.isLoggedIn) {
+            showProfileModal();
+        } else if (checkAccess('advanced_dashboard', false)) {
             showScreen('dashboard');
         } else {
             if (confirm('Acesso ao dashboard restrito ao seu plano.\n\nDeseja ver os planos disponíveis?')) {
@@ -143,7 +145,16 @@ export function registerAllEvents() {
     document.getElementById('profile-update-form')?.addEventListener('submit', handleProfileUpdate);
     document.getElementById('logout-btn')?.addEventListener('click', logout);
     document.getElementById('cancel-profile-btn')?.addEventListener('click', () => closeModal('profile-modal'));
-    document.getElementById('login-to-dashboard-btn')?.addEventListener('click', showProfileModal);
+    document.getElementById('open-login-btn')?.addEventListener('click', () => openModal('login-modal'));
+    document.getElementById('open-register-btn')?.addEventListener('click', () => openModal('register-modal'));
+    document.querySelectorAll('[data-close-modal]').forEach(button => {
+        button.addEventListener('click', () => closeModal(button.closest('.modal').id));
+    });
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', event => {
+            if (event.target === modal) closeModal(modal.id);
+        });
+    });
     document.getElementById('dashboard-user-info')?.addEventListener('click', showProfileModal);
     
     document.getElementById('view-full-log-btn')?.addEventListener('click', () => {
