@@ -77,7 +77,12 @@ O GitHub registra, para o commit-base `0a9ed8c`, dois status de deployment concl
 - `Vercel – siav`: <https://vercel.com/siav2/siav/A1qUDTPX6R2QvytihMzj8T9vXAfL>
 - `Vercel – siav-zlca`: <https://vercel.com/siav2/siav-zlca/B1yTn5EscSS5tBCATEx9WrjYeJGf>
 
-São links de detalhes no painel, **não URLs públicas do aplicativo**. Eles demonstram que ambos os projetos recebem essa branch, mas não comprovam URL de preview, conteúdo publicado, variáveis ou destino de produção. Nenhuma URL de app foi inventada. Os status do novo commit devem ser conferidos após o push e são informados na entrega; o sucesso da base não é apresentado como validação do novo commit.
+São links de detalhes no painel, **não URLs públicas do aplicativo**. Eles demonstram que ambos os projetos recebem essa branch, mas não comprovam URL de preview, conteúdo publicado, variáveis ou destino de produção. Nenhuma URL de app foi inventada. Após o push de `85f3577ae1b4861898598bf09151ddbd66b4d625`, o GitHub registrou **failure nos dois previews**:
+
+- `siav`: <https://vercel.com/siav2/siav/EBmDTiSSXLEkai7wdW1bzzQX3SyS>
+- `siav-zlca`: <https://vercel.com/siav2/siav-zlca/EbWXTexfZA4MW17pqHszME9wLkRj>
+
+Mensagem observada: `Deployment has failed`. O status fornece link/identificador do deployment, mas não a causa do erro de build. Sem logs autenticados Vercel, **não se atribui causa exata**: configurar/conferir as variáveis Preview e abrir o log do deployment são ações pendentes. Não foi declarada prévia pronta nem URL pública validada. O commit final de documentação não muda a implementação validada.
 
 O `vercel.json` da branch define:
 
@@ -126,13 +131,13 @@ Proteção por login Vercel pode existir nos previews. Entrar com a conta autori
 | Sintaxe JS/MJS e `git diff --check` | Aprovados |
 | Políticas RLS, schema e dados de produção | Não consultados, modificados ou homologados |
 | Teste HTTP real de Supabase | Bloqueado pelo proxy; não declarado aprovado |
-| Painel Vercel/URL pública do novo preview | Não acessíveis diretamente nesta sessão; dependem da conferência manual acima |
+| Painel Vercel/URL pública do novo preview | Previews do commit enviado falharam nos dois projetos; logs e variáveis exigem conferência manual acima |
 
 As 24 novas regressões cobrem referência padrão, URLs incorretas/ambíguas, configuração ausente, rejeição de tipos de chave privilegiados/legados, mensagens sem valores, fábrica de cliente com opções padrão, referência explicitamente declarada, ausência de chave fixa, configuração Vercel e proteção dos arquivos locais.
 
 O teste de distribuição foi ampliado para bloquear builds com chave ausente ou de servidor e conferir a criação única do cliente com destino esperado no carregamento visitante. Ele usa uma chave **sintética** e fixtures de SDK, sem sucesso de autenticação e sem chamadas de banco/pagamento. Seu build fica num `dist/` temporário, removido ao final; não sobrescreve o `dist/` local com a configuração real validada.
 
-O CI da branch executa suíte, cobertura, lint e build com configuração sintética. `dist-ci-synthetic` **não é artefato para publicar ou configurar no preview**. O Vercel precisa do build próprio com suas variáveis Preview. Os resultados remotos são conferidos após envio; não se confundem com os testes locais ou status anteriores.
+O CI da branch executa suíte, cobertura, lint e build com configuração sintética. `dist-ci-synthetic` **não é artefato para publicar ou configurar no preview**. O Vercel precisa do build próprio com suas variáveis Preview. Após envio, os três jobs de CI de `85f3577ae1b4861898598bf09151ddbd66b4d625` concluíram com sucesso: **Testes, Build e Lint**. Execução: <https://github.com/jhcruzdomingues/SIAV/actions/runs/42887043805>. O build é sintético e não é deploy. Essa execução verde de GitHub Actions não invalida a falha observada em Vercel nem confirma suas variáveis.
 
 Permanecem os avisos de scripts clássicos fora do bundler (emitidos por allowlist explícita) e a chave CSS inesperada preexistente. CDN Supabase não foi fixado/vendorizado nesta entrega. Nenhuma dose, algoritmo, timer, FCT, regra de plano, pagamento, fila ou histórico foi modificado.
 
