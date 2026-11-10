@@ -2,7 +2,7 @@ name: CI - Testes e Build
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, fix/adult-pcr-antiarrhythmics ]
   pull_request:
     branches: [ main, develop ]
 
