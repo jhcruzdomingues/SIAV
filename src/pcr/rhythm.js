@@ -1,7 +1,12 @@
 import { state, compressionCycle } from '../config/state.js';
 import { showScreen } from '../ui/dom.js';
+import { assessClinicalRhythm, commitClinicalShock, isClinicalArrestActive } from './clinical.js';
+import { clearAllIntervals } from './core.js';
 
 export function showRhythmSelectorScreen(isCycleCheck = false) {
+    if (!isClinicalArrestActive()) return;
+    // A new assessment explicitly replaces an unconsumed shock decision.
+    state.clinical.pendingShock = null;
     if (isCycleCheck) {
         const notesInput = document.getElementById('selector-rhythm-notes');
         if (notesInput) notesInput.value = '';
@@ -33,6 +38,7 @@ export function selectRhythmOption(element) {
 }
 
 export function processRhythmSelection() {
+    if (!isClinicalArrestActive()) return;
     const rhythm = state.tempRhythmData.rhythm;
     const notesInput = document.getElementById('selector-rhythm-notes');
     const notes = notesInput ? notesInput.value : '';
@@ -41,6 +47,10 @@ export function processRhythmSelection() {
         if (typeof window.showTransientAlert === 'function') window.showTransientAlert('Por favor, selecione um ritmo cardíaco.', 'warning', 3000);
         return;
     }
+    if (rhythm === 'Ritmo') { roscObtido(); return; }
+    if (!assessClinicalRhythm(rhythm)) return;
+    state.tempRhythmData.rhythm = null;
+    compressionCycle.currentPhase = 'rhythm_check';
     
     const rhythmNames = {
         'FV': 'Fibrilação Ventricular',
@@ -145,6 +155,7 @@ export function setupShockActionScreen(rhythmType) {
 }
 
 export function applyShockAndResume() {
+    if (!isClinicalArrestActive() || !state.clinical.pendingShock) return;
     if (typeof window.feedbackCritico === 'function') window.feedbackCritico('apply-shock-btn');
     try {
         const rhythmTypeDisplay = document.getElementById('final-shock-rhythm');
@@ -176,7 +187,10 @@ export function applyShockAndResume() {
         if ('vibrate' in navigator) navigator.vibrate([200, 100, 200, 100, 200]);
         if (typeof window.playSystemSound === 'function') window.playSystemSound('shock');
 
-        state.shockCount++;
+        if (!commitClinicalShock(energyValue)) return;
+        compressionCycle.currentPhase = 'shock_advised';
+        const applyBtn = document.getElementById('apply-shock-btn');
+        if (applyBtn) applyBtn.disabled = true;
         let shockText = `CHOQUE #${state.shockCount} - ${rhythmType} - ${energyValue}J`;
         if (typeof window.addEvent === 'function') window.addEvent(shockText, 'critical');
 
@@ -195,7 +209,7 @@ export function applyShockAndResume() {
 
 export function roscObtido() {
     if (typeof window.feedbackCritico === 'function') window.feedbackCritico('rosc-btn');
-    if (!state.pcrActive) {
+    if (!isClinicalArrestActive()) {
         if (typeof window.showTransientAlert === 'function') window.showTransientAlert("Inicie um atendimento de PCR para registrar o ROSC.", 'warning', 3000);
         return;
     }
@@ -203,6 +217,18 @@ export function roscObtido() {
     if (!confirm("CONFIRMAR: O paciente obteve Retorno da Circulação Espontânea (RCE/ROSC)?")) return;
     
     state.roscAchieved = true;
+    state.clinical.status = 'rosc';
+    state.clinical.pendingShock = null;
+    if (compressionCycle.currentPhase === 'compressions' && compressionCycle.startTime) {
+        state.totalCompressionSeconds += Math.floor((Date.now() - compressionCycle.startTime) / 1000);
+    }
+    compressionCycle.active = false;
+    compressionCycle.currentPhase = 'rosc';
+    compressionCycle.rhythmCheckTriggered = false;
+    clearAllIntervals();
+    if (typeof window.stopDrugTimer === 'function') window.stopDrugTimer();
+    if (typeof window.stopMetronome === 'function') window.stopMetronome();
+    if (typeof window.updatePcrGuidance === 'function') window.updatePcrGuidance();
     if (typeof window.addEvent === 'function') window.addEvent('ROSC OBTIDO - Pulso presente, Circulação Espontânea', 'success');
     
     if (typeof window.showTransientAlert === 'function') window.showTransientAlert('✅ ROSC OBTIDO! Finalizando RCP e iniciando Cuidados Pós-PCR.', 'success', 4000);

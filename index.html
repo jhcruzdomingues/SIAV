@@ -201,6 +201,8 @@
                     <i class="fas fa-heart-circle-check"></i> RCE OBTIDO (PULSO +)
                 </button>
 
+                <button id="restart-pcr-btn" class="secondary-btn" hidden>CONFIRMAR NOVA PCR APÓS ROSC</button>
+
                 <div class="timeline-container">
                     <h3><i class="fas fa-clock-rotate-left"></i> Linha do Tempo</h3>
                     <div id="timeline-events" class="timeline-events">
@@ -959,6 +961,7 @@
             <h3>Preparar Novo Atendimento</h3>
             <p>Insira os dados do paciente para cálculos pediátricos e registro.</p>
             <form id="patient-form">
+                <label><input type="checkbox" id="patient-adult-protocol">Confirmo o uso do algoritmo adulto neste atendimento</label>
                 <label for="patient-name">Nome / ID do Paciente (opcional):</label>
                 <input type="text" id="patient-name" placeholder="Ex: Paciente 001">
 
@@ -1000,7 +1003,7 @@
                 <div class="med-icon-wrapper">
                     <i class="fas fa-syringe"></i>
                 </div>
-                <h3>Administrar Droga</h3>
+                <h3>Registrar medicamento administrado</h3>
                 <p>Diretrizes AHA 2025</p>
             </div>
             
@@ -1032,7 +1035,15 @@
             </div>
             
             <input type="hidden" id="medication-select" value="">
-            <input type="hidden" id="medication-dose" value="">
+            <label for="medication-dose">Quantidade exata efetivamente administrada</label>
+            <input type="number" id="medication-dose" min="0" step="any" inputmode="decimal" required>
+            <label for="medication-unit">Unidade</label>
+            <select id="medication-unit"><option value="mg">mg</option><option value="g">g</option><option value="mEq">mEq</option></select>
+            <label for="medication-timing">Momento da administração</label>
+            <select id="medication-timing"><option value="realtime">Administrada agora</option><option value="retrospective">Registrar administração anterior</option></select>
+            <label for="medication-effective-at">Horário efetivo (obrigatório para registro anterior, hora local)</label>
+            <input type="datetime-local" id="medication-effective-at" step="1">
+            <label><input type="checkbox" id="medication-confirmed">Confirmo a quantidade, a via e o horário efetivamente administrados</label>
 
             <div class="med-preview-panel" id="med-preview-panel" style="display: none;">
                 <div class="med-preview-header">
@@ -1056,7 +1067,7 @@
             <button id="record-med-btn" class="med-action-btn" disabled>
                 <i class="fas fa-check-circle"></i>
                 <div class="med-action-text">
-                    <span class="main-text">ADMINISTRAR AGORA</span>
+                    <span class="main-text">REGISTRAR ADMINISTRAÇÃO</span>
                     <span class="sub-text">Selecione uma droga</span>
                 </div>
             </button>

@@ -6006,3 +6006,15 @@ body[data-theme="dark"] .sim-game-over-message {
         font-size: 1.5em;
     }
 }
+
+/* Keep the administration form usable with exact-dose and effective-time fields. */
+#med-modal .modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+#med-preview-value {
+    font-family: inherit;
+    font-size: 1rem;
+    line-height: 1.4;
+    font-weight: 500;
+}

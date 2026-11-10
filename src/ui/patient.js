@@ -35,6 +35,7 @@ export function savePatientData(e) {
         }
 
         state.patient = {
+            algorithm: document.getElementById('patient-adult-protocol')?.checked ? 'adult' : null,
             name: sanitizedName || 'N/I',
             age: ageValue || 'N/I',
             sex: sexChecked ? sexChecked.value : 'N/I',
@@ -56,7 +57,7 @@ export function savePatientData(e) {
 }
 
 export function startPCRWithUninformedData() {
-    state.patient = { name: 'N/I', age: 'N/I', sex: 'N/I', weight: 'N/I', allergies: 'Nenhuma informada', comorbidities: 'N/I' };
+    state.patient = { algorithm: document.getElementById('patient-adult-protocol')?.checked ? 'adult' : null, name: 'N/I', age: 'N/I', sex: 'N/I', weight: 'N/I', allergies: 'Nenhuma informada', comorbidities: 'N/I' };
     updatePatientDisplay();
     closeModal('patient-modal');
     if (!state.pcrActive && typeof window.startPCR === 'function') {

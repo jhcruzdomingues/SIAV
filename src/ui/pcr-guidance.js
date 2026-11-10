@@ -1,4 +1,6 @@
 import { state, compressionCycle } from '../config/state.js';
+import { getClinicalSnapshot, isClinicalArrestActive } from '../pcr/clinical.js';
+import { getProtocolNextStep } from '../protocols/medical.js';
 
 export function feedbackCritico(btnId) {
     if ('vibrate' in navigator) navigator.vibrate([120, 60, 120]);
@@ -23,16 +25,7 @@ export function updatePcrGuidance() {
     
     if (!actionCenter || !compBtn) return;
 
-    const pcrStateSnapshot = {
-        currentPhase: compressionCycle.currentPhase,
-        isShockable: compressionCycle.lastRhythmWasShockable,
-        medications: state.medications || [],
-        currentCycle: compressionCycle.cycleCount,
-        shockCount: state.shockCount,
-        elapsedSeconds: state.pcrSeconds
-    };
-
-    const protocolStep = window.MedicalBrain.getProtocolNextStep(pcrStateSnapshot);
+    const protocolStep = getProtocolNextStep(getClinicalSnapshot());
     
     let phaseClass = 'status-preparation';
     let badgeText = 'PREPARAÇÃO';
@@ -41,6 +34,10 @@ export function updatePcrGuidance() {
     let compBtnStyle = 'linear-gradient(135deg, var(--success), #219a52)';
 
     switch(compressionCycle.currentPhase) {
+        case 'rosc':
+            phaseClass = 'status-preparation'; badgeText = 'ROSC';
+            compBtnText = 'ROSC — PCR INTERROMPIDA';
+            compBtn.disabled = true; break;
         case 'preparation':
             phaseClass = 'status-preparation'; badgeText = 'PREPARAÇÃO'; iconClass = 'fas fa-heartbeat';
             compBtnText = 'INICIAR COMPRESSÕES'; compBtnStyle = 'linear-gradient(135deg, var(--success), #219a52)';
@@ -58,6 +55,9 @@ export function updatePcrGuidance() {
             compBtnText = 'RETOMAR COMPRESSÕES'; compBtnStyle = 'linear-gradient(135deg, var(--success), #219a52)'; 
             compBtn.disabled = false; break;
     }
+    if (!isClinicalArrestActive()) compBtn.disabled = true;
+    const restart = document.getElementById('restart-pcr-btn');
+    if (restart) restart.hidden = !(state.pcrActive && state.roscAchieved);
     
     // Override visual se for ação crítica de protocolo (Ex: Adrenalina Imediata)
     if (protocolStep.criticalAction === 'DRUG') {

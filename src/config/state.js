@@ -36,6 +36,7 @@ const defaultState = {
 
   // Dados do paciente
   patient: {
+    algorithm: null,
     name: '',
     age: 30,
     weight: 70,
@@ -55,6 +56,8 @@ const defaultState = {
 
   // Contadores e métricas PCR
   shockCount: 0,
+  shocks: [],
+  clinical: { status: 'inactive', episodeId: null, step: null, pendingShock: null },
   medications: [],
   notes: [],
   causesChecked: [],
@@ -141,6 +144,8 @@ export function resetPCRState() {
   state.currentRhythm = null;
   state.rhythms = [];
   state.shockCount = 0;
+  state.shocks = [];
+  state.clinical = { status: 'inactive', episodeId: null, step: null, pendingShock: null };
   state.medications = [];
   state.notes = [];
   state.causesChecked = [];
@@ -165,6 +170,7 @@ export function resetPCRState() {
  */
 export function resetPatientData() {
   state.patient = {
+    algorithm: null,
     name: '',
     age: 30,
     weight: 70,

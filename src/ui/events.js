@@ -1,10 +1,11 @@
+import { restartPCRAfterROSC } from '../pcr/core.js';
 import { state } from '../config/state.js';
 import { showScreen, closeModal, showTransientAlert } from './dom.js';
 import { showPatientModal, savePatientData, startPCRWithUninformedData, cancelPatientSetup } from './patient.js';
 import { startCompressions, finishPCR } from '../pcr/core.js';
 import { toggleMetronome, adjustBPM } from './audio.js';
 import { showRhythmSelectorScreen, selectRhythmOption, processRhythmSelection, applyShockAndResume, roscObtido } from '../pcr/rhythm.js';
-import { showMedModal, updateMedicationDose, recordMedication } from '../pcr/medications.js';
+import { showMedModal, updateMedicationDose, recordMedication, cancelMedicationRecord } from '../pcr/medications.js';
 import { showNotesModal, saveNotes } from '../pcr/log.js';
 import { showVitalsModal, recordVitals } from '../pcr/vitals.js';
 import { showGlasgowModal, saveGlasgow } from './glasgow.js';
@@ -93,6 +94,7 @@ export function registerAllEvents() {
         showRhythmSelectorScreen(false);
     });
     document.getElementById('rosc-btn')?.addEventListener('click', roscObtido);
+    document.getElementById('restart-pcr-btn')?.addEventListener('click', restartPCRAfterROSC);
 
     document.querySelectorAll('#rhythm-selector-screen .rhythm-option-btn').forEach(btn => {
         btn.addEventListener('click', function() { selectRhythmOption(this); });
@@ -106,7 +108,7 @@ export function registerAllEvents() {
         btn.addEventListener('click', function() {
             const medId = this.getAttribute('data-med');
             if (this.classList.contains('selected')) {
-                recordMedication();
+                updateMedicationDose();
             } else {
                 document.querySelectorAll('.med-btn-pro').forEach(b => b.classList.remove('selected'));
                 this.classList.add('selected');
@@ -118,7 +120,9 @@ export function registerAllEvents() {
     });
 
     document.getElementById('record-med-btn')?.addEventListener('click', recordMedication);
-    document.getElementById('cancel-med-btn')?.addEventListener('click', () => closeModal('med-modal'));
+    document.getElementById('medication-timing')?.addEventListener('change', updateMedicationDose);
+    document.querySelectorAll('input[name="administration-route"]').forEach(input => input.addEventListener('change', updateMedicationDose));
+    document.getElementById('cancel-med-btn')?.addEventListener('click', cancelMedicationRecord);
 
     document.getElementById('notes-btn')?.addEventListener('click', showNotesModal);
     document.getElementById('save-notes-btn')?.addEventListener('click', saveNotes);
@@ -244,7 +248,7 @@ export function registerAllEvents() {
     // Configura atalhos de teclado globais
     document.addEventListener('keydown', (e) => {
         const active = document.activeElement;
-        if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
+        if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT' || active.isContentEditable)) return;
 
         switch (e.code) {
             case 'KeyC': {

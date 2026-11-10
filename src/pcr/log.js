@@ -177,14 +177,18 @@ export function generateEvolution(saveLog) {
     const totalDurationSeconds = state.pcrSeconds;
     const patientName = state.patient.name;
     const shocksCount = state.shockCount;
-    const medsList = state.medications.map(m => `${m.name} (${m.dose} via ${m.route})`).join('; ');
+    const formatEffectiveTime = timestamp => Number.isFinite(timestamp) ? new Date(timestamp).toLocaleString('pt-BR') : 'N/I';
+    const hasEffectiveTime = m => typeof m.isRetrospective === 'boolean' && Number.isFinite(m.timestamp) && Number.isFinite(m.recordedAt);
+    const medsList = state.medications.map(m => `${m.name} (${m.dose} via ${m.route}; horário efetivo: ${formatEffectiveTime(hasEffectiveTime(m) ? m.timestamp : NaN)}; registrado em: ${formatEffectiveTime(m.recordedAt)}; ${m.isRetrospective === true ? 'retrospectivo' : m.isRetrospective === false ? 'tempo real' : 'tipo de registro N/I'})`).join('; ');
     const compressionDuration = state.totalCompressionSeconds;
     const compressionRatio = totalDurationSeconds > 0 ? ((compressionDuration / totalDurationSeconds) * 100).toFixed(1) : 0;
     
     const firstShockEvent = state.events.find(e => e.text.includes('CHOQUE'));
     const firstShockTime = firstShockEvent ? firstShockEvent.time : 'N/A';
     const firstShockEnergy = firstShockEvent ? firstShockEvent.text.match(/(\d+)J/)?.[1] || 'N/A' : 'N/A';
-    const firstAdrenalineTime = state.events.find(e => e.text.includes('Adrenalina'))?.time || 'N/A';
+    const adrenalineRecords = state.medications.filter(m => m.name?.toLowerCase().includes('adrenalina'));
+    const firstAdrenalineTime = adrenalineRecords.length && adrenalineRecords.every(hasEffectiveTime)
+        ? formatEffectiveTime(Math.min(...adrenalineRecords.map(m => m.timestamp))) : 'N/I';
     const finalRhythm = state.rhythms[state.rhythms.length - 1]?.name || 'Não Registrado';
     
     const chronologicalEvents = state.events.slice().reverse().map(event => ({ time: event.time, action: event.text.trim() }));
@@ -235,6 +239,7 @@ export function generateEvolution(saveLog) {
         });
     }
     showScreen('home');
+    return reportHTML;
 }
 
 export function renderPatientLog() {

@@ -2,6 +2,7 @@ import { state, compressionCycle, intervals } from '../config/state.js';
 import { TIMINGS } from '../config/constants.js';
 import { formatTime } from '../utils/formatters.js';
 import { events } from '../utils/events.js';
+import { initializeClinicalArrest, isClinicalArrestActive } from './clinical.js';
 
 export function clearAllIntervals() {
     const intervalKeys = Object.keys(intervals);
@@ -97,6 +98,7 @@ export function startCycleProgress() {
 }
 
 export function startCompressions() {
+    if (!isClinicalArrestActive()) return;
     if (typeof window.feedbackCritico === 'function') window.feedbackCritico('compressions-btn');
     if (compressionCycle.currentPhase === 'compressions') return;
     if (compressionCycle.cycleTimer) clearTimeout(compressionCycle.cycleTimer);
@@ -131,6 +133,7 @@ export function startCompressions() {
 }
 
 export function promptRhythmCheck() {
+    if (!isClinicalArrestActive()) return;
     if (compressionCycle.rhythmCheckTriggered) return;
     compressionCycle.rhythmCheckTriggered = true;
 
@@ -165,17 +168,21 @@ export function startPCR() {
         return;
     }
 
+    if ((state.roscAchieved || state.clinical?.status === 'rosc') && !confirm('Confirmar uma NOVA PCR em um novo atendimento após ROSC?')) return;
+
     state.pcrActive = true;
     state.pcrStartTime = Date.now();
     state.pcrSeconds = 0;
 
     state.events = [];
     state.shockCount = 0;
+    state.shocks = [];
     state.medications = [];
     state.rhythms = [];
     state.causesChecked = [];
     state.totalCompressionSeconds = 0; 
     state.roscAchieved = false; 
+    initializeClinicalArrest();
     state.metronomeUserDisabled = false;
     
     compressionCycle.active = false;
@@ -239,6 +246,9 @@ export function executePCRFinish() {
     }
     
     state.pcrActive = false;
+    if (!state.clinical) state.clinical = { status: 'inactive' };
+    if (state.clinical?.status !== 'rosc') state.clinical.status = 'inactive';
+    state.clinical.pendingShock = null;
     compressionCycle.active = false;
     compressionCycle.rhythmCheckTriggered = false;
 
@@ -249,8 +259,23 @@ export function executePCRFinish() {
     }
     
     if (typeof window.addEvent === 'function') window.addEvent('FINALIZAÇÃO: Atendimento de PCR finalizado', state.roscAchieved ? 'success' : 'critical');
+    if (typeof window.updatePcrGuidance === 'function') window.updatePcrGuidance();
     
     events.emit('PCR_FINISHED');
     
     if (typeof window.generateEvolution === 'function') window.generateEvolution(true);
+}
+
+export function restartPCRAfterROSC() {
+    if (!state.pcrActive || !state.roscAchieved || state.clinical?.status !== 'rosc') return;
+    if (!confirm('Confirmar NOVA PCR após ROSC? Os registros anteriores serão preservados.')) return;
+    initializeClinicalArrest();
+    compressionCycle.currentPhase = 'preparation';
+    compressionCycle.lastRhythmWasShockable = undefined;
+    compressionCycle.cycleCount = 0;
+    compressionCycle.active = false;
+    compressionCycle.rhythmCheckTriggered = false;
+    if (typeof window.addEvent === 'function') window.addEvent('NOVA PCR APÓS ROSC — transição confirmada', 'critical');
+    startTimer();
+    if (typeof window.updatePcrGuidance === 'function') window.updatePcrGuidance();
 }

@@ -1,143 +1,112 @@
-import { state, intervals, compressionCycle } from '../config/state.js';
+import { state, intervals } from '../config/state.js';
 import { closeModal, openModal, showTransientAlert } from '../ui/dom.js';
 import { addMedication } from './events.js';
-import { getAntiarrhythmicHistory, getAdultAntiarrhythmicDose } from '../protocols/medical.js';
+import { getAntiarrhythmicHistory, evaluateMedicationGuidance, getProtocolNextStep } from '../protocols/medical.js';
+import { getClinicalSnapshot, isClinicalArrestActive, newOperationId } from './clinical.js';
 
-const MEDICATION_DOSES = {
-    adrenalina: { adult: '1 mg EV/IO a cada 3-5 minutos', pediatric: '0.01 mg/kg EV/IO' },
-    amiodarona: { adult: '1ª dose: 300 mg EV/IO. 2ª dose: 150 mg EV/IO', pediatric: '5 mg/kg EV/IO em bolus' },
-    atropina: { adult: '1 mg EV/IO a cada 3-5 minutos (máx. 3 mg)', pediatric: '0.02 mg/kg EV/IO (mín. 0.1 mg / máx. 0.5 mg)' },
-    bicarbonato: { adult: '1 mEq/kg', pediatric: '1 mEq/kg (raramente usado)' },
-    lidocaina: { adult: '1-1.5 mg/kg', pediatric: '1 mg/kg' },
-    sulfato: { adult: '1-2 g IV/IO (Torçada de Pontas)', pediatric: '25-50 mg/kg (máx. 2g)' }
+const medNames = { adrenalina: 'Adrenalina', amiodarona: 'Amiodarona', lidocaina: 'Lidocaína', atropina: 'Atropina', bicarbonato: 'Bicarbonato de Sódio', sulfato: 'Sulfato de Magnésio' };
+const formOperation = () => document.getElementById('med-modal')?.dataset.operationId;
+const clearOperation = () => {
+    const form = document.getElementById('med-modal');
+    if (form) delete form.dataset.operationId;
 };
 
+export function cancelMedicationRecord() {
+    clearOperation();
+    closeModal('med-modal');
+}
+
 export function showMedModal() {
-    const medDose = document.getElementById('medication-dose');
-    const medSelect = document.getElementById('medication-select');
-    const recordBtn = document.getElementById('record-med-btn');
-    const previewPanel = document.getElementById('med-preview-panel');
-
-    if(medDose) medDose.value = '';
-    if(medSelect) medSelect.value = '';
-    if(previewPanel) previewPanel.style.display = 'none';
-    
-    if(recordBtn) {
-        recordBtn.disabled = true;
-        const subText = recordBtn.querySelector('.sub-text');
-        if(subText) subText.textContent = 'Selecione uma droga primeiro';
+    const form = document.getElementById('med-modal');
+    if (!form) return;
+    form.dataset.operationId = newOperationId();
+    for (const id of ['medication-dose', 'medication-select', 'medication-effective-at']) {
+        const input = document.getElementById(id);
+        if (input) input.value = '';
     }
-     
-    document.querySelectorAll('.med-btn-pro').forEach(btn => {
-        btn.classList.remove('selected');
-    });
-
+    const confirmed = document.getElementById('medication-confirmed');
+    if (confirmed) confirmed.checked = false;
+    const timing = document.getElementById('medication-timing');
+    if (timing) timing.value = 'realtime';
+    const unit = document.getElementById('medication-unit');
+    if (unit) unit.value = 'mg';
+    const preview = document.getElementById('med-preview-panel');
+    if (preview) preview.style.display = 'none';
+    const button = document.getElementById('record-med-btn');
+    if (button) button.disabled = true;
+    document.querySelectorAll('.med-btn-pro').forEach(btn => btn.classList.remove('selected'));
     openModal('med-modal');
 }
 
 export function updateMedicationDose() {
-    const medication = document.getElementById('medication-select')?.value;
-    const weight = parseInt(state.patient.weight) || 70;
-    const age = parseInt(state.patient.age) || 30;
-    const isPediatric = age < 8 || weight < 30;
-    
-    let doseText = '--';
-    
-    if (medication && MEDICATION_DOSES[medication]) {
-        if (isPediatric) {
-            const calculatedDoses = window.MedicalBrain.getCalculatedPediatricValues(weight); 
-            doseText = MEDICATION_DOSES[medication].pediatric; 
-            
-            if (medication === 'adrenalina') {
-                doseText = `${calculatedDoses.adrenalina} mg (0.01 mg/kg)`;
-            } else if (medication === 'amiodarona') {
-                doseText = `${calculatedDoses.amiodarona} mg (5 mg/kg)`;
-            } else if (medication === 'lidocaina') {
-                 doseText = `${calculatedDoses.lidocaina} mg (1 mg/kg)`;
-            }
-        } else {
-            doseText = MEDICATION_DOSES[medication].adult;
-            if (medication === 'amiodarona' || medication === 'lidocaina') {
-                const count = getAntiarrhythmicHistory(state.medications)[medication].length;
-                doseText = getAdultAntiarrhythmicDose(medication, count + 1) || '--';
-                if (medication === 'lidocaina' && count < 2) {
-                    const minDose = Number((weight * (count === 0 ? 1 : 0.5)).toFixed(2));
-                    const maxDose = Number((weight * (count === 0 ? 1.5 : 0.75)).toFixed(2));
-                    doseText = `${minDose}-${maxDose} mg (${doseText})`;
-                }
-            }
-        }
-    }
-    
-    const medDose = document.getElementById('medication-dose');
-    const previewValue = document.getElementById('med-preview-value');
-    const previewName = document.getElementById('med-preview-name');
-    const previewPanel = document.getElementById('med-preview-panel');
-    const recordBtn = document.getElementById('record-med-btn');
-    
-    if(medDose) medDose.value = doseText;
-    if(previewValue) previewValue.textContent = doseText;
-    
-    if(medication) {
-        if(previewName) {
-            const medNames = { 'adrenalina': 'Adrenalina', 'amiodarona': 'Amiodarona', 'lidocaina': 'Lidocaína', 'atropina': 'Atropina', 'bicarbonato': 'Bicarbonato', 'sulfato': 'Sulfato de Mg' };
-            previewName.textContent = medNames[medication] || medication;
-        }
-        if(previewPanel) previewPanel.style.display = 'block';
-        if(recordBtn) {
-            recordBtn.disabled = doseText === '--';
-            const subText = recordBtn.querySelector('.sub-text');
-            if(subText) subText.textContent = doseText === '--' ? 'Esquema de duas doses já registrado' : 'Clique para confirmar';
-        }
+    const id = document.getElementById('medication-select')?.value;
+    const entry = evaluateMedicationGuidance(getClinicalSnapshot())[id];
+    const retrospective = document.getElementById('medication-timing')?.value === 'retrospective';
+    const route = document.querySelector('input[name="administration-route"]:checked')?.value;
+    const text = retrospective ? 'Registro retrospectivo: informar o fato ocorrido; sem recomendação de nova dose.'
+        : route && !['EV', 'IO'].includes(route) ? 'Via fora do algoritmo IV/IO. Apenas documentar o fato e reavaliar; sem recomendação por esta via.'
+            : entry?.status === 'due' ? `Orientação do passo atual: ${entry.dose}. ${entry.reason}`
+                : entry?.reason || 'Sem recomendação automática para este medicamento; documentar apenas o que foi efetivamente administrado.';
+    const preview = document.getElementById('med-preview-value');
+    if (preview) preview.textContent = text;
+    const name = document.getElementById('med-preview-name');
+    if (name) name.textContent = medNames[id] || '';
+    const panel = document.getElementById('med-preview-panel');
+    if (panel) panel.style.display = id ? 'block' : 'none';
+    const button = document.getElementById('record-med-btn');
+    if (button) {
+        button.disabled = !id || !formOperation();
+        const label = button.querySelector('.sub-text');
+        if (label) label.textContent = 'Confirmar quantidade, via e horário efetivos';
     }
 }
 
 export function recordMedication() {
+    const operationId = formOperation();
+    if (!operationId) return;
     try {
-        const medicationSelect = document.getElementById('medication-select');
-        const doseInput = document.getElementById('medication-dose');
-        const routeElement = document.querySelector('input[name="administration-route"]:checked');
-
-        if (!medicationSelect || !doseInput) {
-            showTransientAlert('Erro: Campos de medicação não encontrados.', 'danger');
-            return;
-        }
-
-        const medication = medicationSelect.value;
-        const dose = doseInput.value.trim();
-        const route = routeElement ? routeElement.value : 'N/I';
-
-        if (!medication) { showTransientAlert('Selecione uma medicação!', 'warning'); return; }
-        if (!dose || dose === '--') { showTransientAlert('Dose da medicação inválida.', 'warning'); return; }
-        if (dose.length > 100) { showTransientAlert('Dose muito longa! Máximo de 100 caracteres.', 'warning'); return; }
-
-        if ('vibrate' in navigator) navigator.vibrate([100, 50, 100]);
-        if (typeof window.playSystemSound === 'function') window.playSystemSound('drug');
-
-        const medNames = {
-            'adrenalina': 'Adrenalina', 'amiodarona': 'Amiodarona', 'atropina': 'Atropina',
-            'bicarbonato': 'Bicarbonato de Sodio', 'lidocaina': 'Lidocaína', 'sulfato': 'Sulfato de Magnesio'
-        };
-
-        const medicationName = medNames[medication] || medication;
-
-        addMedication({
-            name: medicationName, dose: dose, route: route,
-            time: new Date()
+        const id = document.getElementById('medication-select')?.value;
+        const raw = document.getElementById('medication-dose')?.value.trim();
+        const amount = Number(raw);
+        const unit = document.getElementById('medication-unit')?.value;
+        const route = document.querySelector('input[name="administration-route"]:checked')?.value;
+        const isRetrospective = document.getElementById('medication-timing')?.value === 'retrospective';
+        const timeValue = document.getElementById('medication-effective-at')?.value;
+        const recordedAt = Date.now();
+        const timestamp = isRetrospective ? (timeValue ? new Date(timeValue).getTime() : NaN) : recordedAt;
+        if (!medNames[id] || !raw || !Number.isFinite(amount) || amount <= 0) throw new Error('Informe a quantidade exata efetivamente administrada.');
+        if (!document.getElementById('medication-confirmed')?.checked) throw new Error('Confirme os dados efetivamente administrados.');
+        if (!Number.isFinite(timestamp) || timestamp > recordedAt) throw new Error('Informe um horário efetivo válido, sem data futura.');
+        const snapshot = getClinicalSnapshot();
+        const guidance = evaluateMedicationGuidance(snapshot, recordedAt)[id];
+        const history = getAntiarrhythmicHistory(state.medications);
+        const count = history[id]?.length || 0;
+        const weight = Number(state.patient.weight);
+        const expected = id === 'adrenalina' ? amount === 1
+            : id === 'amiodarona' ? amount === (count === 0 ? 300 : 150)
+                : id === 'lidocaina' ? Number.isFinite(weight) && weight > 0
+                    && amount >= weight * (count === 0 ? 1 : 0.5) && amount <= weight * (count === 0 ? 1.5 : 0.75) : false;
+        const requiresReview = isRetrospective || guidance?.status !== 'due' || !expected || unit !== 'mg' || !['EV', 'IO'].includes(route);
+        const realTimeContext = !isRetrospective && isClinicalArrestActive();
+        const entry = addMedication({
+            id: operationId, name: medNames[id], medicationId: id, amount, unit, route,
+            timestamp, isRetrospective, requiresReview,
+            weightAtAdministration: Number.isFinite(weight) && weight > 0 ? weight : null,
+            episodeId: !isRetrospective || timestamp >= state.clinical?.startedAt ? state.clinical?.episodeId : null,
+            shockCount: realTimeContext ? state.shockCount : null,
+            clinicalContext: realTimeContext ? { step: state.clinical.step, compressionId: state.clinical.compressionId } : null
         });
-
-        if (typeof window.playNotification === 'function') window.playNotification('DRUG');
-        if (typeof window.addEvent === 'function') window.addEvent(`MEDICACAO: ${medicationName} - ${dose} via ${route}`, 'critical');
-        
+        if (!entry) return;
+        clearOperation(); // Only reopening the form creates another legitimate administration.
+        const button = document.getElementById('record-med-btn');
+        if (button) button.disabled = true;
         closeModal('med-modal');
-
+        if (typeof window.addEvent === 'function') window.addEvent(`MEDICAÇÃO: ${entry.name} - ${entry.dose} via ${route}; horário efetivo ${new Date(timestamp).toLocaleString()}; ${isRetrospective ? 'registro retrospectivo' : 'tempo real'}`, 'critical');
         if (typeof window.updatePcrGuidance === 'function') window.updatePcrGuidance();
-        startDrugTimer();
-
-        showTransientAlert(`${medicationName} administrado com sucesso!`, 'success', 4000);
+        if (isClinicalArrestActive()) startDrugTimer();
+        showTransientAlert('Administração registrada. Este registro não é uma recomendação de nova dose.', 'success', 4000);
     } catch (error) {
-        console.error('Erro ao registrar medicacao:', error);
-        showTransientAlert('Erro ao registrar medicação. Por favor, tente novamente.', 'danger');
+        showTransientAlert(error.message, 'warning');
     }
 }
 
@@ -163,38 +132,20 @@ export function stopDrugTimer() {
 }
 
 export function updateDrugStatusDisplay() {
-    if (!state.pcrActive || compressionCycle.lastRhythmWasShockable === undefined) return;
-    const labelEl = document.getElementById('ac-drug-timer-label');
-    const countdownEl = document.getElementById('ac-drug-countdown');
-    if (!labelEl || !countdownEl) return;
-
-    const pcrStateSnapshot = { currentPhase: compressionCycle.currentPhase, isShockable: compressionCycle.lastRhythmWasShockable, medications: state.medications || [], currentCycle: compressionCycle.cycleCount, shockCount: state.shockCount, elapsedSeconds: state.pcrSeconds };
-    const nextStep = window.MedicalBrain.getProtocolNextStep(pcrStateSnapshot);
-    const isDrugStep = nextStep && (nextStep.criticalAction === 'DRUG' || nextStep.message.includes('Adrenalina') || nextStep.message.includes('Amiodarona'));
-
-    if (isDrugStep) {
-        const medName = nextStep.message.split('—')[0].trim() || 'MEDICAÇÃO';
-        labelEl.textContent = medName.toUpperCase();
-        countdownEl.textContent = 'DEVIDA';
-        countdownEl.className = 'ac-timer-value due';
-    } else {
-        // Conta adrenalina em background mesmo durante a RCP
-        const adrenalineStatus = window.MedicalBrain.getMedicationDueStatus('Adrenalina', 180, state.medications);
-        const hasAdrenaline = state.medications.some(m => m.name.includes('Adrenalina'));
-        
-        labelEl.textContent = 'ADRENALINA';
-        
-        if (hasAdrenaline && adrenalineStatus && adrenalineStatus.secondsUntilDue > 0) {
-            const mins = Math.floor(adrenalineStatus.secondsUntilDue / 60);
-            const secs = Math.floor(adrenalineStatus.secondsUntilDue % 60);
-            countdownEl.textContent = `0${mins}:${secs.toString().padStart(2, '0')}`;
-            countdownEl.className = 'ac-timer-value';
-        } else if (!hasAdrenaline) {
-            countdownEl.textContent = 'PREPARAR';
-            countdownEl.className = 'ac-timer-value ok';
-        } else {
-            countdownEl.textContent = 'DEVIDA';
-            countdownEl.className = 'ac-timer-value due';
-        }
+    const label = document.getElementById('ac-drug-timer-label');
+    const value = document.getElementById('ac-drug-countdown');
+    if (!label || !value) return;
+    const snapshot = getClinicalSnapshot();
+    const step = getProtocolNextStep(snapshot);
+    const guidance = step.medicationGuidance;
+    label.textContent = 'ORIENTAÇÃO CLÍNICA';
+    if (!isClinicalArrestActive()) value.textContent = state.roscAchieved ? 'ROSC' : 'INATIVA';
+    else if (step.criticalAction === 'DRUG') value.textContent = 'VER CONDUTAS';
+    else if (Object.values(guidance).some(entry => entry.status === 'review')) value.textContent = 'REAVALIAR';
+    else {
+        const seconds = guidance.adrenalina?.secondsUntilDue;
+        value.textContent = seconds > 0 ? `${Math.floor(seconds / 60)}:${String(Math.ceil(seconds % 60)).padStart(2, '0')}` : 'AGUARDAR';
     }
+    value.className = 'ac-timer-value';
+    if (document.getElementById('med-modal')?.classList.contains('show')) updateMedicationDose();
 }
