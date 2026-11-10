@@ -36,12 +36,13 @@ jobs:
       - name: 🔎 Verificar relatório de cobertura
         run: test -s coverage/coverage-final.json
 
-      - name: 📤 Upload cobertura para Codecov
-        uses: codecov/codecov-action@v4
+      - name: 📤 Upload artefato de cobertura
+        uses: actions/upload-artifact@v4
         with:
-          file: ./coverage/coverage-final.json
-          flags: unittests
           name: siav-coverage
+          path: coverage/
+          if-no-files-found: error
+          retention-days: 7
 
   build:
     name: 🏗️ Build de Produção
