@@ -10,6 +10,7 @@ import { JSDOM } from 'jsdom';
 import { chromium, devices } from 'playwright';
 import { STATIC_ASSETS, SOUND_ASSETS } from '../../scripts/distribution-assets.mjs';
 import { serveDist } from './server.mjs';
+import { checkPCRInterface, enableVisualIcons } from './pcr-interface.mjs';
 import { SIAV_PROJECT_REF, SIAV_PROJECT_URL } from '../../src/config/public-supabase.js';
 
 let root, temporaryDirectory, server, browser, workerConfig;
@@ -69,7 +70,7 @@ test('build contém somente entradas públicas explícitas e bundles, sem recurs
   const files = await filesIn(root);
   const explicit = new Set(['index.html', 'service-worker.js', ...STATIC_ASSETS.map(asset => asset.fileName)]);
   for (const file of files) {
-    assert.ok(explicit.has(file) || /^assets\/(?:index|engine|simulator|profile-plan-styles|sound-settings-styles|shock-styles|plans-modal|settings-menu-styles|manifest)-[\w-]+\.(?:js|css|json)$/.test(file), `Unexpected distribution file: ${file}`);
+    assert.ok(explicit.has(file) || /^assets\/(?:index|engine|simulator|profile-plan-styles|sound-settings-styles|shock-styles|plans-modal|settings-menu-styles|pcr-interface|manifest)-[\w-]+\.(?:js|css|json)$/.test(file), `Unexpected distribution file: ${file}`);
     assert.ok(!/(?:^|\/)(?:src|docs|tests|scripts|supabase|node_modules|\.git|\.github|\.env)(?:[/.]|$)|\.map$/.test(file), file);
   }
   for (const asset of STATIC_ASSETS) assert.equal(hash(await bytes('/' + asset.fileName)), hash(await readFile(asset.source)), asset.fileName);
@@ -235,4 +236,15 @@ for (const device of ['iPhone 13', 'iPhone SE']) {
       assert.deepEqual(errors, []);
     } finally { await context.close(); }
   }, { timeout: 45000 });
+}
+
+for (const device of ['iPhone 13', 'iPhone SE']) {
+  test(`PCR mobile ${device}: contraste, toque, BPM, movimento reduzido e telas`, async () => {
+    const { context } = await contextFor(device);
+    try {
+      await enableVisualIcons(context);
+      const page = await readyPage(context);
+      await checkPCRInterface(page, device);
+    } finally { await context.close(); }
+  }, { timeout: 120000 });
 }

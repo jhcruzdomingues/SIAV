@@ -7,6 +7,7 @@
 
 import { getItem } from '../services/storage.js';
 import { state, intervals } from '../config/state.js';
+import { pulseMetronomeBeat, clearMetronomeBeat } from './metronome-feedback.js';
 
 // Elementos de áudio
 const AUDIO_ELEMENTS = {
@@ -28,6 +29,7 @@ export function initAudio() {
     AUDIO_ELEMENTS.alert = document.getElementById('alert-sound');
     AUDIO_ELEMENTS.drug = document.getElementById('drug-sound');
     AUDIO_ELEMENTS.metronome = document.getElementById('metronome-sound');
+    updateBPMControls();
 
     console.log('🔊 Sistema de áudio inicializado');
 }
@@ -90,6 +92,7 @@ export function createMetronomeSound() {
         oscillator.onended = () => {
             oscillator.disconnect();
             gainNode.disconnect();
+            pulseMetronomeBeat();
         };
     } catch (error) {
         console.warn('Erro ao criar som do metrônomo:', error);
@@ -125,6 +128,7 @@ export function startMetronome() {
     const metroStatus = document.getElementById('metro-status');
 
     if (metroBtn) metroBtn.classList.add('active');
+    metroBtn?.setAttribute('aria-pressed', 'true');
     if (metroStatus) metroStatus.textContent = 'METRÔNOMO ATIVO';
     
     const interval = 60000 / state.bpm;
@@ -146,6 +150,8 @@ export function stopMetronome() {
     const metroStatus = document.getElementById('metro-status');
     
     if (metroBtn) metroBtn.classList.remove('active');
+    metroBtn?.setAttribute('aria-pressed', 'false');
+    clearMetronomeBeat();
     if (metroStatus) metroStatus.textContent = 'INICIAR METRÔNOMO';
     
     if (intervals.metronome) {
@@ -171,8 +177,7 @@ export function adjustBPM(change) {
     state.bpm += change;
     state.bpm = Math.max(100, Math.min(120, state.bpm));
     
-    const bpmValue = document.getElementById('bpm-value');
-    if(bpmValue) bpmValue.textContent = state.bpm + ' BPM';
+    updateBPMControls();
     
     if (state.metronomeActive) {
         if (intervals.metronome) clearInterval(intervals.metronome);
@@ -181,6 +186,15 @@ export function adjustBPM(change) {
             createMetronomeSound();
         }, interval);
     }
+}
+
+function updateBPMControls() {
+    const bpmValue = document.getElementById('bpm-value');
+    if (bpmValue) bpmValue.textContent = state.bpm + ' BPM';
+    const minus = document.getElementById('bpm-minus');
+    const plus = document.getElementById('bpm-plus');
+    if (minus) minus.disabled = state.bpm <= 100;
+    if (plus) plus.disabled = state.bpm >= 120;
 }
 
 export { AUDIO_ELEMENTS, audioContext };

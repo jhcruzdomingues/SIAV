@@ -1,0 +1,179 @@
+/* Shared presentation tokens, loaded after legacy styles. No clinical rules live here. */
+:root {
+    --ui-canvas: #f1f5f9;
+    --ui-surface: #ffffff;
+    --ui-raised: #f8fafc;
+    --ui-border: #cbd5e1;
+    --ui-text: #1e293b;
+    --ui-muted: #475569;
+    --ui-action: #1d4ed8;
+    --ui-on-action: #ffffff;
+    --ui-info-bg: #eff6ff;
+    --ui-info-text: #1e40af;
+    --ui-success-bg: #ecfdf5;
+    --ui-success-text: #065f46;
+    --ui-warning-bg: #fffbeb;
+    --ui-warning-text: #854d0e;
+    --ui-danger-bg: #fff1f2;
+    --ui-danger-text: #9f1239;
+}
+body[data-theme="dark"] {
+    --ui-canvas: #0f172a;
+    --ui-surface: #1e293b;
+    --ui-raised: #273449;
+    --ui-border: #64748b;
+    --ui-text: #f1f5f9;
+    --ui-muted: #cbd5e1;
+    --ui-action: #1d4ed8;
+    --ui-info-bg: #172c4c;
+    --ui-info-text: #bfdbfe;
+    --ui-success-bg: #123b32;
+    --ui-success-text: #a7f3d0;
+    --ui-warning-bg: #422f13;
+    --ui-warning-text: #fde68a;
+    --ui-danger-bg: #451e2b;
+    --ui-danger-text: #fecdd3;
+}
+body, body[data-theme] {
+    --bg-body: var(--ui-canvas);
+    --bg-container: var(--ui-surface);
+    --bg-card: var(--ui-surface);
+    --bg-elevated: var(--ui-raised);
+    --bg-hover: var(--ui-raised);
+    --bg-primary: var(--ui-canvas);
+    --bg-secondary: var(--ui-surface);
+    --text-primary: var(--ui-text);
+    --text-secondary: var(--ui-muted);
+    --text-muted: var(--ui-muted);
+    --border-color: var(--ui-border);
+    --border-light: var(--ui-border);
+    --dark: var(--ui-text);
+    --font-color: var(--ui-text);
+}
+
+/* Symmetric touch targets keep the principal control centered even at 320px. */
+body .metronome-section {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) 48px;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0;
+}
+body .btn-bpm, body .btn-metronome {
+    background: var(--ui-surface);
+    color: var(--ui-text);
+    border: 2px solid var(--ui-border);
+    touch-action: manipulation;
+    transition: border-color 0.15s ease;
+}
+body .btn-bpm {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    min-height: 48px;
+    padding: 0;
+    font-size: 1.5rem;
+}
+body .btn-metronome {
+    min-width: 0;
+    min-height: 76px;
+    padding: 10px 6px;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+}
+body .metro-info { min-width: 0; flex: 0 1 auto; text-align: center; }
+body .metro-info span { font-size: 0.75rem; line-height: 1.35; overflow-wrap: normal; white-space: normal; }
+body .metro-info small { font-size: 0.8125rem; line-height: 1.4; color: var(--ui-muted); }
+body .btn-metronome :is(i, span) { color: inherit; }
+body .btn-metronome i { font-size: 1rem; }
+body .btn-metronome.active { background: var(--ui-action); border-color: var(--ui-action); color: var(--ui-on-action); }
+body .btn-metronome.active .metro-info small { color: var(--ui-on-action); }
+.metro-beat { flex: 0 0 7px; width: 7px; height: 7px; border-radius: 50%; background: currentColor; opacity: 0.45; }
+body .btn-bpm:disabled { opacity: 0.5; cursor: default; }
+body :is(.btn-bpm, .btn-metronome):focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+    .metro-beat { transform: none !important; opacity: 1 !important; animation: none !important; transition: none !important; }
+}
+
+/* Causes retain red selection and amber guidance, with a readable themed surface. */
+body .causes-header { background: var(--ui-raised); border-left-color: var(--primary); }
+body .causes-header h2 { color: var(--ui-text); }
+body .causes-subtitle { color: var(--ui-muted); }
+body .cause-item { background: var(--ui-raised); color: var(--ui-text); border-color: var(--ui-border); min-width: 0; overflow-wrap: anywhere; }
+body .cause-item:hover { background: var(--ui-info-bg); }
+body .cause-item.checked { background: var(--ui-danger-bg); color: var(--ui-danger-text); border-color: var(--danger); }
+body .causes-header.treatment-active { background: var(--ui-warning-bg); border-left-color: var(--warning); min-height: 0; padding: 16px; }
+body .causes-treatment-box h3 { color: var(--ui-warning-text); text-shadow: none; font-size: 1.2rem; overflow-wrap: anywhere; }
+body .causes-treatment-box p { color: var(--ui-text); line-height: 1.6; overflow-wrap: anywhere; }
+
+/* Keep timer values and operational text complete without changing their contents. */
+body #pcr-action-center { padding: 12px; }
+body .ac-timers-dashboard { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 8px; }
+body .ac-timer-box { min-width: 0; padding: 10px 3px; }
+body .ac-timer-label { font-size: 0.625rem; line-height: 1.4; letter-spacing: 0.02em; white-space: normal; text-overflow: clip; overflow: visible; }
+body .ac-timer-value { font-size: clamp(1rem, 4.7vw, 1.4rem); line-height: 1.4; letter-spacing: 0; white-space: nowrap; font-variant-numeric: tabular-nums; }
+body .ac-main-display { padding: 12px; gap: 10px; }
+body .ac-icon { width: 36px; height: 36px; min-width: 36px; font-size: 1.3rem; }
+body :is(.ac-instruction-panel, .ac-details-content, .ac-dose-content) { min-width: 0; }
+body .ac-hud-title { font-size: 1.2rem; line-height: 1.35; letter-spacing: 0.02em; overflow-wrap: anywhere; }
+body .ac-badge { white-space: normal; font-size: 0.6875rem; letter-spacing: 0.03em; }
+body :is(.ac-hud-details, .ac-hud-dose) { min-width: 0; overflow-wrap: anywhere; }
+body .ac-details-content { color: var(--ui-text); }
+body .ac-hud-details { background: var(--ui-raised); }
+body .measurement-summary { color: var(--ui-muted); font-size: 0.8125rem; line-height: 1.5; overflow-wrap: anywhere; }
+body .pcr-actions-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+body #pcr-screen .pcr-actions-grid .btn-action { background: var(--ui-surface); border-color: var(--ui-border); color: var(--ui-text); min-width: 0; min-height: 76px; padding: 14px 8px; gap: 8px; }
+body .pcr-actions-grid .btn-action span { color: inherit; white-space: normal; overflow-wrap: anywhere; }
+body :is(.btn-check-rhythm, .btn-rosc, .btn-finish, #restart-pcr-btn, #pause-compressions-btn) { white-space: normal; overflow-wrap: anywhere; padding: 16px 10px; line-height: 1.4; }
+body :is(.btn-check-rhythm, .btn-finish) { background: #b91c1c; color: #fff; }
+body .btn-rosc { background: #047857; color: #fff; }
+body .btn-compressions { background: #047857; color: #fff; }
+body :is(.btn-compressions, .btn-check-rhythm, .btn-rosc, .btn-finish) :is(span, small, i) { color: inherit; }
+body .event-item { background: var(--ui-surface); color: var(--ui-text); }
+body .event-text { color: var(--ui-text); min-width: 0; overflow-wrap: anywhere; }
+body .event-time { color: #fff; }
+
+/* Theme colors change together; fading foreground/background through low contrast is unsafe. */
+body, body .app-container, body .card, body .modal-content, body .cause-item,
+body .ac-main-display, body #pcr-action-center, body .btn-action {
+    transition-property: border-color, box-shadow;
+}
+
+/* Severity keeps its meaning; remove clipping of multi-line feedback. */
+body #pcr-feedback-banner { background: var(--ui-info-bg); color: var(--ui-info-text); border-left: 4px solid currentColor; }
+body #pcr-feedback-banner.success { background: var(--ui-success-bg); color: var(--ui-success-text); }
+body #pcr-feedback-banner.warning { background: var(--ui-warning-bg); color: var(--ui-warning-text); }
+body #pcr-feedback-banner.danger { background: var(--ui-danger-bg); color: var(--ui-danger-text); }
+body #pcr-feedback-banner.show { max-height: none; overflow: visible; }
+body #pcr-feedback-banner :is(div, p, span, i) { color: inherit; min-width: 0; overflow-wrap: anywhere; }
+
+/* Consistent non-commercial surfaces across navigation, cards and clinical/auth modals. */
+body :is(.section-description, .protocol-desc, .settings-subtitle) { color: var(--ui-muted); }
+body :is(.protocol-item, .study-item, .patient-info, .timeline-container) { color: var(--ui-text); }
+body :is(#patient-modal, #med-modal, #notes-modal, #vitals-modal, #glasgow-modal, #profile-modal, #login-modal, #register-modal, #log-detail-modal) .modal-content {
+    background: var(--ui-surface); color: var(--ui-text); border-color: var(--ui-border);
+    max-width: calc(100vw - 24px); overflow-wrap: anywhere;
+}
+body :is(#patient-modal, #med-modal, #notes-modal, #vitals-modal, #glasgow-modal, #profile-modal, #login-modal, #register-modal) :is(label, input, select, textarea) { color: var(--ui-text); }
+body :is(#patient-modal, #med-modal, #notes-modal, #vitals-modal, #glasgow-modal, #profile-modal, #login-modal, #register-modal) :is(input, select, textarea) { background: var(--ui-raised); border-color: var(--ui-border); }
+body :is(#patient-modal, #notes-modal, #vitals-modal, #glasgow-modal, #profile-modal, #login-modal, #register-modal) .primary-btn { background: var(--ui-action); color: #fff; }
+body :is(#patient-modal, #med-modal, #notes-modal, #vitals-modal, #glasgow-modal) button { white-space: normal; line-height: 1.4; overflow-wrap: anywhere; }
+
+/* Badge colors remain neutral / green / blue / amber / red, now with readable text. */
+body #pcr-action-center.status-preparation .ac-badge { background: var(--ui-raised); color: var(--ui-text); }
+body #pcr-action-center.status-compressions .ac-badge { background: var(--ui-success-bg); color: var(--ui-success-text); }
+body #pcr-action-center.status-rhythm .ac-badge { background: var(--ui-info-bg); color: var(--ui-info-text); }
+body #pcr-action-center.status-shock .ac-badge { background: var(--ui-warning-bg); color: var(--ui-warning-text); }
+body #pcr-action-center.status-danger .ac-badge { background: var(--ui-danger-bg); color: var(--ui-danger-text); }
+
+/* Keep native tap overlays from temporarily changing clinical selection colors. */
+body :is(.metronome-section button, .cause-item) { -webkit-tap-highlight-color: transparent; }
+body[data-theme] .logo-subtitle, body .nav-item { color: var(--ui-muted); }
+body .nav-item.active { color: var(--ui-info-text); }
+body .nav-item { transition-property: border-color, box-shadow; }
+body :is(#pause-compressions-btn, #restart-pcr-btn) { background: var(--ui-raised); color: var(--ui-text); border: 1px solid var(--ui-border); }
+/* The controller's green/amber inline backgrounds remain authoritative. */
+body .btn-compressions { background: linear-gradient(135deg, var(--success), #219a52); }
+body #compressions-btn, body #compressions-btn span { color: #071d10; }
+body :is(#patient-modal, #med-modal, #notes-modal, #vitals-modal, #glasgow-modal, #profile-modal, #login-modal, #register-modal) :is(input, textarea)::placeholder { color: var(--ui-muted); opacity: 1; }

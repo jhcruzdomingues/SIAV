@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="settings-menu-styles.css?v=2" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="profile-plan-styles.css?v=1" media="print" onload="this.media='all'">
     <link rel="stylesheet" href="plans-modal.css?v=darkmode1" media="print" onload="this.media='all'">
+    <link rel="stylesheet" href="pcr-interface.css?v=6a">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://sdk.mercadopago.com/js/v2" defer></script>
@@ -169,16 +170,17 @@
                     <i class="fas fa-heart-pulse"></i> CHECAR RITMO
                 </button>
 
-                <div class="metronome-section">
-                    <button id="bpm-minus" class="btn-bpm">−</button>
-                    <button id="metro-btn" class="btn-metronome" aria-label="Alternar metrônomo">
-                        <i class="fas fa-drum"></i>
-                        <div class="metro-info">
+                <div class="metronome-section" role="group" aria-label="Metrônomo de 100 a 120 BPM">
+                    <button id="bpm-minus" type="button" class="btn-bpm" aria-label="Diminuir BPM">−</button>
+                    <button id="metro-btn" type="button" class="btn-metronome" aria-label="Alternar metrônomo" aria-pressed="false">
+                        <i class="fas fa-drum" aria-hidden="true"></i>
+                        <span id="metro-beat" class="metro-beat" aria-hidden="true"></span>
+                        <span class="metro-info">
                             <span id="metro-status">METRÔNOMO</span>
-                            <small id="bpm-value">110 BPM</small>
-                        </div>
+                            <small id="bpm-value" role="status" aria-live="polite" aria-atomic="true">110 BPM</small>
+                        </span>
                     </button>
-                    <button id="bpm-plus" class="btn-bpm">+</button>
+                    <button id="bpm-plus" type="button" class="btn-bpm" aria-label="Aumentar BPM">+</button>
                 </div>
 
                 <div class="pcr-actions-grid">

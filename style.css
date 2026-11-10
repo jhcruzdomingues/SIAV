@@ -1279,7 +1279,6 @@ body[data-theme="dark"] .med-preview-value { color: var(--text-primary); }
 body[data-theme="dark"] .route-options { background: var(--bg-container); border-color: var(--border-color); }
 body[data-theme="dark"] .route-options label { color: var(--text-secondary); }
 body[data-theme="dark"] .med-action-btn:disabled { background: var(--bg-container); color: var(--text-muted); }
-}
 
 /* === METRÔNOMO === */
 .metronome-section {
