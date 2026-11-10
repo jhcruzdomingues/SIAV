@@ -2,16 +2,20 @@ import assert from 'node:assert/strict';
 import { test, before, after } from 'node:test';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { readFile, readdir } from 'node:fs/promises';
-import { resolve, relative } from 'node:path';
+import { readFile, readdir, mkdtemp, rm } from 'node:fs/promises';
+import { resolve, relative, join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { JSDOM } from 'jsdom';
 import { chromium, devices } from 'playwright';
 import { STATIC_ASSETS, SOUND_ASSETS } from '../../scripts/distribution-assets.mjs';
 import { serveDist } from './server.mjs';
+import { SIAV_PROJECT_REF, SIAV_PROJECT_URL } from '../../src/config/public-supabase.js';
 
-const root = resolve('dist');
-let server, browser, workerConfig;
+let root, temporaryDirectory, server, browser, workerConfig;
+const buildEnvironment = { ...process.env, VITE_SUPABASE_URL: SIAV_PROJECT_URL,
+  VITE_SUPABASE_PROJECT_REF: SIAV_PROJECT_REF,
+  VITE_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_SYNTHETIC_DISTRIBUTION_TEST' };
 const bytes = async path => Buffer.from(await (await fetch(server.url + path)).arrayBuffer());
 const hash = body => createHash('sha256').update(body).digest('hex');
 async function filesIn(directory) {
@@ -30,7 +34,12 @@ async function checkResource(url) {
 }
 
 before(async () => {
-  const build = await promisify(execFile)('npm', ['run', 'build'], { cwd: process.cwd(), timeout: 120000, maxBuffer: 4 * 1024 * 1024 });
+  // Build into a disposable dist/ with synthetic public configuration; never overwrite
+  // the real artifact or require a backend credential to run the regression suite.
+  temporaryDirectory = await mkdtemp(join(tmpdir(), 'siav-distribution-'));
+  root = join(temporaryDirectory, 'dist');
+  const build = await promisify(execFile)('npm', ['run', 'build', '--', '--outDir', root, '--emptyOutDir'], {
+    cwd: process.cwd(), env: buildEnvironment, timeout: 120000, maxBuffer: 4 * 1024 * 1024 });
   console.log(build.stdout);
   // Warnings are visible; a successful build alone is not the acceptance criterion.
   if (build.stderr) console.log(build.stderr);
@@ -39,7 +48,22 @@ before(async () => {
   server = await serveDist(root);
   browser = await chromium.launch({ headless: true, ...(process.env.SIAV_CHROMIUM_PATH ? { executablePath: process.env.SIAV_CHROMIUM_PATH } : {}) });
 }, { timeout: 150000 });
-after(async () => { await browser?.close(); await server?.close(); });
+after(async () => {
+  await browser?.close(); await server?.close();
+  if (temporaryDirectory) await rm(temporaryDirectory, { recursive: true, force: true });
+});
+
+test('build bloqueia chave ausente ou de servidor antes de gerar artefato', async () => {
+  for (const key of ['', 'sb_secret_SYNTHETIC_DO_NOT_USE']) {
+    await assert.rejects(promisify(execFile)('npm', ['run', 'build', '--', '--outDir', join(temporaryDirectory, 'invalid-dist')], {
+      env: { ...buildEnvironment, VITE_SUPABASE_PUBLISHABLE_KEY: key }, timeout: 30000, maxBuffer: 1024 * 1024
+    }), error => {
+      assert.match(error.stderr, /chave publicável moderna/);
+      if (key) assert.ok(!error.stderr.includes(key), 'Errors must never print credential values');
+      return true;
+    });
+  }
+});
 
 test('build contém somente entradas públicas explícitas e bundles, sem recursos internos', async () => {
   const files = await filesIn(root);
@@ -56,7 +80,7 @@ test('build contém somente entradas públicas explícitas e bundles, sem recurs
   }
   for (const asset of STATIC_ASSETS) digest.update(asset.fileName).update(await readFile(asset.source));
   assert.equal(workerConfig.version, digest.digest('hex').slice(0, 16), 'Cache revision must cover the final HTML and resources');
-  for (const path of ['/package.json', '/package-lock.json', '/.env', '/.git/config', '/src/main.js', '/docs/CODEBASE_CLEANUP_RESULT.md', '/tests/setup.js', '/supabase/functions/mercadopago-checkout/index.ts', '/force-reload.js', '/limpar-cache.html', '/test-plans-modal.html']) {
+  for (const path of ['/package.json', '/package-lock.json', '/.env', '/.env.preview.local', '/vercel.json', '/.vercel/project.json', '/.git/config', '/src/main.js', '/docs/CODEBASE_CLEANUP_RESULT.md', '/tests/setup.js', '/supabase/functions/mercadopago-checkout/index.ts', '/force-reload.js', '/limpar-cache.html', '/test-plans-modal.html']) {
     assert.equal((await fetch(server.url + path)).status, 404, path);
   }
   console.log(`Verified public artifact: ${files.length} files.`);
@@ -112,7 +136,8 @@ test('quiz fallback e todos os áudios mantêm conteúdo e formato reais', async
 
 // Only test SDK interfaces are replaced. Session is always null; any backend/payment call fails.
 // This makes packaging/offline tests reproducible without production or CDN availability.
-const sdkFactory = `function createClient() {
+const sdkFactory = `function createClient(url, publishableKey) {
+  (window.__SIAV_TEST_CLIENTS__ ||= []).push({ url, modernPublicKey: publishableKey.startsWith('sb_publishable_') });
   const denied = () => { throw new Error('Unexpected backend/payment call in distribution test'); };
   return { auth: { getSession: async () => ({ data: { session: null }, error: null }),
     getUser: async () => ({ data: { user: null }, error: null }),
@@ -154,6 +179,7 @@ for (const device of ['iPhone 13', 'iPhone SE']) {
       const registration = await page.evaluate(async () => ({ scope: (await navigator.serviceWorker.ready).scope, script: navigator.serviceWorker.controller.scriptURL }));
       assert.equal(registration.script, server.url + '/service-worker.js');
       assert.equal(registration.scope, server.url + '/');
+      assert.deepEqual(await page.evaluate(() => window.__SIAV_TEST_CLIENTS__), [{ url: SIAV_PROJECT_URL, modernPublicKey: true }]);
       assert.equal(await page.evaluate(() => window.SIAV.state.currentUser.isLoggedIn), false);
       assert.equal(await page.evaluate(() => typeof window.createMercadoPagoCheckout), 'function');
       assert.equal(await page.evaluate(() => typeof window.toggleBillingPeriod), 'function');

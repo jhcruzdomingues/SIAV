@@ -4,9 +4,10 @@
 
 # Credenciais e Variáveis de Ambiente
 .env
-.env.local
-.env.production
-.env.development
+.env.*
+!.env.example
+!.env.*.example
+.vercel/
 
 # Node.js
 node_modules/

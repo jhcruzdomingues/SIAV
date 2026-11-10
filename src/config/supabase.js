@@ -1,9 +1,9 @@
-// =============================================
-// SUPABASE - CONEXÃO ÚNICA E SIMPLES
-// =============================================
-// Edite apenas as duas linhas abaixo com as credenciais do seu projeto
-const SUPABASE_URL = 'https://lfcjrjshlybmurnvulvh.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_Y6tEzLt7PPf0aRqqB_7bqA_9lHu6OQZ';
-
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+import { createPublicSupabaseClient } from './public-supabase.js';
+
+// Enumerate public variables explicitly. Never embed the entire import.meta.env object.
+export const supabase = createPublicSupabaseClient(createClient, {
+    url: import.meta.env.VITE_SUPABASE_URL,
+    publishableKey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    projectRef: import.meta.env.VITE_SUPABASE_PROJECT_REF || undefined
+});

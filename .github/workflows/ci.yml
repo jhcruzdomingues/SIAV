@@ -2,7 +2,7 @@ name: CI - Testes e Build
 
 on:
   push:
-    branches: [ main, develop, fix/adult-pcr-antiarrhythmics ]
+    branches: [ main, develop, fix/adult-pcr-antiarrhythmics, fix/distribution-assets-pwa ]
   pull_request:
     branches: [ main, develop ]
 
@@ -65,13 +65,17 @@ jobs:
       - name: 📚 Instalar dependências
         run: npm ci
 
-      - name: 🏗️ Build otimizado
+      - name: 🏗️ Build com configuração sintética (não publicar)
         run: npm run build
+        env:
+          VITE_SUPABASE_PROJECT_REF: lfcvjrshlybmurnvulvh
+          VITE_SUPABASE_URL: https://lfcvjrshlybmurnvulvh.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_SYNTHETIC_CI_ONLY
 
       - name: 📤 Upload artefato de build
         uses: actions/upload-artifact@v4
         with:
-          name: build-optimized
+          name: dist-ci-synthetic
           path: dist/
           if-no-files-found: error
           retention-days: 7
