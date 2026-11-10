@@ -2,6 +2,20 @@ import { state } from '../config/state.js';
 import { closeModal, openModal, showScreen } from './dom.js';
 
 export function showPatientModal() {
+    const noData = document.getElementById('start-pcr-no-data-btn');
+    if (noData) noData.style.display = state.pcrActive ? 'none' : 'inline-block';
+    const submit = document.querySelector('#patient-form button[type="submit"]');
+    if (submit) submit.textContent = state.pcrActive ? 'SALVAR ALTERAÇÕES' : 'INICIAR ATENDIMENTO';
+    if (!state.pcrActive) {
+        document.getElementById('patient-form')?.reset();
+        const details = document.getElementById('patient-additional-details');
+        if (details) details.open = false;
+    } else {
+        const adult = document.getElementById('patient-adult-protocol');
+        const other = document.getElementById('patient-other-protocol');
+        if (adult) adult.checked = state.patient.algorithm === 'adult';
+        if (other) other.checked = state.patient.algorithm !== 'adult';
+    }
     openModal('patient-modal');
 }
 
@@ -14,6 +28,7 @@ export function cancelPatientSetup() {
 
 export function savePatientData(e) {
     e.preventDefault();
+    const previousPatient = state.patient;
     try {
         const weightValue = document.getElementById('patient-weight')?.value;
         const ageValue = document.getElementById('patient-age')?.value;
@@ -53,15 +68,18 @@ export function savePatientData(e) {
     
     if (!state.pcrActive && typeof window.startPCR === 'function') {
         window.startPCR();
+        if (!state.pcrActive) { state.patient = previousPatient; updatePatientDisplay(); }
     }
 }
 
 export function startPCRWithUninformedData() {
+    const previousPatient = state.patient;
     state.patient = { algorithm: document.getElementById('patient-adult-protocol')?.checked ? 'adult' : null, name: 'N/I', age: 'N/I', sex: 'N/I', weight: 'N/I', allergies: 'Nenhuma informada', comorbidities: 'N/I' };
     updatePatientDisplay();
     closeModal('patient-modal');
     if (!state.pcrActive && typeof window.startPCR === 'function') {
         window.startPCR();
+        if (!state.pcrActive) { state.patient = previousPatient; updatePatientDisplay(); }
     }
 }
 

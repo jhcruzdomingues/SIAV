@@ -162,6 +162,9 @@
                     </div>
                 </button>
 
+                <button id="pause-compressions-btn" type="button" class="secondary-btn wide-btn" disabled>REGISTRAR PAUSA DAS COMPRESSÕES</button>
+                <p id="compression-measurement" class="measurement-summary" aria-live="off">Medição de compressões informada pelo operador.</p>
+
                 <button id="rhythm-conduta-btn" class="btn-check-rhythm" aria-label="Checar ritmo cardíaco do paciente">
                     <i class="fas fa-heart-pulse"></i> CHECAR RITMO
                 </button>
@@ -863,9 +866,13 @@
     <div id="patient-modal" class="modal">
         <div class="modal-content">
             <h3>Preparar Novo Atendimento</h3>
-            <p>Insira os dados do paciente para cálculos pediátricos e registro.</p>
+            <p>Selecione o algoritmo. Dados ausentes permanecem N/I; não serão inferidos.</p>
             <form id="patient-form">
-                <label><input type="checkbox" id="patient-adult-protocol">Confirmo o uso do algoritmo adulto neste atendimento</label>
+                <fieldset class="patient-protocol-options">
+                    <legend>Algoritmo de referência</legend>
+                    <label><input type="radio" name="patient-protocol" id="patient-adult-protocol" value="adult">Adulto</label>
+                    <label><input type="radio" name="patient-protocol" id="patient-other-protocol" value="unknown" checked>Outro / não definido — sem preenchimento adulto</label>
+                </fieldset>
                 <label for="patient-name">Nome / ID do Paciente (opcional):</label>
                 <input type="text" id="patient-name" placeholder="Ex: Paciente 001">
 
@@ -876,10 +883,11 @@
                     </div>
                     <div>
                         <label for="patient-weight">Peso (kg):</label>
-                        <input type="number" id="patient-weight" placeholder="Ex: 20" min="1">
+                        <input type="number" id="patient-weight" placeholder="Se conhecido" min="0.1" step="any" inputmode="decimal">
                     </div>
                 </div>
                 
+                <details id="patient-additional-details"><summary>Dados adicionais (opcionais)</summary>
                 <label>Sexo:</label>
                 <div class="radio-group">
                     <input type="radio" id="sex-m" name="sex" value="Masculino">
@@ -894,8 +902,9 @@
                 <label for="patient-comorbidities">Comorbidades Relevantes (opcional):</label>
                 <input type="text" id="patient-comorbidities" placeholder="Ex: ICC, DPOC">
 
+                </details>
                 <button type="submit" class="primary-btn">INICIAR ATENDIMENTO</button>
-                <button type="button" id="start-pcr-no-data-btn" class="secondary-btn">Iniciar com dados N/I</button>
+                <button type="button" id="start-pcr-no-data-btn" class="secondary-btn">INICIAR SEM DADOS (N/I)</button>
                 <button type="button" id="cancel-patient-btn" class="cancel-btn">Cancelar</button>
             </form>
         </div>
@@ -939,15 +948,30 @@
             </div>
             
             <input type="hidden" id="medication-select" value="">
-            <label for="medication-dose">Quantidade exata efetivamente administrada</label>
-            <input type="number" id="medication-dose" min="0" step="any" inputmode="decimal" required>
-            <label for="medication-unit">Unidade</label>
-            <select id="medication-unit"><option value="mg">mg</option><option value="g">g</option><option value="mEq">mEq</option></select>
-            <label for="medication-timing">Momento da administração</label>
-            <select id="medication-timing"><option value="realtime">Administrada agora</option><option value="retrospective">Registrar administração anterior</option></select>
-            <label for="medication-effective-at">Horário efetivo (obrigatório para registro anterior, hora local)</label>
-            <input type="datetime-local" id="medication-effective-at" step="1">
-            <label><input type="checkbox" id="medication-confirmed">Confirmo a quantidade, a via e o horário efetivamente administrados</label>
+            <p id="medication-registration-summary" class="registration-summary" aria-live="polite">Selecione o medicamento efetivamente administrado.</p>
+            <p class="registration-instruction">Seleção não grava. Toque no botão somente para registrar a dose já administrada.</p>
+            <button id="record-med-btn" class="med-action-btn" disabled>
+                <i class="fas fa-check-circle"></i>
+                <div class="med-action-text">
+                    <span class="main-text">REGISTRAR DOSE ADMINISTRADA</span>
+                    <span class="sub-text">Selecione uma droga</span>
+                </div>
+            </button>
+
+            <details id="medication-edit-details">
+                <summary>EDITAR ADMINISTRAÇÃO / REGISTRO MANUAL</summary>
+                <label for="medication-dose">Quantidade exata efetivamente administrada</label>
+                <input type="number" id="medication-dose" min="0" step="any" inputmode="decimal" required>
+                <label for="medication-unit">Unidade</label>
+                <select id="medication-unit"><option value="mg">mg</option><option value="g">g</option><option value="mEq">mEq</option></select>
+                <label for="medication-timing">Momento da administração</label>
+                <select id="medication-timing"><option value="realtime">Administrada agora</option><option value="retrospective">Registrar administração anterior</option></select>
+                <div id="medication-effective-field" hidden>
+                    <label for="medication-effective-at">Horário efetivo (hora local)</label>
+                    <input type="datetime-local" id="medication-effective-at" step="1">
+                </div>
+                <label id="medication-review-confirmation"><input type="checkbox" id="medication-confirmed">Revisei os dados da administração real e o contexto deste registro manual</label>
+            </details>
 
             <div class="med-preview-panel" id="med-preview-panel" style="display: none;">
                 <div class="med-preview-header">
@@ -968,14 +992,6 @@
                 </div>
             </div>
 
-            <button id="record-med-btn" class="med-action-btn" disabled>
-                <i class="fas fa-check-circle"></i>
-                <div class="med-action-text">
-                    <span class="main-text">REGISTRAR ADMINISTRAÇÃO</span>
-                    <span class="sub-text">Selecione uma droga</span>
-                </div>
-            </button>
-            
             <button id="cancel-med-btn" class="cancel-btn wide-btn" style="margin-top: 12px; background: transparent; border: 2px solid var(--border-color); color: var(--text-primary); font-weight: 700; box-shadow: none;">CANCELAR</button>
         </div>
     </div>

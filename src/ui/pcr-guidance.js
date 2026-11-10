@@ -43,9 +43,9 @@ export function updatePcrGuidance() {
             compBtnText = 'INICIAR COMPRESSÕES'; compBtnStyle = 'linear-gradient(135deg, var(--success), #219a52)';
             compBtn.disabled = false; break;
         case 'compressions':
-            phaseClass = 'status-compressions'; badgeText = 'RCP ATIVA'; iconClass = 'fas fa-hands-helping';
-            compBtnText = 'RCP EM ANDAMENTO'; compBtnStyle = 'linear-gradient(135deg, var(--warning), #e67e22)';
-            compBtn.disabled = true; break;
+            phaseClass = 'status-compressions'; badgeText = compressionCycle.paused ? 'REGISTRO DE COMPRESSÕES PAUSADO' : 'RCP ATIVA'; iconClass = 'fas fa-hands-helping';
+            compBtnText = compressionCycle.paused ? 'REGISTRAR RETOMADA DAS COMPRESSÕES' : 'RCP EM ANDAMENTO'; compBtnStyle = 'linear-gradient(135deg, var(--warning), #e67e22)';
+            compBtn.disabled = !compressionCycle.paused; break;
         case 'rhythm_check':
             phaseClass = 'status-rhythm'; badgeText = 'AVALIAÇÃO'; iconClass = 'fas fa-wave-square';
             compBtnText = 'RETOMAR COMPRESSÕES'; compBtnStyle = 'linear-gradient(135deg, var(--success), #219a52)'; 
@@ -56,6 +56,8 @@ export function updatePcrGuidance() {
             compBtn.disabled = false; break;
     }
     if (!isClinicalArrestActive()) compBtn.disabled = true;
+    const pause = document.getElementById('pause-compressions-btn');
+    if (pause) pause.disabled = !isClinicalArrestActive() || compressionCycle.currentPhase !== 'compressions' || compressionCycle.paused;
     const restart = document.getElementById('restart-pcr-btn');
     if (restart) restart.hidden = !(state.pcrActive && state.roscAchieved);
     

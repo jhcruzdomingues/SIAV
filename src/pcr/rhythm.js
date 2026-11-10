@@ -1,12 +1,14 @@
 import { state, compressionCycle } from '../config/state.js';
 import { showScreen } from '../ui/dom.js';
 import { assessClinicalRhythm, commitClinicalShock, isClinicalArrestActive } from './clinical.js';
-import { clearAllIntervals } from './core.js';
+import { clearAllIntervals, pauseCompressions } from './core.js';
+import { closeTimingEpisode, syncTimingTotals } from './timing.js';
 
 export function showRhythmSelectorScreen(isCycleCheck = false) {
     if (!isClinicalArrestActive()) return;
     // A new assessment explicitly replaces an unconsumed shock decision.
     state.clinical.pendingShock = null;
+    if (!isCycleCheck) pauseCompressions();
     if (isCycleCheck) {
         const notesInput = document.getElementById('selector-rhythm-notes');
         if (notesInput) notesInput.value = '';
@@ -227,9 +229,8 @@ export function roscObtido() {
     state.roscAchieved = true;
     state.clinical.status = 'rosc';
     state.clinical.pendingShock = null;
-    if (compressionCycle.currentPhase === 'compressions' && compressionCycle.startTime) {
-        state.totalCompressionSeconds += Math.floor((Date.now() - compressionCycle.startTime) / 1000);
-    }
+    closeTimingEpisode('rosc');
+    syncTimingTotals();
     compressionCycle.active = false;
     compressionCycle.currentPhase = 'rosc';
     compressionCycle.rhythmCheckTriggered = false;

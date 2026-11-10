@@ -62,6 +62,8 @@ const defaultState = {
   notes: [],
   causesChecked: [],
   totalCompressionSeconds: 0,
+  totalPauseSeconds: 0,
+  resuscitationTiming: null,
   roscAchieved: false,
 
   // Metrônomo
@@ -107,6 +109,8 @@ const defaultCompressionCycle = {
   startTime: null,
   cycleCount: 0,
   currentPhase: 'preparation',
+  deadline: null,
+  paused: false,
   cycleTimer: null,
   cycleProgress: 0,
   compressionTime: 0,
@@ -150,11 +154,15 @@ export function resetPCRState() {
   state.notes = [];
   state.causesChecked = [];
   state.totalCompressionSeconds = 0;
+  state.totalPauseSeconds = 0;
+  state.resuscitationTiming = null;
   state.roscAchieved = false;
   state.tempRhythmData = { rhythm: null, notes: null };
 
   compressionCycle.active = false;
   compressionCycle.startTime = null;
+  compressionCycle.deadline = null;
+  compressionCycle.paused = false;
   compressionCycle.cycleCount = 0;
   compressionCycle.currentPhase = 'preparation';
   compressionCycle.cycleTimer = null;

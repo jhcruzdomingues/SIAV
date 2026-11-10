@@ -2,10 +2,10 @@ import { restartPCRAfterROSC } from '../pcr/core.js';
 import { state } from '../config/state.js';
 import { showScreen, openModal, closeModal, showTransientAlert } from './dom.js';
 import { showPatientModal, savePatientData, startPCRWithUninformedData, cancelPatientSetup } from './patient.js';
-import { startCompressions, finishPCR } from '../pcr/core.js';
+import { startCompressions, finishPCR, pauseCompressions, handleTimingVisibility, handleTimingPageHide } from '../pcr/core.js';
 import { toggleMetronome, adjustBPM } from './audio.js';
 import { showRhythmSelectorScreen, selectRhythmOption, processRhythmSelection, applyShockAndResume, roscObtido } from '../pcr/rhythm.js';
-import { showMedModal, updateMedicationDose, recordMedication, cancelMedicationRecord } from '../pcr/medications.js';
+import { showMedModal, updateMedicationDose, recordMedication, cancelMedicationRecord, selectMedication } from '../pcr/medications.js';
 import { showNotesModal, saveNotes } from '../pcr/log.js';
 import { showVitalsModal, recordVitals } from '../pcr/vitals.js';
 import { showGlasgowModal, saveGlasgow } from './glasgow.js';
@@ -65,16 +65,6 @@ export function registerAllEvents() {
         const patientComorbiditiesInput = document.getElementById('patient-comorbidities');
         if(patientComorbiditiesInput) patientComorbiditiesInput.value = state.patient.comorbidities !== 'N/I' ? state.patient.comorbidities : '';
         
-        const noDataBtn = document.getElementById('start-pcr-no-data-btn');
-        const submitBtn = document.querySelector('#patient-form .primary-btn');
-        if (state.pcrActive) {
-            if (noDataBtn) noDataBtn.style.display = 'none';
-            if (submitBtn) submitBtn.textContent = 'SALVAR ALTERAÇÕES';
-        } else {
-            if (noDataBtn) noDataBtn.style.display = 'inline-block';
-            if (submitBtn) submitBtn.textContent = 'INICIAR ATENDIMENTO';
-        }
-        
         showPatientModal();
     });
 
@@ -84,6 +74,10 @@ export function registerAllEvents() {
     document.getElementById('cancel-patient-btn')?.addEventListener('click', cancelPatientSetup);
 
     document.getElementById('compressions-btn')?.addEventListener('click', startCompressions);
+    document.getElementById('pause-compressions-btn')?.addEventListener('click', pauseCompressions);
+    document.addEventListener('visibilitychange', handleTimingVisibility);
+    window.addEventListener('pagehide', handleTimingPageHide);
+    window.addEventListener('pageshow', handleTimingVisibility);
     document.getElementById('metro-btn')?.addEventListener('click', toggleMetronome);
     document.getElementById('bpm-minus')?.addEventListener('click', () => adjustBPM(-5));
     document.getElementById('bpm-plus')?.addEventListener('click', () => adjustBPM(5));
@@ -106,20 +100,13 @@ export function registerAllEvents() {
 
     document.getElementById('med-btn')?.addEventListener('click', showMedModal);
     
-    document.querySelectorAll('.med-btn-pro').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const medId = this.getAttribute('data-med');
-            if (this.classList.contains('selected')) {
-                updateMedicationDose();
-            } else {
-                document.querySelectorAll('.med-btn-pro').forEach(b => b.classList.remove('selected'));
-                this.classList.add('selected');
-                const medSelect = document.getElementById('medication-select');
-                if (medSelect) medSelect.value = medId;
-                updateMedicationDose();
-            }
-        });
+    document.querySelectorAll('.med-btn-pro').forEach(button => {
+        button.addEventListener('click', () => selectMedication(button.dataset.med));
     });
+    for (const id of ['medication-dose', 'medication-unit', 'medication-confirmed', 'medication-effective-at']) {
+        document.getElementById(id)?.addEventListener('input', updateMedicationDose);
+        document.getElementById(id)?.addEventListener('change', updateMedicationDose);
+    }
 
     document.getElementById('record-med-btn')?.addEventListener('click', recordMedication);
     document.getElementById('medication-timing')?.addEventListener('change', updateMedicationDose);
