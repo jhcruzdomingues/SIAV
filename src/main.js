@@ -49,6 +49,7 @@ import { initDOMCache, showScreen, closeModal, openModal, showTransientAlert } f
 import { initAudio, playNotification, toggleMetronome, startMetronome, stopMetronome, adjustBPM } from './ui/audio.js';
 
 import { registerAllEvents } from './ui/events.js';
+import { registerServiceWorker } from './pwa/register.js';
 
 // ===== INICIALIZAÇÃO =====
 
@@ -59,6 +60,7 @@ console.log('%c🏥 SIAV v2.0 - Sistema Modular Inicializado', 'color: #e74c3c; 
  */
 async function initApp() {
   console.log('🚀 Inicializando SIAV...');
+  registerServiceWorker();
 
   // 1. Inicializar DOM e UI
   initDOMCache();
@@ -152,17 +154,6 @@ async function initApp() {
       }
     }, 500);
   });
-
-  
-  // Registra Service Worker (PWA)
-  if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js')
-              .then((reg) => console.log('Service Worker registrado com sucesso:', reg.scope))
-              .catch((err) => console.log('Falha ao registrar Service Worker:', err));
-      });
-  }
-
 }
 
 // ===== EXPORTS GLOBAIS (Para compatibilidade com código legado) =====

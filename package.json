@@ -12,7 +12,8 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "test:run": "vitest run",
-    "deploy": "npm run build && echo 'Build pronto! Envie a pasta dist/ para seu servidor'"
+    "deploy": "npm run build && echo 'Build pronto! Envie a pasta dist/ para seu servidor'",
+    "test:distribution": "node --test tests/distribution/check.mjs"
   },
   "keywords": [
     "medical",
@@ -35,6 +36,7 @@
     "cssnano": "^7.0.6",
     "cssnano-cli": "^1.0.5",
     "jsdom": "^25.0.1",
+    "playwright": "1.57.0",
     "postcss": "^8.4.49",
     "postcss-cli": "^11.0.0",
     "purgecss": "^6.0.0",
