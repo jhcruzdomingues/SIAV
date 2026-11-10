@@ -1,10 +1,11 @@
+import { restartPCRAfterROSC } from '../pcr/core.js';
 import { state } from '../config/state.js';
-import { showScreen, closeModal, showTransientAlert } from './dom.js';
+import { showScreen, openModal, closeModal, showTransientAlert } from './dom.js';
 import { showPatientModal, savePatientData, startPCRWithUninformedData, cancelPatientSetup } from './patient.js';
-import { startCompressions, finishPCR } from '../pcr/core.js';
+import { startCompressions, finishPCR, pauseCompressions, handleTimingVisibility, handleTimingPageHide } from '../pcr/core.js';
 import { toggleMetronome, adjustBPM } from './audio.js';
 import { showRhythmSelectorScreen, selectRhythmOption, processRhythmSelection, applyShockAndResume, roscObtido } from '../pcr/rhythm.js';
-import { showMedModal, updateMedicationDose, recordMedication } from '../pcr/medications.js';
+import { showMedModal, updateMedicationDose, recordMedication, cancelMedicationRecord, selectMedication } from '../pcr/medications.js';
 import { showNotesModal, saveNotes } from '../pcr/log.js';
 import { showVitalsModal, recordVitals } from '../pcr/vitals.js';
 import { showGlasgowModal, saveGlasgow } from './glasgow.js';
@@ -24,7 +25,9 @@ export function registerAllEvents() {
     });
     document.getElementById('nav-dashboard')?.addEventListener('click', () => {
         updateDashboard();
-        if (checkAccess('advanced_dashboard', false)) {
+        if (!state.currentUser.isLoggedIn) {
+            showProfileModal();
+        } else if (checkAccess('advanced_dashboard', false)) {
             showScreen('dashboard');
         } else {
             if (confirm('Acesso ao dashboard restrito ao seu plano.\n\nDeseja ver os planos disponíveis?')) {
@@ -62,16 +65,6 @@ export function registerAllEvents() {
         const patientComorbiditiesInput = document.getElementById('patient-comorbidities');
         if(patientComorbiditiesInput) patientComorbiditiesInput.value = state.patient.comorbidities !== 'N/I' ? state.patient.comorbidities : '';
         
-        const noDataBtn = document.getElementById('start-pcr-no-data-btn');
-        const submitBtn = document.querySelector('#patient-form .primary-btn');
-        if (state.pcrActive) {
-            if (noDataBtn) noDataBtn.style.display = 'none';
-            if (submitBtn) submitBtn.textContent = 'SALVAR ALTERAÇÕES';
-        } else {
-            if (noDataBtn) noDataBtn.style.display = 'inline-block';
-            if (submitBtn) submitBtn.textContent = 'INICIAR ATENDIMENTO';
-        }
-        
         showPatientModal();
     });
 
@@ -81,6 +74,10 @@ export function registerAllEvents() {
     document.getElementById('cancel-patient-btn')?.addEventListener('click', cancelPatientSetup);
 
     document.getElementById('compressions-btn')?.addEventListener('click', startCompressions);
+    document.getElementById('pause-compressions-btn')?.addEventListener('click', pauseCompressions);
+    document.addEventListener('visibilitychange', handleTimingVisibility);
+    window.addEventListener('pagehide', handleTimingPageHide);
+    window.addEventListener('pageshow', handleTimingVisibility);
     document.getElementById('metro-btn')?.addEventListener('click', toggleMetronome);
     document.getElementById('bpm-minus')?.addEventListener('click', () => adjustBPM(-5));
     document.getElementById('bpm-plus')?.addEventListener('click', () => adjustBPM(5));
@@ -93,6 +90,7 @@ export function registerAllEvents() {
         showRhythmSelectorScreen(false);
     });
     document.getElementById('rosc-btn')?.addEventListener('click', roscObtido);
+    document.getElementById('restart-pcr-btn')?.addEventListener('click', restartPCRAfterROSC);
 
     document.querySelectorAll('#rhythm-selector-screen .rhythm-option-btn').forEach(btn => {
         btn.addEventListener('click', function() { selectRhythmOption(this); });
@@ -102,23 +100,18 @@ export function registerAllEvents() {
 
     document.getElementById('med-btn')?.addEventListener('click', showMedModal);
     
-    document.querySelectorAll('.med-btn-pro').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const medId = this.getAttribute('data-med');
-            if (this.classList.contains('selected')) {
-                recordMedication();
-            } else {
-                document.querySelectorAll('.med-btn-pro').forEach(b => b.classList.remove('selected'));
-                this.classList.add('selected');
-                const medSelect = document.getElementById('medication-select');
-                if (medSelect) medSelect.value = medId;
-                updateMedicationDose();
-            }
-        });
+    document.querySelectorAll('.med-btn-pro').forEach(button => {
+        button.addEventListener('click', () => selectMedication(button.dataset.med));
     });
+    for (const id of ['medication-dose', 'medication-unit', 'medication-confirmed', 'medication-effective-at']) {
+        document.getElementById(id)?.addEventListener('input', updateMedicationDose);
+        document.getElementById(id)?.addEventListener('change', updateMedicationDose);
+    }
 
     document.getElementById('record-med-btn')?.addEventListener('click', recordMedication);
-    document.getElementById('cancel-med-btn')?.addEventListener('click', () => closeModal('med-modal'));
+    document.getElementById('medication-timing')?.addEventListener('change', updateMedicationDose);
+    document.querySelectorAll('input[name="administration-route"]').forEach(input => input.addEventListener('change', updateMedicationDose));
+    document.getElementById('cancel-med-btn')?.addEventListener('click', cancelMedicationRecord);
 
     document.getElementById('notes-btn')?.addEventListener('click', showNotesModal);
     document.getElementById('save-notes-btn')?.addEventListener('click', saveNotes);
@@ -139,7 +132,16 @@ export function registerAllEvents() {
     document.getElementById('profile-update-form')?.addEventListener('submit', handleProfileUpdate);
     document.getElementById('logout-btn')?.addEventListener('click', logout);
     document.getElementById('cancel-profile-btn')?.addEventListener('click', () => closeModal('profile-modal'));
-    document.getElementById('login-to-dashboard-btn')?.addEventListener('click', showProfileModal);
+    document.getElementById('open-login-btn')?.addEventListener('click', () => openModal('login-modal'));
+    document.getElementById('open-register-btn')?.addEventListener('click', () => openModal('register-modal'));
+    document.querySelectorAll('[data-close-modal]').forEach(button => {
+        button.addEventListener('click', () => closeModal(button.closest('.modal').id));
+    });
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', event => {
+            if (event.target === modal) closeModal(modal.id);
+        });
+    });
     document.getElementById('dashboard-user-info')?.addEventListener('click', showProfileModal);
     
     document.getElementById('view-full-log-btn')?.addEventListener('click', () => {
@@ -244,7 +246,7 @@ export function registerAllEvents() {
     // Configura atalhos de teclado globais
     document.addEventListener('keydown', (e) => {
         const active = document.activeElement;
-        if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
+        if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT' || active.isContentEditable)) return;
 
         switch (e.code) {
             case 'KeyC': {

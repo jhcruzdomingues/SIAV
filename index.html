@@ -49,8 +49,8 @@
                     <p class="logo-subtitle">Sistema Inteligente de Assistência à Vida</p>
                 </div>
             </div>
-            <button id="settings-btn" class="header-btn" onclick="openSettingsMenu()" title="Configurações">
-                <i class="fas fa-cog"></i>
+            <button id="settings-btn" class="header-btn" onclick="openSettingsMenu()" type="button" aria-label="Configurações" title="Configurações">
+                <span aria-hidden="true">⚙</span>
             </button>
         </header>
 
@@ -162,6 +162,9 @@
                     </div>
                 </button>
 
+                <button id="pause-compressions-btn" type="button" class="secondary-btn wide-btn" disabled>REGISTRAR PAUSA DAS COMPRESSÕES</button>
+                <p id="compression-measurement" class="measurement-summary" aria-live="off">Medição de compressões informada pelo operador.</p>
+
                 <button id="rhythm-conduta-btn" class="btn-check-rhythm" aria-label="Checar ritmo cardíaco do paciente">
                     <i class="fas fa-heart-pulse"></i> CHECAR RITMO
                 </button>
@@ -201,6 +204,8 @@
                     <i class="fas fa-heart-circle-check"></i> RCE OBTIDO (PULSO +)
                 </button>
 
+                <button id="restart-pcr-btn" class="secondary-btn" hidden>CONFIRMAR NOVA PCR APÓS ROSC</button>
+
                 <div class="timeline-container">
                     <h3><i class="fas fa-clock-rotate-left"></i> Linha do Tempo</h3>
                     <div id="timeline-events" class="timeline-events">
@@ -229,7 +234,7 @@
                         <h3 class="category-title shockable">
                             <i class="fas fa-bolt"></i> Ritmos Chocáveis
                         </h3>
-                        <button class="rhythm-option-btn chocable" data-rhythm="FV" aria-label="Selecionar Fibrilação Ventricular - ritmo chocável">
+                        <button type="button" aria-pressed="false" class="rhythm-option-btn chocable" data-rhythm="FV" aria-label="Selecionar Fibrilação Ventricular - ritmo chocável">
                             <div class="rhythm-icon-wrapper">
                                 <i class="fas fa-chart-bar" aria-hidden="true"></i>
                             </div>
@@ -237,7 +242,7 @@
                             <div class="rhythm-name">Fibrilação Ventricular</div>
                             <div class="rhythm-description">Ondas caóticas sem QRS definido</div>
                         </button>
-                        <button class="rhythm-option-btn chocable" data-rhythm="TVSP" aria-label="Selecionar Taquicardia Ventricular sem Pulso - ritmo chocável">
+                        <button type="button" aria-pressed="false" class="rhythm-option-btn chocable" data-rhythm="TVSP" aria-label="Selecionar Taquicardia Ventricular sem Pulso - ritmo chocável">
                             <div class="rhythm-icon-wrapper">
                                 <i class="fas fa-wave-square" aria-hidden="true"></i>
                             </div>
@@ -251,7 +256,7 @@
                         <h3 class="category-title non-shockable">
                             <i class="fas fa-syringe"></i> Ritmos Não-Chocáveis
                         </h3>
-                        <button class="rhythm-option-btn non-chocable" data-rhythm="AESP" aria-label="Selecionar Atividade Elétrica sem Pulso - ritmo não-chocável">
+                        <button type="button" aria-pressed="false" class="rhythm-option-btn non-chocable" data-rhythm="AESP" aria-label="Selecionar Atividade Elétrica sem Pulso - ritmo não-chocável">
                             <div class="rhythm-icon-wrapper">
                                 <i class="fas fa-chart-line" aria-hidden="true"></i>
                             </div>
@@ -259,7 +264,7 @@
                             <div class="rhythm-name">Atividade Elétrica sem Pulso</div>
                             <div class="rhythm-description">Ritmo organizado, pulso ausente</div>
                         </button>
-                        <button class="rhythm-option-btn non-chocable" data-rhythm="Assistolia">
+                        <button type="button" aria-pressed="false" class="rhythm-option-btn non-chocable" data-rhythm="Assistolia">
                             <div class="rhythm-icon-wrapper">
                                 <i class="fas fa-minus"></i>
                             </div>
@@ -277,6 +282,8 @@
                     <textarea id="selector-rhythm-notes" rows="3" placeholder="Ex: Ritmo alternante, causa provável identificada, achados do monitor..."></textarea>
                 </div>
                 
+                <button id="submit-rhythm-selection-btn" type="button" class="primary-btn wide-btn rhythm-confirm-btn" disabled>SELECIONE UM RITMO</button>
+
                 <div class="rhythm-back-btn-container">
                     <button onclick="showScreen('pcr')" class="back-btn-screen"><i class="fas fa-arrow-left"></i> Voltar ao Atendimento</button>
                 </div>
@@ -578,105 +585,7 @@
                                 <i class="fas fa-user-plus"></i> Cadastro
                             </button>
                         </div>
-                        <div id="login-modal" class="modal" style="display:none;">
-                            <div class="modal-content">
-                                <h3>Login</h3>
-                                <form id="login-form-simple" class="login-form">
-                                    <div class="form-field">
-                                        <label for="login-email-modal"><i class="fas fa-envelope"></i> E-mail</label>
-                                        <input type="email" id="login-email-modal" name="login-email-modal" required placeholder="seu.email@exemplo.com">
-                                    </div>
-                                    <div class="form-field">
-                                        <label for="login-password-modal"><i class="fas fa-lock"></i> Senha</label>
-                                        <input type="password" id="login-password-modal" name="login-password-modal" required placeholder="Mínimo 6 caracteres">
-                                    </div>
-                                    <button type="submit" class="primary-btn wide-btn"><i class="fas fa-sign-in-alt"></i> Entrar</button>
-                                </form>
-                                <button type="button" class="close-btn">Fechar</button>
-                            </div>
-                        </div>
-                        <div id="register-modal" class="modal" style="display:none;">
-                            <div class="modal-content">
-                                <h3>Cadastro</h3>
-                                <form id="register-form-full" class="register-form">
-                                    <div class="form-field">
-                                        <label for="register-name"><i class="fas fa-user"></i> Nome Completo</label>
-                                        <input type="text" id="register-name" name="register-name" required placeholder="Seu nome completo">
-                                    </div>
-                                    <div class="form-field">
-                                        <label for="register-profession"><i class="fas fa-briefcase-medical"></i> Profissão/Especialidade</label>
-                                        <input type="text" id="register-profession" name="register-profession" placeholder="Ex: Enfermeiro">
-                                    </div>
-                                    <div class="form-row">
-                                        <div class="form-field">
-                                            <label for="register-council"><i class="fas fa-id-card"></i> Registro Profissional</label>
-                                            <input type="text" id="register-council" name="register-council" placeholder="Ex: CRM-SP 123456">
-                                        </div>
-                                        <div class="form-field">
-                                            <label for="register-birth-date"><i class="fas fa-calendar"></i> Data de Nascimento</label>
-                                            <input type="date" id="register-birth-date" name="register-birth-date">
-                                        </div>
-                                    </div>
-                                    <div class="form-field">
-                                        <label for="register-phone"><i class="fas fa-phone"></i> Telefone (opcional)</label>
-                                        <input type="tel" id="register-phone" name="register-phone" placeholder="(99) 99999-9999">
-                                    </div>
-                                    <div class="form-field">
-                                        <label for="register-email"><i class="fas fa-envelope"></i> E-mail</label>
-                                        <input type="email" id="register-email" name="register-email" required placeholder="seu.email@exemplo.com">
-                                    </div>
-                                    <div class="form-field">
-                                        <label for="register-password"><i class="fas fa-lock"></i> Senha</label>
-                                        <input type="password" id="register-password" name="register-password" required placeholder="Mínimo 6 caracteres">
-                                    </div>
-                                    <button type="submit" class="primary-btn wide-btn" style="background: #22b573;"><i class="fas fa-user-plus"></i> Cadastrar</button>
-                                </form>
-                                <button type="button" class="close-btn">Fechar</button>
-                            </div>
-                        </div>
-                        <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            const btnLogin = document.getElementById('open-login-btn');
-                            const btnRegister = document.getElementById('open-register-btn');
-                            if (btnLogin) btnLogin.onclick = () => {
-                                const modal = document.getElementById('login-modal');
-                                modal.style.display = 'flex';
-                                modal.classList.add('show');
-                            };
-                            if (btnRegister) btnRegister.onclick = () => {
-                                const modal = document.getElementById('register-modal');
-                                modal.style.display = 'flex';
-                                modal.classList.add('show');
-                            };
 
-                            // Handlers para fechar modais
-                            const closeButtons = document.querySelectorAll('.close-btn');
-                            closeButtons.forEach(btn => {
-                                btn.addEventListener('click', function() {
-                                    const modal = this.closest('.modal');
-                                    if (modal) {
-                                        modal.classList.remove('show');
-                                        setTimeout(() => {
-                                            modal.style.display = 'none';
-                                        }, 300);
-                                    }
-                                });
-                            });
-
-                            // Fecha modal ao clicar fora
-                            document.querySelectorAll('.modal').forEach(modal => {
-                                modal.addEventListener('click', function(e) {
-                                    if (e.target === this) {
-                                        this.classList.remove('show');
-                                        setTimeout(() => {
-                                            this.style.display = 'none';
-                                        }, 300);
-                                    }
-                                });
-                            });
-                        });
-                        </script>
-                        </button>
                     </div>
                 </div>
 
@@ -957,8 +866,13 @@
     <div id="patient-modal" class="modal">
         <div class="modal-content">
             <h3>Preparar Novo Atendimento</h3>
-            <p>Insira os dados do paciente para cálculos pediátricos e registro.</p>
+            <p>Selecione o algoritmo. Dados ausentes permanecem N/I; não serão inferidos.</p>
             <form id="patient-form">
+                <fieldset class="patient-protocol-options">
+                    <legend>Algoritmo de referência</legend>
+                    <label><input type="radio" name="patient-protocol" id="patient-adult-protocol" value="adult">Adulto</label>
+                    <label><input type="radio" name="patient-protocol" id="patient-other-protocol" value="unknown" checked>Outro / não definido — sem preenchimento adulto</label>
+                </fieldset>
                 <label for="patient-name">Nome / ID do Paciente (opcional):</label>
                 <input type="text" id="patient-name" placeholder="Ex: Paciente 001">
 
@@ -969,10 +883,11 @@
                     </div>
                     <div>
                         <label for="patient-weight">Peso (kg):</label>
-                        <input type="number" id="patient-weight" placeholder="Ex: 20" min="1">
+                        <input type="number" id="patient-weight" placeholder="Se conhecido" min="0.1" step="any" inputmode="decimal">
                     </div>
                 </div>
                 
+                <details id="patient-additional-details"><summary>Dados adicionais (opcionais)</summary>
                 <label>Sexo:</label>
                 <div class="radio-group">
                     <input type="radio" id="sex-m" name="sex" value="Masculino">
@@ -987,8 +902,9 @@
                 <label for="patient-comorbidities">Comorbidades Relevantes (opcional):</label>
                 <input type="text" id="patient-comorbidities" placeholder="Ex: ICC, DPOC">
 
+                </details>
                 <button type="submit" class="primary-btn">INICIAR ATENDIMENTO</button>
-                <button type="button" id="start-pcr-no-data-btn" class="secondary-btn">Iniciar com dados N/I</button>
+                <button type="button" id="start-pcr-no-data-btn" class="secondary-btn">INICIAR SEM DADOS (N/I)</button>
                 <button type="button" id="cancel-patient-btn" class="cancel-btn">Cancelar</button>
             </form>
         </div>
@@ -1000,7 +916,7 @@
                 <div class="med-icon-wrapper">
                     <i class="fas fa-syringe"></i>
                 </div>
-                <h3>Administrar Droga</h3>
+                <h3>Registrar medicamento administrado</h3>
                 <p>Diretrizes AHA 2025</p>
             </div>
             
@@ -1032,7 +948,30 @@
             </div>
             
             <input type="hidden" id="medication-select" value="">
-            <input type="hidden" id="medication-dose" value="">
+            <p id="medication-registration-summary" class="registration-summary" aria-live="polite">Selecione o medicamento efetivamente administrado.</p>
+            <p class="registration-instruction">Seleção não grava. Toque no botão somente para registrar a dose já administrada.</p>
+            <button id="record-med-btn" class="med-action-btn" disabled>
+                <i class="fas fa-check-circle"></i>
+                <div class="med-action-text">
+                    <span class="main-text">REGISTRAR DOSE ADMINISTRADA</span>
+                    <span class="sub-text">Selecione uma droga</span>
+                </div>
+            </button>
+
+            <details id="medication-edit-details">
+                <summary>EDITAR ADMINISTRAÇÃO / REGISTRO MANUAL</summary>
+                <label for="medication-dose">Quantidade exata efetivamente administrada</label>
+                <input type="number" id="medication-dose" min="0" step="any" inputmode="decimal" required>
+                <label for="medication-unit">Unidade</label>
+                <select id="medication-unit"><option value="mg">mg</option><option value="g">g</option><option value="mEq">mEq</option></select>
+                <label for="medication-timing">Momento da administração</label>
+                <select id="medication-timing"><option value="realtime">Administrada agora</option><option value="retrospective">Registrar administração anterior</option></select>
+                <div id="medication-effective-field" hidden>
+                    <label for="medication-effective-at">Horário efetivo (hora local)</label>
+                    <input type="datetime-local" id="medication-effective-at" step="1">
+                </div>
+                <label id="medication-review-confirmation"><input type="checkbox" id="medication-confirmed">Revisei os dados da administração real e o contexto deste registro manual</label>
+            </details>
 
             <div class="med-preview-panel" id="med-preview-panel" style="display: none;">
                 <div class="med-preview-header">
@@ -1053,14 +992,6 @@
                 </div>
             </div>
 
-            <button id="record-med-btn" class="med-action-btn" disabled>
-                <i class="fas fa-check-circle"></i>
-                <div class="med-action-text">
-                    <span class="main-text">ADMINISTRAR AGORA</span>
-                    <span class="sub-text">Selecione uma droga</span>
-                </div>
-            </button>
-            
             <button id="cancel-med-btn" class="cancel-btn wide-btn" style="margin-top: 12px; background: transparent; border: 2px solid var(--border-color); color: var(--text-primary); font-weight: 700; box-shadow: none;">CANCELAR</button>
         </div>
     </div>
@@ -1257,6 +1188,63 @@
         </div>
     </div>
 
+                        <div id="login-modal" class="modal" style="display:none;">
+                            <div class="modal-content">
+                                <h3>Login</h3>
+                                <form id="login-form-simple" class="login-form">
+                                    <div class="form-field">
+                                        <label for="login-email-modal"><i class="fas fa-envelope"></i> E-mail</label>
+                                        <input type="email" id="login-email-modal" name="login-email-modal" required placeholder="seu.email@exemplo.com">
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="login-password-modal"><i class="fas fa-lock"></i> Senha</label>
+                                        <input type="password" id="login-password-modal" name="login-password-modal" required placeholder="Mínimo 6 caracteres">
+                                    </div>
+                                    <button type="submit" class="primary-btn wide-btn"><i class="fas fa-sign-in-alt"></i> Entrar</button>
+                                </form>
+                                <button type="button" class="close-btn" data-close-modal>Fechar</button>
+                            </div>
+                        </div>
+                        <div id="register-modal" class="modal" style="display:none;">
+                            <div class="modal-content">
+                                <h3>Cadastro</h3>
+                                <form id="register-form-full" class="register-form">
+                                    <div class="form-field">
+                                        <label for="register-name"><i class="fas fa-user"></i> Nome Completo</label>
+                                        <input type="text" id="register-name" name="register-name" required placeholder="Seu nome completo">
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="register-profession"><i class="fas fa-briefcase-medical"></i> Profissão/Especialidade</label>
+                                        <input type="text" id="register-profession" name="register-profession" placeholder="Ex: Enfermeiro">
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-field">
+                                            <label for="register-council"><i class="fas fa-id-card"></i> Registro Profissional</label>
+                                            <input type="text" id="register-council" name="register-council" placeholder="Ex: CRM-SP 123456">
+                                        </div>
+                                        <div class="form-field">
+                                            <label for="register-birth-date"><i class="fas fa-calendar"></i> Data de Nascimento</label>
+                                            <input type="date" id="register-birth-date" name="register-birth-date">
+                                        </div>
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="register-phone"><i class="fas fa-phone"></i> Telefone (opcional)</label>
+                                        <input type="tel" id="register-phone" name="register-phone" placeholder="(99) 99999-9999">
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="register-email"><i class="fas fa-envelope"></i> E-mail</label>
+                                        <input type="email" id="register-email" name="register-email" required placeholder="seu.email@exemplo.com">
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="register-password"><i class="fas fa-lock"></i> Senha</label>
+                                        <input type="password" id="register-password" name="register-password" required placeholder="Mínimo 6 caracteres">
+                                    </div>
+                                    <button type="submit" class="primary-btn wide-btn" style="background: #22b573;"><i class="fas fa-user-plus"></i> Cadastrar</button>
+                                </form>
+                                <button type="button" class="close-btn" data-close-modal>Fechar</button>
+                            </div>
+                        </div>
+
     <div id="settings-menu-modal" class="modal">
         <div class="modal-content settings-modal-content">
             <div class="settings-header">
@@ -1269,7 +1257,7 @@
                         <p class="settings-subtitle">Personalize sua experiência no SIAV</p>
                     </div>
                 </div>
-                <button onclick="closeModal('settings-menu-modal')" class="close-btn"><i class="fas fa-times"></i></button>
+                <button type="button" onclick="closeModal('settings-menu-modal')" class="close-btn" aria-label="Fechar">&times;</button>
             </div>
 
             <div class="settings-menu-grid">
@@ -1351,7 +1339,7 @@
     <div id="theme-settings-modal" class="modal">
         <div class="modal-content">
             <h3>🎨 Aparência</h3>
-            <button onclick="closeModal('theme-settings-modal')" class="close-btn"><i class="fas fa-times"></i></button>
+            <button type="button" onclick="closeModal('theme-settings-modal')" class="close-btn" aria-label="Fechar">&times;</button>
 
             <div class="theme-selector">
                 <div class="theme-option" id="theme-light" onclick="setTheme('light')">
@@ -1403,9 +1391,7 @@
             <div class="sound-settings-header">
                 <h3><i class="fas fa-volume-up"></i> Configurações de Sons</h3>
                 <p>Personalize os sons e alertas do SIAV</p>
-                <button onclick="closeModal('sound-settings-modal')" class="close-btn">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button type="button" onclick="closeModal('sound-settings-modal')" class="close-btn" aria-label="Fechar">&times;</button>
             </div>
 
             <div class="sound-settings-content">
@@ -1577,7 +1563,7 @@
                         <p class="profile-subtitle">Gerencie suas informações pessoais e de acesso</p>
                     </div>
                 </div>
-                <button onclick="closeModal('profile-modal')" class="close-btn"><i class="fas fa-times"></i></button>
+                <button type="button" onclick="closeModal('profile-modal')" class="close-btn" aria-label="Fechar">&times;</button>
             </div>
 
             <form id="login-form" class="profile-form">
@@ -2033,8 +2019,8 @@
             window.location.reload(true);
         }
     </script>
-    <script src="settings-integration.js?v=3" defer></script>
-    <script src="sound-settings.js" defer></script>
+    <script type="module" src="settings-integration.js"></script>
+    <script type="module" src="sound-settings.js"></script>
     <script src="mercadopago-config.js" defer></script>
     <script src="mercadopago-integration.js" defer></script>
     <script src="plans-modal-optimized-v5.js" defer></script>

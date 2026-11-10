@@ -1,6 +1,7 @@
 import { state } from '../config/state.js';
 import { supabase } from '../config/supabase.js';
 import { formatTime } from '../utils/formatters.js';
+import { getTimingSummary } from './timing.js';
 import { showScreen, closeModal, openModal, showTransientAlert } from '../ui/dom.js';
 
 export function showNotesModal() {
@@ -174,17 +175,24 @@ export async function deleteLogEntry(logId) {
 }
 
 export function generateEvolution(saveLog) {
-    const totalDurationSeconds = state.pcrSeconds;
+    const timing = getTimingSummary();
+    const totalDurationSeconds = state.resuscitationTiming ? Math.floor(timing.totalMs / 1000) : state.pcrSeconds;
     const patientName = state.patient.name;
     const shocksCount = state.shockCount;
-    const medsList = state.medications.map(m => `${m.name} (${m.dose} via ${m.route})`).join('; ');
-    const compressionDuration = state.totalCompressionSeconds;
-    const compressionRatio = totalDurationSeconds > 0 ? ((compressionDuration / totalDurationSeconds) * 100).toFixed(1) : 0;
+    const formatEffectiveTime = timestamp => Number.isFinite(timestamp) ? new Date(timestamp).toLocaleString('pt-BR') : 'N/I';
+    const hasEffectiveTime = m => typeof m.isRetrospective === 'boolean' && Number.isFinite(m.timestamp) && Number.isFinite(m.recordedAt);
+    const medsList = state.medications.map(m => `${m.name} (${m.dose} via ${m.route}; horário efetivo: ${formatEffectiveTime(hasEffectiveTime(m) ? m.timestamp : NaN)}; registrado em: ${formatEffectiveTime(m.recordedAt)}; ${m.isRetrospective === true ? 'retrospectivo' : m.isRetrospective === false ? 'tempo real' : 'tipo de registro N/I'})`).join('; ');
+    const compressionDuration = Math.floor(timing.compressionMs / 1000);
+    const compressionRatio = timing.fct === null ? 'N/I — medição incompleta ou sem duração válida' : timing.fct.toFixed(1) + '%';
+    const intervalTime = value => Number.isFinite(value) && Number.isFinite(new Date(value).getTime()) ? new Date(value).toISOString() : 'N/I';
+    const temporalRows = timing.segments.map(segment => `<li>${segment.kind === 'compressions' ? 'Compressões registradas' : segment.kind === 'pause' ? 'Pausa registrada' : 'Desconhecido'}: ${intervalTime(segment.start)} → ${intervalTime(segment.end)} (episódio ${segment.episodeId}; operação ${segment.id}; ${segment.reason})</li>`).join('');
     
     const firstShockEvent = state.events.find(e => e.text.includes('CHOQUE'));
     const firstShockTime = firstShockEvent ? firstShockEvent.time : 'N/A';
     const firstShockEnergy = firstShockEvent ? firstShockEvent.text.match(/(\d+)J/)?.[1] || 'N/A' : 'N/A';
-    const firstAdrenalineTime = state.events.find(e => e.text.includes('Adrenalina'))?.time || 'N/A';
+    const adrenalineRecords = state.medications.filter(m => m.name?.toLowerCase().includes('adrenalina'));
+    const firstAdrenalineTime = adrenalineRecords.length && adrenalineRecords.every(hasEffectiveTime)
+        ? formatEffectiveTime(Math.min(...adrenalineRecords.map(m => m.timestamp))) : 'N/I';
     const finalRhythm = state.rhythms[state.rhythms.length - 1]?.name || 'Não Registrado';
     
     const chronologicalEvents = state.events.slice().reverse().map(event => ({ time: event.time, action: event.text.trim() }));
@@ -209,8 +217,12 @@ export function generateEvolution(saveLog) {
             <h3 style="margin-top: 20px;">RESUMO ANALÍTICO DE PERFORMANCE (AHA)</h3>
             <ul>
                 <li><strong>Desfecho Final:</strong> ${state.roscAchieved ? 'ROSC ALCANÇADO' : 'PCR NÃO REVERTIDA'}</li>
-                <li><strong>Duração Total do Atendimento:</strong> ${formatTime(totalDurationSeconds)}</li>
-                <li><strong>Tempo de Compressão Ativa (Hands-on Time):</strong> ${formatTime(compressionDuration)} (${compressionRatio}% do Tempo Total)</li>
+                <li><strong>Tempo acumulado de PCR:</strong> ${formatTime(totalDurationSeconds)} (soma dos episódios até ROSC ou encerramento; inclui preparo e pausas)</li>
+                <li><strong>Tempo administrativo desde o início:</strong> ${formatTime(Math.max(0, Math.floor((Date.now() - state.pcrStartTime) / 1000)))}</li>
+                <li><strong>Compressões registradas:</strong> ${state.resuscitationTiming ? formatTime(compressionDuration) : 'N/I'}</li>
+                <li><strong>Tempo sem compressões registrado:</strong> ${state.resuscitationTiming ? formatTime(Math.floor(timing.pauseMs / 1000)) : 'N/I'}</li>
+                <li><strong>Tempo desconhecido:</strong> ${state.resuscitationTiming ? formatTime(Math.floor(timing.unknownMs / 1000)) : 'N/I'}</li>
+                <li><strong>FCT:</strong> ${compressionRatio}. Denominador: tempo acumulado dos episódios de PCR, excluindo intervalo pós-ROSC. Medição declarada pelo operador, sem sensor; suspensão ou lacuna invalida a fração.</li>
                 <li><strong>Choques Administrados:</strong> ${shocksCount} (1º Choque em: ${firstShockTime}, ${firstShockEnergy}J)</li>
                 <li><strong>Primeira Adrenalina:</strong> ${firstAdrenalineTime}</li>
                 <li><strong>Ritmo Final Registrado:</strong> ${finalRhythm}</li>
@@ -219,6 +231,8 @@ export function generateEvolution(saveLog) {
             <h3 style="margin-top: 20px;">DETALHES CRONOLÓGICOS DO EVENTO (Log)</h3>
             <ol class="log-list">${logEvents}</ol>
 
+            <h3 style="margin-top: 20px;">INTERVALOS TEMPORAIS REGISTRADOS</h3>
+            <ol>${temporalRows || '<li>Medição incompleta: intervalos não disponíveis neste registro.</li>'}</ol>
             <h3 style="margin-top: 20px;">ANOTAÇÕES E MEDICAMENTOS</h3>
             <ul>
                 <li>Medicamentos Aplicados: ${medsList || 'Nenhum'}</li>
@@ -235,6 +249,7 @@ export function generateEvolution(saveLog) {
         });
     }
     showScreen('home');
+    return reportHTML;
 }
 
 export function renderPatientLog() {

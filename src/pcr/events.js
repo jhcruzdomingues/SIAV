@@ -21,8 +21,22 @@ export function addNote(text) {
 }
 
 export function addMedication(medication) {
-  if (!state.medications) state.medications = [];
-  state.medications.push({ ...medication, timestamp: Date.now() });
+  if (!Array.isArray(state.medications)) {
+    state.medications = [];
+    if (state.clinical) state.clinical.historyIncomplete = true;
+  }
+  if (!medication.id) throw new Error('Identificador de registro obrigatório.');
+  if (state.medications.some(entry => entry?.id === medication.id)) return null;
+  const recordedAt = Date.now();
+  if (!Number.isFinite(medication.amount) || medication.amount <= 0
+      || !['mg', 'g', 'mEq'].includes(medication.unit)
+      || !['EV', 'IO', 'ET'].includes(medication.route)
+      || !Number.isFinite(medication.timestamp) || medication.timestamp > recordedAt) {
+    throw new Error('Informe quantidade, unidade, via e horário efetivos válidos.');
+  }
+  const entry = { ...medication, recordedAt, time: new Date(medication.timestamp), dose: `${medication.amount} ${medication.unit}` };
+  state.medications.push(entry);
+  return entry;
 }
 
 export function getTimeline() {

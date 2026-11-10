@@ -2,7 +2,7 @@ name: CI - Testes e Build
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, fix/adult-pcr-antiarrhythmics ]
   pull_request:
     branches: [ main, develop ]
 
@@ -22,6 +22,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
+          cache-dependency-path: package-lock.json
 
       - name: 📚 Instalar dependências
         run: npm ci
@@ -32,12 +33,16 @@ jobs:
       - name: 📊 Gerar relatório de cobertura
         run: npm run test:coverage
 
-      - name: 📤 Upload cobertura para Codecov
-        uses: codecov/codecov-action@v4
+      - name: 🔎 Verificar relatório de cobertura
+        run: test -s coverage/coverage-final.json
+
+      - name: 📤 Upload artefato de cobertura
+        uses: actions/upload-artifact@v4
         with:
-          file: ./coverage/coverage-final.json
-          flags: unittests
           name: siav-coverage
+          path: coverage/
+          if-no-files-found: error
+          retention-days: 7
 
   build:
     name: 🏗️ Build de Produção
@@ -55,6 +60,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
+          cache-dependency-path: package-lock.json
 
       - name: 📚 Instalar dependências
         run: npm ci
@@ -66,7 +72,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-optimized
-          path: build-optimized/
+          path: dist/
+          if-no-files-found: error
           retention-days: 7
 
   lint:
@@ -86,7 +93,7 @@ jobs:
 
       - name: 🔍 Verificar sintaxe JavaScript
         run: |
-          find src -name "*.js" -type f -exec node -c {} \;
+          find src -name "*.js" -type f -print0 | xargs -0 -n 1 node --check
           echo "✅ Sintaxe JavaScript válida"
 
       - name: 📏 Verificar tamanho dos arquivos

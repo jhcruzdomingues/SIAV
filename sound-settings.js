@@ -514,7 +514,7 @@ function playSystemSound(type) {
 // =============================================
 
 // Inicializar quando o modal de sons for aberto
-document.addEventListener('DOMContentLoaded', function() {
+function observeSoundSettings() {
     // Observer para detectar abertura do modal
     const soundModal = document.getElementById('sound-settings-modal');
     if (soundModal) {
@@ -533,7 +533,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Carregar configurações salvas na inicialização
     loadSoundSettings();
-});
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', observeSoundSettings, { once: true });
+else observeSoundSettings();
 
 // Exportar funções globalmente
 window.previewSound = previewSound;

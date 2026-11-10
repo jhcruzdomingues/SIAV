@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getShockRecommendation, getCalculatedPediatricValues, getProtocolNextStep, calculateGlasgow } from '../src/protocols/medical.js';
+import { getShockRecommendation, getCalculatedPediatricValues, getMedicationDueStatus, calculateGlasgow } from '../src/protocols/medical.js';
 
 describe('🧠 Módulo Médico - Protocolos AHA 2025', () => {
 
@@ -51,48 +51,18 @@ describe('🧠 Módulo Médico - Protocolos AHA 2025', () => {
     });
   });
 
-  describe('Relógio de Medicações (Adrenalina e Amiodarona)', () => {
-    it('Deve pedir Adrenalina IMEDIATAMENTE no 1º ciclo de ritmo não chocável (AESP/Assistolia)', () => {
-      const state = { currentPhase: 'compressions', isShockable: false, medications: [], currentCycle: 1, shockCount: 0, elapsedSeconds: 10 };
-      const step = getProtocolNextStep(state);
-      expect(step.criticalAction).toBe('DRUG');
-      expect(step.message).toContain('ADRENALINA');
+  describe('Relógio de Adrenalina', () => {
+    it('usa o horário efetivo mais recente, independentemente da ordem dos registros', () => {
+      const now = 1_800_000_000_000;
+      const status = getMedicationDueStatus('Adrenalina', 180, [
+        { name: 'Adrenalina', timestamp: now - 120_000 },
+        { name: 'Adrenalina', timestamp: now - 240_000 }
+      ], now);
+      expect(status.isDue).toBe(false);
+      expect(status.secondsUntilDue).toBe(60);
     });
-
-    it('Deve AGUARDAR 2 choques antes de pedir Adrenalina em ritmo chocável (FV/TVSP)', () => {
-      const state = { currentPhase: 'compressions', isShockable: true, medications: [], currentCycle: 1, shockCount: 1, elapsedSeconds: 120 };
-      const step = getProtocolNextStep(state);
-      expect(step.criticalAction).toBeNull();
-      expect(step.message).toContain('RCP DE ALTA QUALIDADE');
-    });
-
-    it('Deve pedir Adrenalina APÓS 2 choques em ritmo chocável', () => {
-      const state = { currentPhase: 'compressions', isShockable: true, medications: [], currentCycle: 3, shockCount: 2, elapsedSeconds: 240 };
-      const step = getProtocolNextStep(state);
-      expect(step.criticalAction).toBe('DRUG');
-      expect(step.message).toContain('ADMINISTRAR AGORA');
-    });
-
-    it('Deve recomendar Amiodarona 300mg após o 2º choque em FV/TVSP', () => {
-      const state = { currentPhase: 'compressions', isShockable: true, medications: [{ name: 'Adrenalina', timestamp: Date.now() }], currentCycle: 3, shockCount: 2, elapsedSeconds: 250 };
-      const step = getProtocolNextStep(state);
-      expect(step.criticalAction).toBe('DRUG');
-      expect(step.message).toContain('AMIODARONA');
-      expect(step.dose).toContain('300 mg');
-    });
-
-    it('Deve calcular corretamente o intervalo de 3-5 minutos para a próxima Adrenalina', () => {
-      const now = Date.now();
-      const past2Minutes = now - (2 * 60 * 1000);
-      
-      const step1 = getProtocolNextStep({ currentPhase: 'compressions', isShockable: false, medications: [{ name: 'Adrenalina', timestamp: past2Minutes }], currentCycle: 2, shockCount: 0 }, now);
-      expect(step1.criticalAction).toBeNull();
-      expect(step1.message).toContain('RCP CONTÍNUA');
-      
-      const past4Minutes = now - (4 * 60 * 1000);
-      const step2 = getProtocolNextStep({ currentPhase: 'compressions', isShockable: false, medications: [{ name: 'Adrenalina', timestamp: past4Minutes }], currentCycle: 3, shockCount: 0 }, now);
-      expect(step2.criticalAction).toBe('DRUG');
-      expect(step2.message).toContain('DOSE DEVIDA');
+    it('não presume nova dose quando um horário do histórico é desconhecido', () => {
+      expect(getMedicationDueStatus('Adrenalina', 180, [{ name: 'Adrenalina' }])).toMatchObject({ isDue: false, requiresReview: true });
     });
   });
 

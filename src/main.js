@@ -26,7 +26,7 @@ import { MEDICATIONS, calculateDose } from './utils/medications.js';
 import { getProtocolNextStep, getShockRecommendation, calculateGlasgow } from './protocols/medical.js';
 import * as MedicalBrain from './protocols/medical.js';
 
-import { startPCR, finishPCR, executePCRFinish, startTimer, startCycleProgress, startCompressions, promptRhythmCheck, clearAllIntervals } from './pcr/core.js';
+import { startPCR, finishPCR, executePCRFinish, restartPCRAfterROSC, startTimer, startCycleProgress, startCompressions, promptRhythmCheck, clearAllIntervals } from './pcr/core.js';
 import { showRhythmSelectorScreen, selectRhythmOption, processRhythmSelection, setupShockActionScreen, applyShockAndResume, roscObtido } from './pcr/rhythm.js';
 import { showMedModal, updateMedicationDose, recordMedication, startDrugTimer, stopDrugTimer } from './pcr/medications.js';
 import { addEvent, getIconForEvent, updateTimeline } from './ui/timeline.js';
@@ -81,6 +81,10 @@ async function initApp() {
   state.theme = settings.theme;
   state.soundsEnabled = settings.soundsEnabled;
   state.soundVolume = settings.soundVolume;
+
+  // Bind navigation before waiting for session/network work.
+  registerAllEvents();
+  showScreen('home');
 
   // 6. Verificar sessão ativa
   const user = await checkSession();
@@ -149,8 +153,6 @@ async function initApp() {
     }, 500);
   });
 
-  // Vincula TODOS os listeners da interface da aplicação
-  registerAllEvents();
   
   // Registra Service Worker (PWA)
   if ('serviceWorker' in navigator) {
@@ -160,8 +162,7 @@ async function initApp() {
               .catch((err) => console.log('Falha ao registrar Service Worker:', err));
       });
   }
-  
-  showScreen('home');
+
 }
 
 // ===== EXPORTS GLOBAIS (Para compatibilidade com código legado) =====
@@ -243,7 +244,7 @@ window.SIAV = {
 
 // Vincula as funções extraídas da PCR para garantir compatibilidade perfeita com onclicks do HTML
 Object.assign(window, {
-  startPCR, finishPCR, executePCRFinish, 
+  startPCR, finishPCR, executePCRFinish, restartPCRAfterROSC,
   startTimer, startCycleProgress, startCompressions, 
   promptRhythmCheck, clearAllIntervals
 });
