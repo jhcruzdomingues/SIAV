@@ -178,6 +178,10 @@ export function startPCR() {
     state.shockCount = 0;
     state.shocks = [];
     state.medications = [];
+    // Only a new encounter resets notes; ROSC recurrence preserves this collection.
+    state.notes = [];
+    const notesInput = document.getElementById('clinical-notes');
+    if (notesInput) notesInput.value = '';
     state.rhythms = [];
     state.causesChecked = [];
     state.totalCompressionSeconds = 0; 
