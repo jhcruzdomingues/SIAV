@@ -177,3 +177,55 @@ body :is(#pause-compressions-btn, #restart-pcr-btn) { background: var(--ui-raise
 body .btn-compressions { background: linear-gradient(135deg, var(--success), #219a52); }
 body #compressions-btn, body #compressions-btn span { color: #071d10; }
 body :is(#patient-modal, #med-modal, #notes-modal, #vitals-modal, #glasgow-modal, #profile-modal, #login-modal, #register-modal) :is(input, textarea)::placeholder { color: var(--ui-muted); opacity: 1; }
+/* Entradas de conta: apresentação existente, ações explícitas e texto longo. */
+body :is(#profile-modal, #login-modal, #register-modal) button {
+  min-height: 44px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  transition-property: border-color, box-shadow;
+  -webkit-tap-highlight-color: transparent;
+}
+body :is(#profile-modal, #login-modal, #register-modal) .close-btn { width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; line-height: 1; }
+#profile-actions { gap: 10px; }
+[data-auth-feedback] {
+  color: var(--ui-text);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+body :is(#profile-modal, #login-modal, #register-modal) .secondary-btn {
+  background: var(--ui-raised);
+  color: var(--ui-text);
+  border: 1px solid var(--ui-border);
+}
+body #profile-modal .profile-header { position: relative; padding-right: 56px; }
+body #profile-modal .profile-header-content { flex: 1; min-width: 0; gap: 12px; }
+body #profile-modal .profile-header-content > div:last-child { min-width: 0; }
+body #profile-modal .profile-header h3 { font-size: 1.25rem; line-height: 1.3; overflow-wrap: anywhere; }
+body #profile-modal .profile-header-icon { width: 44px; height: 44px; }
+body #profile-modal .profile-header .close-btn { top: 0; right: 0; width: 44px; height: 44px; padding: 0; }
+body :is(#profile-modal, #login-modal, #register-modal) .form-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body :is(#profile-modal, #login-modal, #register-modal) .form-row > div { min-width: 0; }
+body :is(#profile-modal, #login-modal, #register-modal) input:not([type="checkbox"]):not([type="radio"]) { min-width: 0; width: 100%; box-sizing: border-box; }
+@media (max-width: 480px) {
+  body :is(#profile-modal, #login-modal, #register-modal) .form-row { grid-template-columns: minmax(0, 1fr); }
+}
+.auth-notice {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10001;
+  width: calc(100% - 24px);
+  max-width: 440px;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  background: #fef2f2;
+  border: 1px solid #991b1b;
+  border-radius: 10px;
+  color: #7f1d1d;
+  font-size: .9rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+.auth-notice[hidden] { display: none; }

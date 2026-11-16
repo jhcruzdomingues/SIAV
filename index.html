@@ -29,7 +29,7 @@
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"></noscript>
 </head>
 <body>
-
+    <div id="auth-notice" class="auth-notice" role="status" aria-live="polite" hidden></div>
 
     <audio id="shock-sound" preload="none"></audio>
     <audio id="alert-sound" preload="none"></audio>
@@ -1196,20 +1196,23 @@
                                 <form id="login-form-simple" class="login-form">
                                     <div class="form-field">
                                         <label for="login-email-modal"><i class="fas fa-envelope"></i> E-mail</label>
-                                        <input type="email" id="login-email-modal" name="login-email-modal" required placeholder="seu.email@exemplo.com">
+                                        <input type="email" id="login-email-modal" name="login-email-modal" autocomplete="username" required placeholder="seu.email@exemplo.com">
                                     </div>
                                     <div class="form-field">
                                         <label for="login-password-modal"><i class="fas fa-lock"></i> Senha</label>
-                                        <input type="password" id="login-password-modal" name="login-password-modal" required placeholder="Mínimo 6 caracteres">
+                                        <input type="password" id="login-password-modal" name="login-password-modal" autocomplete="current-password" required placeholder="Sua senha">
                                     </div>
+                                    <p id="login-simple-feedback" data-auth-feedback role="status" aria-live="polite" hidden></p>
                                     <button type="submit" class="primary-btn wide-btn"><i class="fas fa-sign-in-alt"></i> Entrar</button>
+                                    <button type="button" id="login-open-register-btn" data-auth-view="register" class="secondary-btn wide-btn">CRIAR LOGIN</button>
                                 </form>
-                                <button type="button" class="close-btn" data-close-modal>Fechar</button>
+                                <button type="button" class="close-btn" data-close-modal aria-label="Fechar">&times;</button>
                             </div>
                         </div>
                         <div id="register-modal" class="modal" style="display:none;">
                             <div class="modal-content">
                                 <h3>Cadastro</h3>
+                                <p id="register-intro" hidden>VOCÊ AINDA NÃO TEM UMA CONTA, CRIE UMA CONTA AGORA, NÃO CUSTA NADA!</p>
                                 <form id="register-form-full" class="register-form">
                                     <div class="form-field">
                                         <label for="register-name"><i class="fas fa-user"></i> Nome Completo</label>
@@ -1235,15 +1238,17 @@
                                     </div>
                                     <div class="form-field">
                                         <label for="register-email"><i class="fas fa-envelope"></i> E-mail</label>
-                                        <input type="email" id="register-email" name="register-email" required placeholder="seu.email@exemplo.com">
+                                        <input type="email" id="register-email" name="register-email" autocomplete="email" required placeholder="seu.email@exemplo.com">
                                     </div>
                                     <div class="form-field">
                                         <label for="register-password"><i class="fas fa-lock"></i> Senha</label>
-                                        <input type="password" id="register-password" name="register-password" required placeholder="Mínimo 6 caracteres">
+                                        <input type="password" id="register-password" name="register-password" autocomplete="new-password" minlength="6" required placeholder="Mínimo 6 caracteres">
                                     </div>
-                                    <button type="submit" class="primary-btn wide-btn" style="background: #22b573;"><i class="fas fa-user-plus"></i> Cadastrar</button>
+                                    <p id="register-feedback" data-auth-feedback role="status" aria-live="polite" hidden></p>
+                                    <button type="submit" class="primary-btn wide-btn"><i class="fas fa-user-plus"></i> Cadastrar</button>
                                 </form>
-                                <button type="button" class="close-btn" data-close-modal>Fechar</button>
+                                <button type="button" id="register-back-login-btn" data-auth-view="login" class="secondary-btn wide-btn">JÁ TENHO CONTA — FAZER LOGIN</button>
+                                <button type="button" class="close-btn" data-close-modal aria-label="Fechar">&times;</button>
                             </div>
                         </div>
 
@@ -1568,7 +1573,7 @@
                 <button type="button" onclick="closeModal('profile-modal')" class="close-btn" aria-label="Fechar">&times;</button>
             </div>
 
-            <form id="login-form" class="profile-form">
+            <div class="profile-form">
                 <div id="profile-logged-status" class="profile-status-card" style="display: none;">
                     <div class="status-badge status-badge-success">
                         <i class="fas fa-check-circle"></i>
@@ -1584,6 +1589,7 @@
 
                 <div id="sidebar-plan-card" class="plan-card-unified"></div>
 
+                <form id="login-form">
                 <div id="login-form-fields" class="login-section">
                     <div class="form-section-header">
                         <i class="fas fa-key"></i>
@@ -1595,7 +1601,7 @@
                             <i class="fas fa-envelope"></i>
                             E-mail
                         </label>
-                        <input type="email" id="login-email" name="login-email" required placeholder="seu.email@exemplo.com">
+                        <input type="email" id="login-email" name="login-email" autocomplete="username" required placeholder="seu.email@exemplo.com">
                     </div>
 
                     <div class="form-field">
@@ -1603,11 +1609,23 @@
                             <i class="fas fa-lock"></i>
                             Senha
                         </label>
-                        <input type="password" id="login-password" name="login-password" required placeholder="Mínimo 6 caracteres">
+                        <input type="password" id="login-password" name="login-password" autocomplete="current-password" required placeholder="Sua senha">
                     </div>
                 </div>
 
-                <div id="profile-update-form" style="display: none;">
+                <div id="profile-actions">
+                    <p id="login-feedback" data-auth-feedback role="status" aria-live="polite" hidden></p>
+                    <button id="profile-login-btn" type="submit" class="primary-btn wide-btn profile-save-btn">
+                        <i class="fas fa-sign-in-alt"></i> FAZER LOGIN
+                    </button>
+                    <button id="profile-register-btn" type="button" data-auth-view="register" class="secondary-btn wide-btn">
+                        <i class="fas fa-user-plus"></i> CRIAR LOGIN
+                    </button>
+                    <p class="profile-hint">Já possui uma conta? Entre com seu e-mail e senha. Para se cadastrar, toque em Criar login.</p>
+                </div>
+                </form>
+
+                <form id="profile-update-form" style="display: none;">
                     <div class="form-section-header">
                         <i class="fas fa-user-edit"></i>
                         <h4>Informações Pessoais</h4>
@@ -1690,15 +1708,8 @@
                     <button type="submit" class="primary-btn wide-btn profile-save-btn">
                         <i class="fas fa-save"></i> ATUALIZAR PERFIL
                     </button>
-                </div>
-
-                <div id="profile-actions">
-                    <button type="submit" class="primary-btn wide-btn profile-save-btn">
-                        <i class="fas fa-sign-in-alt"></i> FAZER LOGIN / CADASTRAR
-                    </button>
-                    <p class="profile-hint">Use os campos de E-mail e Senha. Se a conta não existir, será criado um novo cadastro.</p>
-                </div>
-            </form>
+                </form>
+            </div>
             
             <button id="logout-btn" class="danger-btn wide-btn" style="display: none; margin-top: 15px;">
                 <i class="fas fa-sign-out-alt"></i> SAIR (LOGOUT)

@@ -9,7 +9,7 @@ import { showMedModal, updateMedicationDose, recordMedication, cancelMedicationR
 import { showNotesModal, saveNotes } from '../pcr/log.js';
 import { showVitalsModal, recordVitals } from '../pcr/vitals.js';
 import { showGlasgowModal, saveGlasgow } from './glasgow.js';
-import { handleLogin, handleRegistrationFromForm, handleProfileUpdate, logout, showProfileModal, updateDashboard } from './auth-profile.js';
+import { handleLogin, handleRegistrationFromForm, handleProfileUpdate, logout, showProfileModal, showRegistrationModal, showLoginModal, updateDashboard } from './auth-profile.js';
 import { checkAccess, startSubscriptionFlow } from '../services/permissions.js';
 import { showProtocolDetail, showStudyDetail, toggleCause, closeTreatmentFullscreen, createStudyHSTsList } from '../protocols/guidelines.js';
 import { checkAndIncrementSimulationUse } from '../services/storage.js';
@@ -132,8 +132,10 @@ export function registerAllEvents() {
     document.getElementById('profile-update-form')?.addEventListener('submit', handleProfileUpdate);
     document.getElementById('logout-btn')?.addEventListener('click', logout);
     document.getElementById('cancel-profile-btn')?.addEventListener('click', () => closeModal('profile-modal'));
-    document.getElementById('open-login-btn')?.addEventListener('click', () => openModal('login-modal'));
-    document.getElementById('open-register-btn')?.addEventListener('click', () => openModal('register-modal'));
+    document.getElementById('open-login-btn')?.addEventListener('click', showLoginModal);
+    document.getElementById('open-register-btn')?.addEventListener('click', showRegistrationModal);
+    document.querySelectorAll('[data-auth-view="register"]').forEach(button => button.addEventListener('click', showRegistrationModal));
+    document.querySelectorAll('[data-auth-view="login"]').forEach(button => button.addEventListener('click', showLoginModal));
     document.querySelectorAll('[data-close-modal]').forEach(button => {
         button.addEventListener('click', () => closeModal(button.closest('.modal').id));
     });

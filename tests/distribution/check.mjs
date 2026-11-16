@@ -11,6 +11,7 @@ import { chromium, devices } from 'playwright';
 import { STATIC_ASSETS, SOUND_ASSETS } from '../../scripts/distribution-assets.mjs';
 import { serveDist } from './server.mjs';
 import { checkPCRInterface, enableVisualIcons } from './pcr-interface.mjs';
+import { checkProfileAuth } from './profile-auth.mjs';
 import { SIAV_PROJECT_REF, SIAV_PROJECT_URL } from '../../src/config/public-supabase.js';
 
 let root, temporaryDirectory, server, browser, workerConfig;
@@ -248,3 +249,11 @@ for (const device of ['iPhone 13', 'iPhone SE']) {
     } finally { await context.close(); }
   }, { timeout: 120000 });
 }
+
+test('Perfil em retrato: login/cadastro explícitos, 7 larguras, dois temas e erros sem backend', async () => {
+  const { context } = await contextFor('Pixel 5');
+  try {
+    const page = await readyPage(context);
+    await checkProfileAuth(page);
+  } finally { await context.close(); }
+}, { timeout: 120000 });

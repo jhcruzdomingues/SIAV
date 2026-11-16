@@ -9,7 +9,7 @@ import { supabase } from '../config/supabase.js';
 import { state } from '../config/state.js';
 
 /**
- * Faz login ou registra novo usuário
+ * Faz login de um usuário existente. Cadastro requer ação explícita própria.
  * @param {string} email - Email do usuário
  * @param {string} password - Senha
  * @returns {Promise<{success: boolean, user: object, error: string}>}
@@ -48,29 +48,12 @@ export async function handleLogin(email, password) {
     const sanitizedEmail = email.trim().toLowerCase();
 
     // Tenta fazer login
-    let { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: sanitizedEmail,
       password
     });
 
-    // Se falhou por conta não existir, tenta criar
-    if (error && error.message.includes('Invalid login credentials')) {
-      const signUpResult = await supabase.auth.signUp({
-        email: sanitizedEmail,
-        password
-      });
-
-      if (signUpResult.error) {
-        return {
-          success: false,
-          user: null,
-          error: `Erro ao criar conta: ${signUpResult.error.message}`
-        };
-      }
-
-      data = signUpResult.data;
-      console.log('Nova conta criada com sucesso!');
-    } else if (error) {
+    if (error) {
       return {
         success: false,
         user: null,

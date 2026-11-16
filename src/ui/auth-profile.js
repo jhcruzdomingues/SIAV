@@ -159,10 +159,73 @@ export async function loadState() {
     } catch (e) { }
 }
 
+let authenticationPending = false;
+let authNoticeTimer;
+
+function clearAuthNotice() {
+    clearTimeout(authNoticeTimer);
+    const notice = document.getElementById('auth-notice');
+    if (notice) notice.hidden = true;
+}
+
+function showAuthNotice(message) {
+    clearAuthNotice();
+    const notice = document.getElementById('auth-notice');
+    if (!notice) return;
+    notice.textContent = message;
+    notice.hidden = false;
+    authNoticeTimer = setTimeout(() => { notice.hidden = true; }, 6000);
+}
+
+function authFeedback(form, message = '') {
+    const feedback = form?.querySelector('[data-auth-feedback]');
+    if (feedback) {
+        feedback.textContent = message;
+        feedback.hidden = !message;
+    } else if (message) {
+        alert(message);
+    }
+}
+
+function setAuthenticationPending(form, pending) {
+    authenticationPending = pending;
+    form.setAttribute('aria-busy', String(pending));
+    document.querySelectorAll('[data-auth-view], #open-login-btn, #open-register-btn, #login-form button[type="submit"], #login-form-simple button[type="submit"], #register-form-full button[type="submit"]').forEach(button => {
+        button.disabled = pending;
+    });
+}
+
+export function showRegistrationModal() {
+    if (authenticationPending) return;
+    clearAuthNotice();
+    closeModal('profile-modal');
+    closeModal('login-modal');
+    authFeedback(document.getElementById('register-form-full'));
+    for (const id of ['login-password', 'login-password-modal', 'register-password']) {
+        const input = document.getElementById(id);
+        if (input) input.value = '';
+    }
+    openModal('register-modal');
+    showAuthNotice(document.getElementById('register-intro').textContent.trim());
+}
+
+export function showLoginModal() {
+    if (authenticationPending) return;
+    clearAuthNotice();
+    closeModal('profile-modal');
+    closeModal('register-modal');
+    authFeedback(document.getElementById('login-form-simple'));
+    const password = document.getElementById('register-password');
+    if (password) password.value = '';
+    openModal('login-modal');
+}
+
 export async function handleLogin(e) {
     e.preventDefault();
-    const form = e.target;
+    if (authenticationPending) return;
+    const form = e.currentTarget || e.target;
     const loginBtn = form.querySelector('button[type="submit"]');
+    const originalButton = loginBtn?.innerHTML;
     const emailInput = form.querySelector('input[type="email"]') || document.getElementById('login-email');
     const passwordInput = form.querySelector('input[type="password"]') || document.getElementById('login-password');
     try {
@@ -170,75 +233,90 @@ export async function handleLogin(e) {
         const email = emailInput.value.trim();
         const password = passwordInput.value;
         
-        if (!email || !password) { alert('Por favor, preencha email e senha.'); return; }
+        if (!email || !password) { authFeedback(form, 'Por favor, preencha e-mail e senha.'); return; }
+        authFeedback(form);
+        setAuthenticationPending(form, true);
         if (loginBtn) {
-            if (!loginBtn.getAttribute('data-original-text')) loginBtn.setAttribute('data-original-text', loginBtn.textContent);
-            loginBtn.textContent = 'LOGANDO...';
-            loginBtn.disabled = true;
+            loginBtn.textContent = 'ENTRANDO...';
         }
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (!data?.session?.user || !data.session.access_token) {
+            throw new Error('Não foi possível confirmar a sessão. Tente entrar novamente.');
+        }
         await loadUserFromSession(data.session);
-        alert(`Login REAL bem-sucedido! Bem-vindo(a), ${state.currentUser.name}.`);
+        passwordInput.value = '';
         updateGreetingsAndHeader();
         closeModal('profile-modal');
-        const loginModal = document.getElementById('login-modal');
-        if (loginModal) { loginModal.classList.remove('show'); setTimeout(() => loginModal.style.display = 'none', 300); }
+        closeModal('login-modal');
         updateDashboard();
     } catch (error) {
-        if (error.message.includes('not found') || error.message.includes('Invalid login credentials')) {
-             if (confirm("Usuario nao encontrado. Deseja cadastrar esta conta agora?")) await handleRegistration(emailInput.value.trim(), passwordInput.value);
+        if (error.code === 'invalid_credentials' || error.code === 'user_not_found' || /Invalid login credentials|not found/i.test(error.message || '')) {
+            // This response does not distinguish a missing account from a wrong password.
+            const message = 'Não foi possível entrar. Confira seu e-mail e sua senha. Se ainda não tem uma conta, toque em Criar login.';
+            authFeedback(form, message);
+            showAuthNotice(message);
         } else {
-             alert(`Falha no Login: ${error.message}`);
+            authFeedback(form, error.message?.includes('sessão') ? error.message : 'Não foi possível entrar agora. Tente novamente.');
         }
     } finally {
-        if (loginBtn) {
-            const originalText = loginBtn.getAttribute('data-original-text') || 'ENTRAR';
-            loginBtn.innerHTML = loginBtn.innerHTML.replace('LOGANDO...', originalText);
-            loginBtn.disabled = false;
-        }
+        setAuthenticationPending(form, false);
+        if (loginBtn) loginBtn.innerHTML = originalButton;
     }
 }
 
-export async function handleRegistration(email, password) {
+export async function handleRegistration(email, password, { form = null, metadata } = {}) {
     try {
         if (!email || !password) return false;
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({ email, password,
+            ...(metadata ? { options: { data: metadata } } : {}) });
         if (error) throw error;
-        if (data.user && !data.session) { alert(`Cadastro REAL realizado com sucesso!\n\nUm e-mail de confirmacao foi enviado.`); return true; }
+        if (!data?.user) throw new Error('Cadastro sem resposta válida.');
+        if (!data.session) {
+            // Supabase may obscure existing accounts: do not claim creation or authentication.
+            authFeedback(form, 'Confira seu e-mail para confirmar o cadastro. Se já possui uma conta, faça login.');
+            return true;
+        }
+        if (!data.session.user || !data.session.access_token) throw new Error('Cadastro sem sessão válida.');
         await loadUserFromSession(data.session);
         updateGreetingsAndHeader();
         updateDashboard();
         showProfileModal();
-        alert("Por favor, complete seu perfil com seus dados.");
         return true;
     } catch (error) {
-        alert(`Falha no Cadastro: ${error.message}`);
+        authFeedback(form, 'Não foi possível concluir o cadastro. Confira os dados e tente novamente.');
         return false;
     }
 }
 
 export async function handleRegistrationFromForm(e) {
     e.preventDefault();
-    const form = e.target;
+    if (authenticationPending) return;
+    const form = e.currentTarget || e.target;
     const submitBtn = form.querySelector('button[type="submit"]');
+    const originalButton = submitBtn?.innerHTML;
     try {
+        if (!form.reportValidity()) return;
         const email = form.querySelector('input[type="email"]').value.trim();
         const password = form.querySelector('input[type="password"]').value;
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            const original = submitBtn.textContent;
-            submitBtn.textContent = 'CADASTRANDO...';
-            const success = await handleRegistration(email, password);
-            if (success) {
-                const registerModal = document.getElementById('register-modal');
-                if (registerModal) { registerModal.classList.remove('show'); setTimeout(() => registerModal.style.display = 'none', 300); }
-                form.reset();
-            }
-            submitBtn.textContent = original;
-            submitBtn.disabled = false;
+        const metadata = {};
+        for (const [id, key] of [['register-name', 'full_name'], ['register-profession', 'profession'], ['register-council', 'council_register'], ['register-phone', 'phone_number'], ['register-birth-date', 'birth_date']]) {
+            const value = document.getElementById(id)?.value.trim();
+            if (value) metadata[key] = value;
         }
-    } catch (error) {}
+        authFeedback(form);
+        setAuthenticationPending(form, true);
+        if (submitBtn) {
+            submitBtn.textContent = 'CADASTRANDO...';
+        }
+        const success = await handleRegistration(email, password, { form, metadata });
+        if (success) form.reset();
+    } catch (error) {
+        authFeedback(form, 'Não foi possível concluir o cadastro. Tente novamente.');
+    } finally {
+        setAuthenticationPending(form, false);
+        if (submitBtn) submitBtn.innerHTML = originalButton;
+    }
 }
 
 export async function handleProfileUpdate(e) {
@@ -319,6 +397,11 @@ export function showProfileModal() {
     const profileModal = document.getElementById('profile-modal');
     
     if (!profileModal) return;
+    clearAuthNotice();
+    closeModal('login-modal');
+    closeModal('register-modal');
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) loginForm.style.display = isLogged ? 'none' : 'block';
     
     if (isLogged) {
         if (document.getElementById('profile-header-title')) document.getElementById('profile-header-title').textContent = `Perfil - ${state.currentUser.name || 'Usuário'}`;
@@ -340,12 +423,12 @@ export function showProfileModal() {
         if (document.getElementById('profile-birth-date')) document.getElementById('profile-birth-date').value = state.currentUser.birthDate || '';
         if (document.getElementById('profile-email')) document.getElementById('profile-email').value = state.currentUser.email || '';
     } else {
-        if (document.getElementById('profile-header-title')) document.getElementById('profile-header-title').textContent = 'Login / Cadastro';
+        if (document.getElementById('profile-header-title')) document.getElementById('profile-header-title').textContent = 'Acesso à conta';
         if (document.getElementById('profile-logged-status')) document.getElementById('profile-logged-status').style.display = 'none';
         if (document.getElementById('sidebar-plan-card')) document.getElementById('sidebar-plan-card').style.display = 'none';
         if (document.getElementById('login-form-fields')) document.getElementById('login-form-fields').style.display = 'block';
         if (document.getElementById('profile-update-form')) document.getElementById('profile-update-form').style.display = 'none';
-        if (document.getElementById('profile-actions')) document.getElementById('profile-actions').style.display = 'block';
+        if (document.getElementById('profile-actions')) document.getElementById('profile-actions').style.display = 'flex';
         if (document.getElementById('logout-btn')) document.getElementById('logout-btn').style.display = 'none';
     }
     openModal('profile-modal');
