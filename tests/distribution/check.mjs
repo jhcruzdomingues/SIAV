@@ -14,6 +14,7 @@ import { checkPCRInterface, enableVisualIcons } from './pcr-interface.mjs';
 import { checkProfileAuth } from './profile-auth.mjs';
 import { checkSoundSettings } from './sound-settings.mjs';
 import { checkAppearanceSettings } from './appearance-settings.mjs';
+import { checkPatientEntry } from './patient-entry.mjs';
 import { SIAV_PROJECT_REF, SIAV_PROJECT_URL } from '../../src/config/public-supabase.js';
 
 let root, temporaryDirectory, server, browser, workerConfig;
@@ -273,5 +274,13 @@ test('Aparência em retrato: opções compactas, contraste, teclado, persistênc
   try {
     const page = await readyPage(context);
     await checkAppearanceSettings(page);
+  } finally { await context.close(); }
+}, { timeout: 120000 });
+
+test('Entrada de PCR: formulário opcional, adulto visível, troca manual, edição e toque mobile', async () => {
+  const { context } = await contextFor('Pixel 5');
+  try {
+    const page = await readyPage(context);
+    await checkPatientEntry(page);
   } finally { await context.close(); }
 }, { timeout: 120000 });

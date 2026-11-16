@@ -868,53 +868,59 @@
 
     </div>
 
-    <div id="patient-modal" class="modal">
-        <div class="modal-content">
-            <h3>Preparar Novo Atendimento</h3>
-            <p>Selecione o algoritmo. Dados ausentes permanecem N/I; não serão inferidos.</p>
+    <div id="patient-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="patient-modal-title" data-patient-mode="new">
+        <div class="modal-content patient-dialog">
+            <div class="patient-header">
+                <h3 id="patient-modal-title">Novo atendimento</h3>
+                <p>Todos os dados do paciente são opcionais.</p>
+                <button type="button" id="cancel-patient-btn" class="close-btn" aria-label="Cancelar e fechar">&times;</button>
+            </div>
             <form id="patient-form">
-                <fieldset class="patient-protocol-options">
-                    <legend>Algoritmo de referência</legend>
-                    <label><input type="radio" name="patient-protocol" id="patient-adult-protocol" value="adult">Adulto</label>
-                    <label><input type="radio" name="patient-protocol" id="patient-other-protocol" value="unknown" checked>Outro / não definido — sem preenchimento adulto</label>
-                </fieldset>
-                <label for="patient-name">Nome / ID do Paciente (opcional):</label>
-                <input type="text" id="patient-name" placeholder="Ex: Paciente 001">
-
-                <div class="input-group">
-                    <div>
-                        <label for="patient-age">Idade (anos):</label>
-                        <input type="number" id="patient-age" placeholder="Ex: 5" min="0">
+                <div class="patient-form-fields">
+                    <fieldset class="patient-protocol-options">
+                        <legend>Algoritmo de referência</legend>
+                        <div class="patient-protocol-grid">
+                            <label class="patient-choice"><input type="radio" name="patient-protocol" id="patient-adult-protocol" value="adult" checked><span>Adulto <small>Padrão</small></span></label>
+                            <label class="patient-choice"><input type="radio" name="patient-protocol" id="patient-other-protocol" value="unknown"><span>Outro / não definido</span></label>
+                        </div>
+                    </fieldset>
+                    <div class="patient-field">
+                        <label for="patient-name">Nome ou identificação</label>
+                        <input type="text" id="patient-name" placeholder="Se conhecido" maxlength="100" autocomplete="off">
                     </div>
-                    <div>
-                        <label for="patient-weight">Peso (kg):</label>
-                        <input type="number" id="patient-weight" placeholder="Se conhecido" min="0.1" step="any" inputmode="decimal">
+                    <div class="patient-fields-grid">
+                        <div class="patient-field">
+                            <label for="patient-age">Idade (anos)</label>
+                            <input type="number" id="patient-age" placeholder="Se conhecida" min="0" max="150" inputmode="numeric">
+                        </div>
+                        <div class="patient-field">
+                            <label for="patient-weight">Peso (kg)</label>
+                            <input type="number" id="patient-weight" placeholder="Se conhecido" min="0.1" max="500" step="any" inputmode="decimal">
+                        </div>
+                    </div>
+                    <fieldset class="patient-sex-options">
+                        <legend>Sexo</legend>
+                        <div class="patient-protocol-grid">
+                            <label class="patient-choice" for="sex-m"><input type="radio" id="sex-m" name="sex" value="Masculino"><span>Masculino</span></label>
+                            <label class="patient-choice" for="sex-f"><input type="radio" id="sex-f" name="sex" value="Feminino"><span>Feminino</span></label>
+                        </div>
+                    </fieldset>
+                    <div class="patient-field">
+                        <label for="patient-allergies">Alergias conhecidas</label>
+                        <input type="text" id="patient-allergies" placeholder="Se informadas" autocomplete="off">
+                    </div>
+                    <div class="patient-field">
+                        <label for="patient-comorbidities">Comorbidades relevantes</label>
+                        <input type="text" id="patient-comorbidities" placeholder="Se informadas" autocomplete="off">
                     </div>
                 </div>
-                
-                <details id="patient-additional-details"><summary>Dados adicionais (opcionais)</summary>
-                <label>Sexo:</label>
-                <div class="radio-group">
-                    <input type="radio" id="sex-m" name="sex" value="Masculino">
-                    <label for="sex-m">Masculino</label>
-                    <input type="radio" id="sex-f" name="sex" value="Feminino">
-                    <label for="sex-f">Feminino</label>
+                <div class="patient-form-footer">
+                    <button type="submit" id="patient-start-btn" class="primary-btn">INICIAR ATENDIMENTO ADULTO</button>
                 </div>
-
-                <label for="patient-allergies">Alergias Conhecidas (opcional):</label>
-                <input type="text" id="patient-allergies" placeholder="Ex: Penicilina, Látex">
-
-                <label for="patient-comorbidities">Comorbidades Relevantes (opcional):</label>
-                <input type="text" id="patient-comorbidities" placeholder="Ex: ICC, DPOC">
-
-                </details>
-                <button type="submit" class="primary-btn">INICIAR ATENDIMENTO</button>
-                <button type="button" id="start-pcr-no-data-btn" class="secondary-btn">INICIAR SEM DADOS (N/I)</button>
-                <button type="button" id="cancel-patient-btn" class="cancel-btn">Cancelar</button>
             </form>
         </div>
     </div>
-    
+
     <div id="med-modal" class="modal">
         <div class="modal-content med-modal-custom">
             <div class="med-modal-header">

@@ -242,3 +242,119 @@ body #register-modal #register-submit-btn { display: flex; align-items: center; 
 .registration-submit-content { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 body #register-modal .registration-security-note { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 14px 0 0; color: var(--ui-muted); font-size: .8rem; line-height: 1.5; text-align: center; }
 #register-security-note svg { width: 16px; height: 16px; flex: 0 0 16px; }
+
+/* Patient entry: one optional form with a stable, always-reachable start action. */
+body #patient-modal { animation: none; }
+body #patient-modal .modal-content.patient-dialog {
+    display: flex;
+    flex-direction: column;
+    width: calc(100% - 24px);
+    max-width: 560px;
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    padding: 0;
+    overflow: hidden;
+    background: var(--ui-surface);
+    color: var(--ui-text);
+    border: 1px solid var(--ui-border);
+    border-radius: 16px;
+    animation: none;
+}
+body #patient-modal .patient-header { position: relative; flex: 0 0 auto; padding: 16px 68px 14px 16px; border-bottom: 1px solid var(--ui-border); }
+body #patient-modal .patient-header h3 { margin: 0 0 4px; padding: 0; border: 0; font-size: 1.125rem; line-height: 1.4; color: var(--ui-text); }
+body #patient-modal .patient-header p { margin: 0; font-size: .8125rem; line-height: 1.45; color: var(--ui-muted); }
+body #patient-modal #cancel-patient-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--ui-border);
+    border-radius: 10px;
+    background: var(--ui-raised);
+    color: var(--ui-text);
+    font-size: 1.5rem;
+    line-height: 1;
+    box-shadow: none;
+    transform: none;
+}
+body #patient-modal #patient-form { display: flex; flex-direction: column; min-height: 0; margin: 0; }
+body #patient-modal .patient-form-fields { display: grid; gap: 12px; min-height: 0; padding: 16px; overflow-y: auto; overscroll-behavior: contain; }
+body #patient-modal .patient-fields-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-width: 0; }
+body #patient-modal .patient-field { min-width: 0; }
+body #patient-modal .patient-field > label { display: block; margin: 0 0 4px; font-size: .8125rem; font-weight: 600; line-height: 1.45; color: var(--ui-text); }
+body #patient-modal .patient-field > input {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    margin: 0;
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1px solid var(--ui-border);
+    border-radius: 8px;
+    background: var(--ui-raised);
+    color: var(--ui-text);
+    font-size: 16px;
+    line-height: 1.4;
+    box-shadow: none;
+}
+body #patient-modal fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+body #patient-modal legend { margin: 0 0 6px; padding: 0; font-size: .8125rem; font-weight: 600; line-height: 1.45; color: var(--ui-text); }
+body #patient-modal .patient-protocol-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+body #patient-modal :is(.patient-protocol-options, .patient-sex-options) .patient-choice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    min-height: 48px;
+    margin: 0;
+    padding: 8px;
+    border: 1px solid var(--ui-border);
+    border-radius: 8px;
+    background: var(--ui-raised);
+    color: var(--ui-text);
+    font-size: .8125rem;
+    line-height: 1.45;
+    cursor: pointer;
+}
+body #patient-modal .patient-choice input { flex: 0 0 18px; width: 18px; height: 18px; min-height: 18px; margin: 0; accent-color: var(--ui-action); }
+body #patient-modal .patient-choice span { min-width: 0; }
+body #patient-modal .patient-choice small { display: block; color: var(--ui-muted); font-size: .75rem; font-weight: 400; }
+body #patient-modal .patient-choice:has(input:checked) { border-color: var(--ui-info-text); background: var(--ui-info-bg); }
+body #patient-modal .patient-form-footer { flex: 0 0 auto; padding: 12px 16px; padding-bottom: max(12px, env(safe-area-inset-bottom)); border-top: 1px solid var(--ui-border); background: var(--ui-surface); }
+body #patient-modal #patient-start-btn {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    min-height: 48px;
+    margin: 0;
+    padding: 12px 10px;
+    border: 1px solid var(--ui-action);
+    border-radius: 10px;
+    background: var(--ui-action);
+    color: #fff;
+    font: inherit;
+    font-size: .875rem;
+    font-weight: 700;
+    line-height: 1.4;
+    white-space: normal;
+    transform: none;
+    touch-action: manipulation;
+}
+body #patient-modal[data-patient-mode="new"] #patient-start-btn { background: #b91c1c; border-color: #b91c1c; }
+body #patient-modal[data-patient-mode="new"] #patient-start-btn:not(:disabled) { animation: patient-start-attention 2s ease-in-out infinite; }
+body #patient-modal #patient-start-btn:disabled { animation: none; opacity: .65; cursor: default; }
+body #patient-modal :is(button, input):focus-visible { outline: 3px solid var(--ui-info-text); outline-offset: 2px; }
+@keyframes patient-start-attention {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(185, 28, 28, .12); }
+    50% { box-shadow: 0 0 0 5px rgba(185, 28, 28, .22); }
+}
+@media (prefers-reduced-motion: reduce) {
+    body #patient-modal,
+    body #patient-modal * { animation: none !important; transition: none !important; }
+}

@@ -1,7 +1,7 @@
 import { restartPCRAfterROSC } from '../pcr/core.js';
 import { state } from '../config/state.js';
 import { showScreen, openModal, closeModal, showTransientAlert } from './dom.js';
-import { showPatientModal, savePatientData, startPCRWithUninformedData, cancelPatientSetup } from './patient.js';
+import { showPatientModal, savePatientData, updatePatientStartAction, cancelPatientSetup } from './patient.js';
 import { startCompressions, finishPCR, pauseCompressions, handleTimingVisibility, handleTimingPageHide } from '../pcr/core.js';
 import { toggleMetronome, adjustBPM } from './audio.js';
 import { showRhythmSelectorScreen, selectRhythmOption, processRhythmSelection, applyShockAndResume, roscObtido } from '../pcr/rhythm.js';
@@ -71,7 +71,7 @@ export function registerAllEvents() {
 
     const patientForm = document.getElementById('patient-form');
     if(patientForm) patientForm.addEventListener('submit', savePatientData);
-    document.getElementById('start-pcr-no-data-btn')?.addEventListener('click', startPCRWithUninformedData);
+    document.querySelectorAll('input[name="patient-protocol"]').forEach(input => input.addEventListener('change', updatePatientStartAction));
     document.getElementById('cancel-patient-btn')?.addEventListener('click', cancelPatientSetup);
 
     document.getElementById('compressions-btn')?.addEventListener('click', startCompressions);

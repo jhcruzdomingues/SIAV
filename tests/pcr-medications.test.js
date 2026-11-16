@@ -220,7 +220,8 @@ describe('Regressões com módulos e HTML reais', () => {
         expect(state.medications.at(-1).requiresReview).toBe(true);
         expect(brain.evaluateMedicationGuidance(getClinicalSnapshot()).amiodarona.status).toBe('review');
     });
-    it('preparo sem dados só habilita orientação adulta com confirmação explícita do protocolo', () => {
+    it('escolher outro/não definido no preparo impede orientação adulta, mesmo sem idade', () => {
+        input('patient-other-protocol').checked = true;
         startPCRWithUninformedData();
         expect(state.patient.algorithm).toBeNull();
         shock(); shock(); shock();

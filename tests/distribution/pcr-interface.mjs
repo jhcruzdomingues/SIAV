@@ -40,7 +40,7 @@ export async function checkPCRInterface(page, device) {
   };
   await page.locator('#start-pcr-card').tap();
   await page.locator('#patient-adult-protocol').check();
-  await page.locator('#start-pcr-no-data-btn').tap();
+  await page.locator('#patient-start-btn').tap();
   await page.waitForFunction(() => window.SIAV.state.pcrActive);
   await page.evaluate(() => {
     const beat = document.getElementById('metro-beat'); const animate = beat.animate.bind(beat);

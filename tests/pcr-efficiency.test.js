@@ -250,14 +250,14 @@ describe('Registro rápido sem mudar elegibilidade', () => {
 });
 
 describe('Preparo do paciente por toque', () => {
-    it('novo preparo não herda protocolo, nome ou peso; ausentes ficam N/I', () => {
+    it('novo preparo usa padrão adulto visível, não herda nome ou peso e mantém ausentes N/I', () => {
         core.executePCRFinish();
         el('patient-name').value = 'ANTERIOR SINTETICO'; el('patient-weight').value = '70'; el('patient-adult-protocol').checked = true;
         showPatientModal();
         expect(el('patient-name').value).toBe(''); expect(el('patient-weight').value).toBe('');
-        expect(el('patient-adult-protocol').checked).toBe(false);
+        expect(el('patient-adult-protocol').checked).toBe(true);
         window.confirm.mockClear(); startPCRWithUninformedData();
-        expect(state.patient).toMatchObject({ algorithm: null, name: 'N/I', age: 'N/I', weight: 'N/I' });
+        expect(state.patient).toMatchObject({ algorithm: 'adult', name: 'N/I', age: 'N/I', weight: 'N/I' });
         expect(window.confirm).not.toHaveBeenCalled();
     });
     it('seleção explícita adulta é preservada ao editar paciente ativo', () => {
@@ -269,11 +269,11 @@ describe('Preparo do paciente por toque', () => {
     });
     it('reabre o preparo com ações de início após editar e encerrar o atendimento anterior', () => {
         showPatientModal();
-        expect(el('start-pcr-no-data-btn').style.display).toBe('none');
+        expect(el('start-pcr-no-data-btn')).toBeNull();
         expect(document.querySelector('#patient-form button[type="submit"]').textContent).toBe('SALVAR ALTERAÇÕES');
         core.executePCRFinish(); showPatientModal();
-        expect(el('start-pcr-no-data-btn').style.display).not.toBe('none');
-        expect(document.querySelector('#patient-form button[type="submit"]').textContent).toBe('INICIAR ATENDIMENTO');
+        expect(el('start-pcr-no-data-btn')).toBeNull();
+        expect(document.querySelector('#patient-form button[type="submit"]').textContent).toBe('INICIAR ATENDIMENTO ADULTO');
     });
     it.each(['sem dados', 'formulário'])('cancelar atendimento novo após ROSC via %s não troca o paciente anterior', entry => {
         rhythm.roscObtido(); const previous = state.patient;

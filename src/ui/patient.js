@@ -1,21 +1,28 @@
 import { state } from '../config/state.js';
 import { closeModal, openModal, showScreen } from './dom.js';
 
-export function showPatientModal() {
-    const noData = document.getElementById('start-pcr-no-data-btn');
-    if (noData) noData.style.display = state.pcrActive ? 'none' : 'inline-block';
+export function updatePatientStartAction() {
+    const modal = document.getElementById('patient-modal');
+    if (modal) modal.dataset.patientMode = state.pcrActive ? 'edit' : 'new';
     const submit = document.querySelector('#patient-form button[type="submit"]');
-    if (submit) submit.textContent = state.pcrActive ? 'SALVAR ALTERAÇÕES' : 'INICIAR ATENDIMENTO';
+    if (submit) submit.textContent = state.pcrActive ? 'SALVAR ALTERAÇÕES'
+        : document.getElementById('patient-adult-protocol')?.checked ? 'INICIAR ATENDIMENTO ADULTO' : 'INICIAR ATENDIMENTO';
+}
+
+export function showPatientModal() {
     if (!state.pcrActive) {
         document.getElementById('patient-form')?.reset();
-        const details = document.getElementById('patient-additional-details');
-        if (details) details.open = false;
     } else {
         const adult = document.getElementById('patient-adult-protocol');
         const other = document.getElementById('patient-other-protocol');
         if (adult) adult.checked = state.patient.algorithm === 'adult';
         if (other) other.checked = state.patient.algorithm !== 'adult';
     }
+    const submit = document.querySelector('#patient-form button[type="submit"]');
+    if (submit) submit.disabled = false;
+    const title = document.getElementById('patient-modal-title');
+    if (title) title.textContent = state.pcrActive ? 'Dados do atendimento' : 'Novo atendimento';
+    updatePatientStartAction();
     openModal('patient-modal');
 }
 
@@ -28,6 +35,8 @@ export function cancelPatientSetup() {
 
 export function savePatientData(e) {
     e.preventDefault();
+    const submit = document.querySelector('#patient-form button[type="submit"]');
+    if (submit?.disabled) return;
     const previousPatient = state.patient;
     try {
         const weightValue = document.getElementById('patient-weight')?.value;
@@ -63,6 +72,9 @@ export function savePatientData(e) {
         alert('Erro ao salvar dados do paciente. Por favor, tente novamente.');
         return;
     }
+    // Keep repeated submits in the closing modal from becoming another save/start.
+    // Opening the form again restores the action, including after a cancelled start.
+    if (submit) submit.disabled = true;
     updatePatientDisplay();
     closeModal('patient-modal');
     
