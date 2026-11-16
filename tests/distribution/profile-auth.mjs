@@ -42,10 +42,15 @@ export async function checkProfileAuth(page) {
       await page.evaluate(t => window.setTheme(t), theme);
       const gear = await page.locator('#settings-btn').evaluate(el => {
         const svg = el.querySelector('svg'); const b = el.getBoundingClientRect(); const s = svg?.getBoundingClientRect();
-        return { accessibleName: el.getAttribute('aria-label'), buttonWidth: b.width, buttonHeight: b.height, iconWidth: s?.width, iconHeight: s?.height };
+        const buttonStyle = getComputedStyle(el); const iconStyle = svg && getComputedStyle(svg);
+        return { accessibleName: el.getAttribute('aria-label'), buttonWidth: b.width, buttonHeight: b.height, iconWidth: s?.width, iconHeight: s?.height,
+          buttonColor: buttonStyle.color, iconColor: iconStyle?.color, iconBackground: iconStyle?.backgroundColor, iconShadow: iconStyle?.boxShadow };
       });
       assert.equal(gear.accessibleName, 'Configurações');
       assert.ok(gear.buttonWidth >= 44 && gear.buttonHeight >= 44 && gear.iconWidth === 22 && gear.iconHeight === 22);
+      assert.equal(gear.iconColor, gear.buttonColor, 'Gear must inherit header ink, not settings-card colors');
+      assert.equal(gear.iconBackground, 'rgba(0, 0, 0, 0)');
+      assert.equal(gear.iconShadow, 'none');
       await readableButtons('#settings-btn');
       if (directory && [320, 390].includes(width)) await page.locator('.app-container > header').screenshot({ path: join(directory, `settings-${width}-${theme}.png`) });
       await page.locator('#settings-btn').tap();

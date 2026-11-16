@@ -28,6 +28,7 @@ O campo de profissão de perfis já existentes e a configuração remota de `pro
 
 - Havia apenas um campo de senha no cadastro: inclusão de confirmação e validação nos eventos de entrada e no submit, com teste de bloqueio antes da chamada remota.
 - A engrenagem era um caractere Unicode, cuja aparência depende da fonte/plataforma. SVG e dimensões fixas removem essa variação sem depender do modelo de aparelho.
+- Na revisão da primeira implementação, a classe genérica `settings-icon` colidia com os cartões legados e aplicava fundo azul, tinta branca, margem e sombra ao SVG. O ícone do cabeçalho usa agora `settings-gear-icon`, isolado desses cartões. Uma regressão de navegador falhou antes dessa correção e passou a verificar tinta herdada, fundo transparente e ausência de sombra no SVG.
 - O convite compartilhava a cor dos erros: identificação de tom `invite` separa a apresentação verde do erro vermelho, preservando os alertas existentes.
 - Profissão era texto livre e o registro tinha exemplo fixo de CRM: configuração única no módulo UI popula a lista e adapta o conselho, incluindo a condição de Estudante.
 - Erros de validação são limpos quando a entrada é corrigida. Reset do formulário restaura seleção vazia, registro desabilitado e confirmação sem erro antigo.
@@ -57,7 +58,7 @@ O campo de profissão de perfis já existentes e a configuração remota de `pro
 - Nenhuma conta real foi criada, nenhum e-mail enviado e nenhum dado remoto consultado/escrito pelos testes. SDKs usam fixtures e a rede externa é bloqueada nos ensaios de distribuição.
 - A primeira execução de distribuição falhou por seletor de captura ambíguo (`header` também encontrava o cabeçalho do modal de planos); o seletor passou a apontar ao cabeçalho direto do aplicativo. Não era falha do fluxo do app.
 
-Logs locais em `/workspace/work/registration-refinement`: `tests.log`, `verified-distribution.log`, `verified-build.log` e `before.log`. CI e implantação automática devem ser conferidos após o push; os resultados remotos são informados na entrega.
+Logs locais em `/workspace/work/registration-refinement`: `tests.log`, `release-distribution.log`, `release-build.log`, `before.log` e `gear-collision-before.log`. CI e implantação automática devem ser conferidos após o push; os resultados remotos são informados na entrega.
 
 ## Capturas selecionadas
 
