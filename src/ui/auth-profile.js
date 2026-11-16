@@ -2,6 +2,7 @@ import { state } from '../config/state.js';
 import { supabase } from '../config/supabase.js';
 import { closeModal, openModal, showScreen } from './dom.js';
 import { fetchPcrLogs } from '../pcr/log.js';
+import { validateRegistrationFields } from './registration-fields.js';
 
 const DEFAULT_USER_DATA = {
     name: 'Convidado',
@@ -168,11 +169,12 @@ function clearAuthNotice() {
     if (notice) notice.hidden = true;
 }
 
-function showAuthNotice(message) {
+function showAuthNotice(message, tone = 'error') {
     clearAuthNotice();
     const notice = document.getElementById('auth-notice');
     if (!notice) return;
     notice.textContent = message;
+    notice.dataset.tone = tone;
     notice.hidden = false;
     authNoticeTimer = setTimeout(() => { notice.hidden = true; }, 6000);
 }
@@ -201,12 +203,12 @@ export function showRegistrationModal() {
     closeModal('profile-modal');
     closeModal('login-modal');
     authFeedback(document.getElementById('register-form-full'));
-    for (const id of ['login-password', 'login-password-modal', 'register-password']) {
+    for (const id of ['login-password', 'login-password-modal', 'register-password', 'register-password-confirm']) {
         const input = document.getElementById(id);
-        if (input) input.value = '';
+        if (input) { input.value = ''; input.setCustomValidity(''); }
     }
     openModal('register-modal');
-    showAuthNotice(document.getElementById('register-intro').textContent.trim());
+    showAuthNotice(document.getElementById('register-intro').textContent.trim(), 'invite');
 }
 
 export function showLoginModal() {
@@ -215,8 +217,10 @@ export function showLoginModal() {
     closeModal('profile-modal');
     closeModal('register-modal');
     authFeedback(document.getElementById('login-form-simple'));
-    const password = document.getElementById('register-password');
-    if (password) password.value = '';
+    for (const id of ['register-password', 'register-password-confirm']) {
+        const input = document.getElementById(id);
+        if (input) { input.value = ''; input.setCustomValidity(''); }
+    }
     openModal('login-modal');
 }
 
@@ -296,13 +300,20 @@ export async function handleRegistrationFromForm(e) {
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalButton = submitBtn?.innerHTML;
     try {
+        const validationMessage = validateRegistrationFields();
+        if (validationMessage) {
+            authFeedback(form, validationMessage);
+            form.reportValidity();
+            return;
+        }
         if (!form.reportValidity()) return;
         const email = form.querySelector('input[type="email"]').value.trim();
         const password = form.querySelector('input[type="password"]').value;
         const metadata = {};
         for (const [id, key] of [['register-name', 'full_name'], ['register-profession', 'profession'], ['register-council', 'council_register'], ['register-phone', 'phone_number'], ['register-birth-date', 'birth_date']]) {
-            const value = document.getElementById(id)?.value.trim();
-            if (value) metadata[key] = value;
+            const field = document.getElementById(id);
+            const value = field?.value.trim();
+            if (value && !field.disabled) metadata[key] = value;
         }
         authFeedback(form);
         setAuthenticationPending(form, true);

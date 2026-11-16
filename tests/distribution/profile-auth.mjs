@@ -40,6 +40,14 @@ export async function checkProfileAuth(page) {
     await page.setViewportSize({ width, height: width === 768 ? 1024 : Math.max(568, width * 2) });
     for (const theme of ['light', 'dark']) {
       await page.evaluate(t => window.setTheme(t), theme);
+      const gear = await page.locator('#settings-btn').evaluate(el => {
+        const svg = el.querySelector('svg'); const b = el.getBoundingClientRect(); const s = svg?.getBoundingClientRect();
+        return { accessibleName: el.getAttribute('aria-label'), buttonWidth: b.width, buttonHeight: b.height, iconWidth: s?.width, iconHeight: s?.height };
+      });
+      assert.equal(gear.accessibleName, 'Configurações');
+      assert.ok(gear.buttonWidth >= 44 && gear.buttonHeight >= 44 && gear.iconWidth === 22 && gear.iconHeight === 22);
+      await readableButtons('#settings-btn');
+      if (directory && [320, 390].includes(width)) await page.locator('.app-container > header').screenshot({ path: join(directory, `settings-${width}-${theme}.png`) });
       await page.locator('#settings-btn').tap();
       await oneModal('settings-menu-modal');
       await page.locator('[onclick="openProfileSettings()"]').tap();
@@ -57,7 +65,20 @@ export async function checkProfileAuth(page) {
       await capture(width, theme, 'login');
       await page.locator('#profile-register-btn').tap();
       await oneModal('register-modal');
-      assert.equal((await page.locator('#register-intro').textContent()).trim(), 'VOCÊ AINDA NÃO TEM UMA CONTA, CRIE UMA CONTA AGORA, NÃO CUSTA NADA!');
+      assert.equal((await page.locator('#register-intro').textContent()).trim(), 'CRIE UMA CONTA É RÁPIDO E GRÁTIS! 😉');
+      const invitationStyle = await page.locator('#auth-notice').evaluate(el => {
+        const s = getComputedStyle(el); return { background: s.backgroundColor, border: s.borderTopColor, color: s.color, visible: !el.hidden };
+      });
+      assert.deepEqual(invitationStyle, { background: 'rgb(236, 253, 245)', border: 'rgb(22, 101, 52)', color: 'rgb(20, 83, 45)', visible: true });
+      if (directory && width === 390 && theme === 'light') await page.locator('#auth-notice').screenshot({ path: join(directory, 'registration-invite-green.png'), timeout: 5000 });
+      await page.locator('#register-profession').selectOption('Médico(a)');
+      assert.equal(await page.locator('#register-council').isEnabled(), true);
+      assert.match(await page.locator('#register-council-label').textContent(), /CRM/);
+      if (directory && width === 390 && theme === 'dark') await page.screenshot({ path: join(directory, 'registration-390-dark-crm.png'), animations: 'disabled' });
+      await page.locator('#register-council').fill('CRM-SINTETICO');
+      await page.locator('#register-profession').selectOption('Estudante');
+      assert.equal(await page.locator('#register-council').isDisabled(), true);
+      assert.equal(await page.locator('#register-council').inputValue(), '');
       await noClip('#register-intro, #register-back-login-btn');
       await readableButtons('#register-form-full button[type=submit], #register-back-login-btn');
       if (width <= 430) {
@@ -85,11 +106,24 @@ export async function checkProfileAuth(page) {
   assert.equal(await page.evaluate(() => window.SIAV.state.currentUser.isLoggedIn), false);
   await page.locator('#profile-register-btn').tap(); await oneModal('register-modal');
   await page.locator('#register-name').fill('Pessoa Sintética');
+  await page.locator('#register-profession').selectOption('Estudante');
   await page.locator('#register-email').fill('sintetico@example.invalid');
   await page.locator('#register-password').fill('SENHA_SINTETICA');
+  await page.evaluate(() => {
+    const original = window.SIAV.supabase.auth.signUp;
+    window.__registrationTestCalls = 0;
+    window.SIAV.supabase.auth.signUp = (...args) => { window.__registrationTestCalls++; return original(...args); };
+  });
+  await page.locator('#register-password-confirm').fill('SENHA_DIFERENTE');
+  await page.locator('#register-form-full button[type=submit]').tap();
+  assert.equal(await page.evaluate(() => window.__registrationTestCalls), 0);
+  assert.match(await page.locator('#register-password-confirm').evaluate(el => el.validationMessage), /As senhas não coincidem/);
+  await page.locator('#register-password-confirm').fill('SENHA_SINTETICA');
   await page.locator('#register-form-full button[type=submit]').tap();
   await page.locator('#register-feedback:not([hidden])').waitFor();
   assert.equal(await page.locator('#register-form-full button[type=submit]').isEnabled(), true);
+  assert.equal(await page.evaluate(() => window.__registrationTestCalls), 1);
+  if (directory) await page.screenshot({ path: join(directory, 'registration-password-confirm.png'), animations: 'disabled' });
   assert.equal(await page.evaluate(() => window.SIAV.state.currentUser.isLoggedIn), false);
   await page.locator('#register-back-login-btn').tap(); await oneModal('login-modal');
   // An ambiguous server error keeps the login open and offers explicit registration.

@@ -13,6 +13,7 @@ import { handleLogin, handleRegistrationFromForm, handleProfileUpdate, logout, s
 import { checkAccess, startSubscriptionFlow } from '../services/permissions.js';
 import { showProtocolDetail, showStudyDetail, toggleCause, closeTreatmentFullscreen, createStudyHSTsList } from '../protocols/guidelines.js';
 import { checkAndIncrementSimulationUse } from '../services/storage.js';
+import { initializeRegistrationFields, updateRegistrationProfession, validateRegistrationPasswords } from './registration-fields.js';
 
 export function registerAllEvents() {
     createStudyHSTsList();
@@ -126,6 +127,14 @@ export function registerAllEvents() {
     document.getElementById('close-glasgow-btn')?.addEventListener('click', () => closeModal('glasgow-modal'));
 
     // 4. Autenticação e Perfil
+    initializeRegistrationFields();
+    document.getElementById('register-profession')?.addEventListener('change', updateRegistrationProfession);
+    document.getElementById('register-council')?.addEventListener('input', event => event.target.setCustomValidity(''));
+    for (const id of ['register-password', 'register-password-confirm']) document.getElementById(id)?.addEventListener('input', validateRegistrationPasswords);
+    document.getElementById('register-form-full')?.addEventListener('reset', () => queueMicrotask(() => {
+        updateRegistrationProfession();
+        document.getElementById('register-password-confirm')?.setCustomValidity('');
+    }));
     document.getElementById('login-form')?.addEventListener('submit', handleLogin);
     document.getElementById('login-form-simple')?.addEventListener('submit', handleLogin);
     document.getElementById('register-form-full')?.addEventListener('submit', handleRegistrationFromForm);

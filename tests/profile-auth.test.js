@@ -23,9 +23,17 @@ const body = html.match(/<body[^>]*>([\s\S]*)<\/body>/i)[1];
 const el = id => document.getElementById(id);
 const email = 'pessoa-sintetica@example.invalid';
 const password = 'SENHA_SINTETICA_APENAS_TESTE';
-const invitation = 'VOCÊ AINDA NÃO TEM UMA CONTA, CRIE UMA CONTA AGORA, NÃO CUSTA NADA!';
+const invitation = 'CRIE UMA CONTA É RÁPIDO E GRÁTIS! 😉';
 const settle = () => vi.advanceTimersByTime(350);
 const eventFor = id => ({ preventDefault: vi.fn(), target: el(id), currentTarget: el(id) });
+const fillRegistration = (profession = 'Estudante') => {
+    el('register-name').value = 'Pessoa Sintética';
+    el('register-email').value = email;
+    el('register-password').value = password;
+    el('register-profession').value = profession;
+    el('register-profession').dispatchEvent(new Event('change'));
+    if (el('register-password-confirm')) el('register-password-confirm').value = password;
+};
 
 beforeEach(() => {
     vi.useFakeTimers();
@@ -102,6 +110,7 @@ describe('Perfil: login e cadastro explícitos', () => {
         el('open-register-btn').click(); settle();
         el('register-name').value = 'Pessoa Sintética';
         el('register-email').value = email; el('register-password').value = password;
+        fillRegistration();
         await handleRegistrationFromForm(eventFor('register-form-full'));
         expect(api.signUp).toHaveBeenCalledTimes(1);
         expect(api.signInWithPassword).not.toHaveBeenCalled();
@@ -109,12 +118,13 @@ describe('Perfil: login e cadastro explícitos', () => {
         expect(el('register-feedback').textContent).toContain('e-mail');
         expect(el('register-modal').classList.contains('show')).toBe(true);
         expect(el('register-password').value).toBe('');
-        expect(api.signUp.mock.calls[0][0].options.data).toEqual({ full_name: 'Pessoa Sintética' });
+        expect(api.signUp.mock.calls[0][0].options.data).toEqual({ full_name: 'Pessoa Sintética', profession: 'Estudante' });
     });
     it('erro de cadastro preserva campos, libera botão e permite nova tentativa', async () => {
         api.signUp.mockRejectedValueOnce(new Error('Synthetic offline'));
         el('register-name').value = 'Pessoa Sintética';
         el('register-email').value = email; el('register-password').value = password;
+        fillRegistration();
         await handleRegistrationFromForm(eventFor('register-form-full'));
         expect(el('register-email').value).toBe(email);
         expect(el('register-form-full').querySelector('button[type=submit]').disabled).toBe(false);
@@ -125,6 +135,7 @@ describe('Perfil: login e cadastro explícitos', () => {
         api.signUp.mockReturnValueOnce(new Promise(r => { resolve = r; }));
         el('register-name').value = 'Pessoa Sintética';
         el('register-email').value = email; el('register-password').value = password;
+        fillRegistration();
         const first = handleRegistrationFromForm(eventFor('register-form-full'));
         await handleRegistrationFromForm(eventFor('register-form-full'));
         expect(api.signUp).toHaveBeenCalledTimes(1);
@@ -170,5 +181,115 @@ describe('Perfil: login e cadastro explícitos', () => {
         expect(state.currentUser.id).toBe(user.id);
         expect(api.signUp).not.toHaveBeenCalled();
         expect(el('login-password').value).toBe('');
+    });
+});
+
+describe('Cadastro: confirmação de senha e registro por profissão', () => {
+    it('exige confirmação e bloqueia senhas diferentes antes de chamar o SDK', async () => {
+        fillRegistration();
+        expect(el('register-password-confirm').required).toBe(true);
+        el('register-password-confirm').value = password + 'DIFERENTE';
+        await handleRegistrationFromForm(eventFor('register-form-full'));
+        expect(api.signUp).not.toHaveBeenCalled();
+        expect(el('register-feedback').textContent).toContain('As senhas não coincidem');
+        expect(el('register-form-full').querySelector('button[type=submit]').disabled).toBe(false);
+    });
+    it('bloqueia confirmação vazia e compara sem remover espaços da senha', async () => {
+        fillRegistration();
+        el('register-password-confirm').value = '';
+        await handleRegistrationFromForm(eventFor('register-form-full'));
+        expect(api.signUp).not.toHaveBeenCalled();
+        el('register-password-confirm').value = password + ' ';
+        await handleRegistrationFromForm(eventFor('register-form-full'));
+        expect(api.signUp).not.toHaveBeenCalled();
+    });
+    it('corrigir a confirmação libera o envio, sem incluir a confirmação em metadados', async () => {
+        fillRegistration();
+        el('register-password-confirm').value = 'OUTRA_SENHA';
+        el('register-password-confirm').dispatchEvent(new Event('input'));
+        expect(el('register-password-confirm').validity.valid).toBe(false);
+        el('register-password-confirm').value = password;
+        el('register-password-confirm').dispatchEvent(new Event('input'));
+        await handleRegistrationFromForm(eventFor('register-form-full'));
+        expect(api.signUp).toHaveBeenCalledTimes(1);
+        const payload = api.signUp.mock.calls[0][0];
+        expect(payload.password).toBe(password);
+        expect(payload).not.toHaveProperty('password_confirmation');
+        expect(JSON.stringify(payload.options.data)).not.toContain(password);
+    });
+    it('oferece uma lista fechada de profissões e exige a escolha explícita', async () => {
+        expect(el('register-profession').tagName).toBe('SELECT');
+        const choices = [...el('register-profession').options].map(x => x.value).filter(Boolean);
+        expect(choices).toEqual(['Médico(a)', 'Enfermeiro(a)', 'Técnico(a) de Enfermagem', 'Auxiliar de Enfermagem', 'Fisioterapeuta', 'Cirurgião-dentista', 'Estudante']);
+        fillRegistration('');
+        await handleRegistrationFromForm(eventFor('register-form-full'));
+        expect(api.signUp).not.toHaveBeenCalled();
+    });
+    it.each([
+        ['Médico(a)', 'CRM'], ['Enfermeiro(a)', 'COREN'], ['Técnico(a) de Enfermagem', 'COREN'],
+        ['Auxiliar de Enfermagem', 'COREN'], ['Fisioterapeuta', 'CREFITO'], ['Cirurgião-dentista', 'CRO'],
+    ])('%s solicita %s e descarta o registro de outra seleção', (profession, council) => {
+        el('register-council').value = 'REGISTRO_SINTETICO_ANTERIOR';
+        fillRegistration(profession);
+        expect(el('register-council').disabled).toBe(false);
+        expect(el('register-council').required).toBe(true);
+        expect(el('register-council-label').textContent).toContain(council);
+        expect(el('register-council').placeholder).toContain(council);
+        expect(el('register-council').value).toBe('');
+        expect(api.signUp).not.toHaveBeenCalled();
+    });
+    it('Estudante desabilita e limpa o registro, que não é enviado no cadastro', async () => {
+        fillRegistration('Médico(a)'); el('register-council').value = 'CRM-SINTETICO';
+        fillRegistration('Estudante');
+        expect(el('register-council').disabled).toBe(true);
+        expect(el('register-council').required).toBe(false);
+        expect(el('register-council').value).toBe('');
+        await handleRegistrationFromForm(eventFor('register-form-full'));
+        expect(api.signUp).toHaveBeenCalledTimes(1);
+        expect(api.signUp.mock.calls[0][0].options.data).not.toHaveProperty('council_register');
+    });
+    it('voltar de Estudante para profissional reativa o conselho e exige seu preenchimento', async () => {
+        fillRegistration('Estudante'); fillRegistration('Enfermeiro(a)');
+        await handleRegistrationFromForm(eventFor('register-form-full'));
+        expect(el('register-council').disabled).toBe(false);
+        expect(api.signUp).not.toHaveBeenCalled();
+        el('register-council').value = 'COREN-UF 000000';
+        await handleRegistrationFromForm(eventFor('register-form-full'));
+        expect(api.signUp).toHaveBeenCalledTimes(1);
+        expect(api.signUp.mock.calls[0][0].options.data.council_register).toBe('COREN-UF 000000');
+    });
+    it('trocar profissão não muda plano, algoritmo ou autenticação', () => {
+        const before = JSON.stringify({ patient: state.patient, clinical: state.clinical, currentUser: state.currentUser });
+        fillRegistration('Médico(a)');
+        expect(JSON.stringify({ patient: state.patient, clinical: state.clinical, currentUser: state.currentUser })).toBe(before);
+        expect(api.signInWithPassword).not.toHaveBeenCalled();
+    });
+    it('a engrenagem usa SVG local com nome acessível e preserva a abertura do menu', () => {
+        expect(el('settings-btn').getAttribute('aria-label')).toBe('Configurações');
+        expect(el('settings-btn').querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+        expect(el('settings-btn').textContent).not.toContain('⚙');
+    });
+    it('selecionar profissão e preencher o conselho limpa erros anteriores', async () => {
+        fillRegistration('');
+        await handleRegistrationFromForm(eventFor('register-form-full'));
+        expect(el('register-profession').validity.customError).toBe(true);
+        fillRegistration('Médico(a)');
+        expect(el('register-profession').validity.valid).toBe(true);
+        await handleRegistrationFromForm(eventFor('register-form-full'));
+        expect(el('register-council').validity.customError).toBe(true);
+        el('register-council').value = 'CRM-SP 000000';
+        el('register-council').dispatchEvent(new Event('input'));
+        expect(el('register-council').validity.valid).toBe(true);
+    });
+    it('reset do cadastro restaura seleção e campo desabilitado e limpa o erro de confirmação', async () => {
+        fillRegistration('Médico(a)');
+        el('register-password-confirm').value = 'DIFERENTE';
+        el('register-password-confirm').dispatchEvent(new Event('input'));
+        el('register-form-full').reset();
+        await Promise.resolve();
+        expect(el('register-profession').value).toBe('');
+        expect(el('register-council').disabled).toBe(true);
+        expect(el('register-council').required).toBe(false);
+        expect(el('register-password-confirm').validity.customError).toBe(false);
     });
 });

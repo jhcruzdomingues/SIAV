@@ -229,3 +229,9 @@ body :is(#profile-modal, #login-modal, #register-modal) input:not([type="checkbo
   pointer-events: none;
 }
 .auth-notice[hidden] { display: none; }
+.auth-notice[data-tone="invite"] { background: #ecfdf5; border-color: #166534; color: #14532d; }
+body #settings-btn { display: grid; place-items: center; width: 44px; height: 44px; min-width: 44px; padding: 0; flex-shrink: 0; background: var(--ui-raised); color: var(--ui-text); border: 1px solid var(--ui-border); border-radius: 12px; box-shadow: none; }
+#settings-btn .settings-icon { display: block; width: 22px; height: 22px; }
+body #register-modal select { width: 100%; min-width: 0; box-sizing: border-box; min-height: 44px; padding: 12px; font: inherit; border: 1px solid var(--ui-border); border-radius: 8px; }
+body #register-modal input:disabled { color: var(--ui-muted); background: var(--ui-raised); cursor: not-allowed; }
+.registration-field-hint { color: var(--ui-muted); font-size: .85rem; line-height: 1.4; overflow-wrap: anywhere; }

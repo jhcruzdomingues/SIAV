@@ -51,7 +51,10 @@
                 </div>
             </div>
             <button id="settings-btn" class="header-btn" onclick="openSettingsMenu()" type="button" aria-label="Configurações" title="Configurações">
-                <span aria-hidden="true">⚙</span>
+                <svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.01A1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.01A1.65 1.65 0 0 0 20.91 10H21a2 2 0 0 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15z"></path>
+                </svg>
             </button>
         </header>
 
@@ -1212,20 +1215,23 @@
                         <div id="register-modal" class="modal" style="display:none;">
                             <div class="modal-content">
                                 <h3>Cadastro</h3>
-                                <p id="register-intro" hidden>VOCÊ AINDA NÃO TEM UMA CONTA, CRIE UMA CONTA AGORA, NÃO CUSTA NADA!</p>
+                                <p id="register-intro" hidden>CRIE UMA CONTA É RÁPIDO E GRÁTIS! 😉</p>
                                 <form id="register-form-full" class="register-form">
                                     <div class="form-field">
                                         <label for="register-name"><i class="fas fa-user"></i> Nome Completo</label>
                                         <input type="text" id="register-name" name="register-name" required placeholder="Seu nome completo">
                                     </div>
                                     <div class="form-field">
-                                        <label for="register-profession"><i class="fas fa-briefcase-medical"></i> Profissão/Especialidade</label>
-                                        <input type="text" id="register-profession" name="register-profession" placeholder="Ex: Enfermeiro">
+                                        <label for="register-profession"><i class="fas fa-briefcase-medical"></i> Profissão</label>
+                                        <select id="register-profession" name="register-profession" required>
+                                            <option value="">Selecione sua profissão</option>
+                                        </select>
                                     </div>
                                     <div class="form-row">
                                         <div class="form-field">
-                                            <label for="register-council"><i class="fas fa-id-card"></i> Registro Profissional</label>
-                                            <input type="text" id="register-council" name="register-council" placeholder="Ex: CRM-SP 123456">
+                                            <label for="register-council"><i class="fas fa-id-card"></i> <span id="register-council-label">Registro profissional</span></label>
+                                            <input type="text" id="register-council" name="register-council" aria-describedby="register-council-hint" disabled placeholder="Selecione a profissão">
+                                            <p id="register-council-hint" class="registration-field-hint">Selecione sua profissão para informar o conselho.</p>
                                         </div>
                                         <div class="form-field">
                                             <label for="register-birth-date"><i class="fas fa-calendar"></i> Data de Nascimento</label>
@@ -1243,6 +1249,10 @@
                                     <div class="form-field">
                                         <label for="register-password"><i class="fas fa-lock"></i> Senha</label>
                                         <input type="password" id="register-password" name="register-password" autocomplete="new-password" minlength="6" required placeholder="Mínimo 6 caracteres">
+                                    </div>
+                                    <div class="form-field">
+                                        <label for="register-password-confirm"><i class="fas fa-lock"></i> Confirmar senha</label>
+                                        <input type="password" id="register-password-confirm" name="register-password-confirm" autocomplete="new-password" minlength="6" required placeholder="Digite a senha novamente">
                                     </div>
                                     <p id="register-feedback" data-auth-feedback role="status" aria-live="polite" hidden></p>
                                     <button type="submit" class="primary-btn wide-btn"><i class="fas fa-user-plus"></i> Cadastrar</button>
