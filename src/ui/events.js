@@ -130,6 +130,7 @@ export function registerAllEvents() {
     initializeRegistrationFields();
     document.getElementById('register-profession')?.addEventListener('change', updateRegistrationProfession);
     document.getElementById('register-council')?.addEventListener('input', event => event.target.setCustomValidity(''));
+    document.getElementById('register-council-state')?.addEventListener('change', event => event.target.setCustomValidity(''));
     for (const id of ['register-password', 'register-password-confirm']) document.getElementById(id)?.addEventListener('input', validateRegistrationPasswords);
     document.getElementById('register-form-full')?.addEventListener('reset', () => queueMicrotask(() => {
         updateRegistrationProfession();

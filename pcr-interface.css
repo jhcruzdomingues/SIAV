@@ -235,3 +235,10 @@ body #settings-btn { display: grid; place-items: center; width: 44px; height: 44
 body #register-modal select { width: 100%; min-width: 0; box-sizing: border-box; min-height: 44px; padding: 12px; font: inherit; border: 1px solid var(--ui-border); border-radius: 8px; }
 body #register-modal input:disabled { color: var(--ui-muted); background: var(--ui-raised); cursor: not-allowed; }
 .registration-field-hint { color: var(--ui-muted); font-size: .85rem; line-height: 1.4; overflow-wrap: anywhere; }
+body #register-modal .registration-license-row { display: grid; grid-template-columns: minmax(0, 1fr) 88px; gap: 12px; align-items: end; }
+body #register-modal .registration-license-row > .form-field { min-width: 0; margin-bottom: 0; }
+body #register-modal #register-council-state { padding-inline: 8px; }
+body #register-modal #register-submit-btn { display: flex; align-items: center; justify-content: center; text-align: center; }
+.registration-submit-content { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+body #register-modal .registration-security-note { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 14px 0 0; color: var(--ui-muted); font-size: .8rem; line-height: 1.5; text-align: center; }
+#register-security-note svg { width: 16px; height: 16px; flex: 0 0 16px; }

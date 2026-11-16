@@ -1227,16 +1227,22 @@
                                             <option value="">Selecione sua profissão</option>
                                         </select>
                                     </div>
-                                    <div class="form-row">
+                                    <div class="registration-license-row">
                                         <div class="form-field">
                                             <label for="register-council"><i class="fas fa-id-card"></i> <span id="register-council-label">Registro profissional</span></label>
                                             <input type="text" id="register-council" name="register-council" aria-describedby="register-council-hint" disabled placeholder="Selecione a profissão">
-                                            <p id="register-council-hint" class="registration-field-hint">Selecione sua profissão para informar o conselho.</p>
                                         </div>
                                         <div class="form-field">
-                                            <label for="register-birth-date"><i class="fas fa-calendar"></i> Data de Nascimento</label>
-                                            <input type="date" id="register-birth-date" name="register-birth-date">
+                                            <label for="register-council-state">UF</label>
+                                            <select id="register-council-state" name="register-council-state" aria-label="Estado de registro (UF)" aria-describedby="register-council-hint" disabled>
+                                                <option value="">UF</option>
+                                            </select>
                                         </div>
+                                    </div>
+                                    <p id="register-council-hint" class="registration-field-hint">Selecione sua profissão para informar o conselho.</p>
+                                    <div class="form-field">
+                                        <label for="register-birth-date"><i class="fas fa-calendar"></i> Data de Nascimento</label>
+                                        <input type="date" id="register-birth-date" name="register-birth-date">
                                     </div>
                                     <div class="form-field">
                                         <label for="register-phone"><i class="fas fa-phone"></i> Telefone (opcional)</label>
@@ -1255,9 +1261,13 @@
                                         <input type="password" id="register-password-confirm" name="register-password-confirm" autocomplete="new-password" minlength="6" required placeholder="Digite a senha novamente">
                                     </div>
                                     <p id="register-feedback" data-auth-feedback role="status" aria-live="polite" hidden></p>
-                                    <button type="submit" class="primary-btn wide-btn"><i class="fas fa-user-plus"></i> Cadastrar</button>
+                                    <button id="register-submit-btn" type="submit" class="primary-btn wide-btn"><span class="registration-submit-content"><i class="fas fa-user-plus" aria-hidden="true"></i><span>Cadastrar</span></span></button>
                                 </form>
                                 <button type="button" id="register-back-login-btn" data-auth-view="login" class="secondary-btn wide-btn">JÁ TENHO CONTA — FAZER LOGIN</button>
+                                <p id="register-security-note" class="registration-security-note">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="10" width="14" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path><path d="M12 14v3"></path></svg>
+                                    <span>Seus dados de acesso são enviados por conexão segura (HTTPS).</span>
+                                </p>
                                 <button type="button" class="close-btn" data-close-modal aria-label="Fechar">&times;</button>
                             </div>
                         </div>

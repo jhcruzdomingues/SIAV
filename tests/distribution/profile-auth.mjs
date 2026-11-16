@@ -78,19 +78,36 @@ export async function checkProfileAuth(page) {
       if (directory && width === 390 && theme === 'light') await page.locator('#auth-notice').screenshot({ path: join(directory, 'registration-invite-green.png'), timeout: 5000 });
       await page.locator('#register-profession').selectOption('Médico(a)');
       assert.equal(await page.locator('#register-council').isEnabled(), true);
+      assert.equal(await page.locator('#register-council-state').isEnabled(), true);
       assert.match(await page.locator('#register-council-label').textContent(), /CRM/);
+      await page.locator('#register-council').fill('000000');
+      await page.locator('#register-council-state').selectOption('SP');
+      const licenseFields = await page.locator('#register-council, #register-council-state').evaluateAll(xs => xs.map(x => {
+        const b = x.getBoundingClientRect(); return { x: b.x, right: b.right, bottom: b.bottom, width: b.width, height: b.height };
+      }));
+      assert.ok(licenseFields[0].right < licenseFields[1].x && Math.abs(licenseFields[0].bottom - licenseFields[1].bottom) < 2, 'UF must sit beside the registration, with aligned inputs');
+      assert.ok(licenseFields[1].width >= 80 && licenseFields[1].height >= 44, 'UF must remain usable by touch');
       if (directory && width === 390 && theme === 'dark') await page.screenshot({ path: join(directory, 'registration-390-dark-crm.png'), animations: 'disabled' });
-      await page.locator('#register-council').fill('CRM-SINTETICO');
       await page.locator('#register-profession').selectOption('Estudante');
       assert.equal(await page.locator('#register-council').isDisabled(), true);
+      assert.equal(await page.locator('#register-council-state').isDisabled(), true);
       assert.equal(await page.locator('#register-council').inputValue(), '');
+      assert.equal(await page.locator('#register-council-state').inputValue(), '');
       await noClip('#register-intro, #register-back-login-btn');
       await readableButtons('#register-form-full button[type=submit], #register-back-login-btn');
-      if (width <= 430) {
-        const fields = await page.locator('#register-form-full .form-row input').evaluateAll(xs => xs.map(x => ({ x: x.getBoundingClientRect().x, width: x.getBoundingClientRect().width })));
-        assert.ok(Math.abs(fields[0].x - fields[1].x) < 1 && Math.abs(fields[0].width - fields[1].width) < 1, 'Narrow registration fields must remain readable in full-width rows');
-      }
+      const submitAlignment = await page.locator('#register-submit-btn').evaluate(button => {
+        const b = button.getBoundingClientRect(); const content = button.querySelector('.registration-submit-content').getBoundingClientRect();
+        return { dx: Math.abs((b.left + b.right - content.left - content.right) / 2), dy: Math.abs((b.top + b.bottom - content.top - content.bottom) / 2) };
+      });
+      assert.ok(submitAlignment.dx < 1 && submitAlignment.dy < 1, 'Registration action must be centered');
+      assert.equal(await page.locator('#register-security-note svg').count(), 1);
+      assert.match(await page.locator('#register-security-note').textContent(), /HTTPS/);
+      await noClip('#register-security-note, #register-council-hint');
       await capture(width, theme, 'register');
+      if (directory && width === 390 && theme === 'light') {
+        await page.locator('#register-security-note').scrollIntoViewIfNeeded();
+        await page.screenshot({ path: join(directory, 'registration-submit-security.png'), animations: 'disabled' });
+      }
       await page.locator('#register-back-login-btn').tap();
       await oneModal('login-modal');
       await page.locator('#login-open-register-btn').tap();

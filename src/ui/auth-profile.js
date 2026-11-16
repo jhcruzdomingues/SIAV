@@ -310,7 +310,7 @@ export async function handleRegistrationFromForm(e) {
         const email = form.querySelector('input[type="email"]').value.trim();
         const password = form.querySelector('input[type="password"]').value;
         const metadata = {};
-        for (const [id, key] of [['register-name', 'full_name'], ['register-profession', 'profession'], ['register-council', 'council_register'], ['register-phone', 'phone_number'], ['register-birth-date', 'birth_date']]) {
+        for (const [id, key] of [['register-name', 'full_name'], ['register-profession', 'profession'], ['register-council', 'council_register'], ['register-council-state', 'council_state'], ['register-phone', 'phone_number'], ['register-birth-date', 'birth_date']]) {
             const field = document.getElementById(id);
             const value = field?.value.trim();
             if (value && !field.disabled) metadata[key] = value;

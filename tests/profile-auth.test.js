@@ -234,7 +234,8 @@ describe('Cadastro: confirmação de senha e registro por profissão', () => {
         expect(el('register-council').disabled).toBe(false);
         expect(el('register-council').required).toBe(true);
         expect(el('register-council-label').textContent).toContain(council);
-        expect(el('register-council').placeholder).toContain(council);
+        expect(el('register-council').placeholder).toContain('Ex.:');
+        expect(el('register-council-state').required).toBe(true);
         expect(el('register-council').value).toBe('');
         expect(api.signUp).not.toHaveBeenCalled();
     });
@@ -254,6 +255,8 @@ describe('Cadastro: confirmação de senha e registro por profissão', () => {
         expect(el('register-council').disabled).toBe(false);
         expect(api.signUp).not.toHaveBeenCalled();
         el('register-council').value = 'COREN-UF 000000';
+        el('register-council-state').value = 'SP';
+        el('register-council-state').dispatchEvent(new Event('change'));
         await handleRegistrationFromForm(eventFor('register-form-full'));
         expect(api.signUp).toHaveBeenCalledTimes(1);
         expect(api.signUp.mock.calls[0][0].options.data.council_register).toBe('COREN-UF 000000');
@@ -291,5 +294,61 @@ describe('Cadastro: confirmação de senha e registro por profissão', () => {
         expect(el('register-council').disabled).toBe(true);
         expect(el('register-council').required).toBe(false);
         expect(el('register-password-confirm').validity.customError).toBe(false);
+    });
+});
+
+describe('Cadastro: UF do registro e rodapé', () => {
+    it('oferece as 27 UFs sem depender de uma consulta remota', () => {
+        const select = el('register-council-state');
+        expect(select.tagName).toBe('SELECT');
+        expect([...select.options].map(x => x.value).filter(Boolean)).toEqual(['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']);
+        expect(api.signUp).not.toHaveBeenCalled();
+    });
+    it('exige uma UF válida de profissional e a envia separada, sem alterar o número', async () => {
+        fillRegistration('Médico(a)');
+        el('register-council').value = '000000';
+        await handleRegistrationFromForm(eventFor('register-form-full'));
+        expect(api.signUp).not.toHaveBeenCalled();
+        expect(el('register-feedback').textContent).toContain('UF');
+        el('register-council-state').value = 'SP';
+        el('register-council-state').dispatchEvent(new Event('change'));
+        await handleRegistrationFromForm(eventFor('register-form-full'));
+        expect(api.signUp).toHaveBeenCalledTimes(1);
+        expect(api.signUp.mock.calls[0][0].options.data).toMatchObject({ council_register: '000000', council_state: 'SP' });
+    });
+    it('Estudante desabilita e limpa os dois campos e não envia UF nem conselho', async () => {
+        fillRegistration('Médico(a)');
+        el('register-council-state').value = 'SP';
+        el('register-council').value = '000000';
+        fillRegistration('Estudante');
+        expect(el('register-council-state').disabled).toBe(true);
+        expect(el('register-council-state').required).toBe(false);
+        expect(el('register-council-state').value).toBe('');
+        await handleRegistrationFromForm(eventFor('register-form-full'));
+        const data = api.signUp.mock.calls[0][0].options.data;
+        expect(data).not.toHaveProperty('council_state');
+        expect(data).not.toHaveProperty('council_register');
+    });
+    it('troca de profissão limpa a UF e reset restaura o campo desabilitado', async () => {
+        fillRegistration('Médico(a)'); el('register-council-state').value = 'SP';
+        fillRegistration('Enfermeiro(a)');
+        expect(el('register-council-state').value).toBe('');
+        expect(el('register-council-state').disabled).toBe(false);
+        el('register-form-full').reset(); await Promise.resolve();
+        expect(el('register-council-state').disabled).toBe(true);
+    });
+    it('não deduz região de CREFITO a partir da UF escolhida', async () => {
+        fillRegistration('Fisioterapeuta');
+        el('register-council').value = '1/000000-F';
+        el('register-council-state').value = 'PE';
+        el('register-council-state').dispatchEvent(new Event('change'));
+        await handleRegistrationFromForm(eventFor('register-form-full'));
+        expect(api.signUp.mock.calls[0][0].options.data).toMatchObject({ council_register: '1/000000-F', council_state: 'PE' });
+    });
+    it('tem conteúdo centralizável no botão e aviso com cadeado, sem promessa absoluta', () => {
+        expect(el('register-submit-btn').querySelector('.registration-submit-content').textContent).toContain('Cadastrar');
+        expect(el('register-security-note').querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+        expect(el('register-security-note').textContent).toContain('HTTPS');
+        expect(el('register-security-note').textContent).not.toMatch(/100%|totalmente|garantid/i);
     });
 });
