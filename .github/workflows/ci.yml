@@ -2,7 +2,7 @@ name: CI - Testes e Build
 
 on:
   push:
-    branches: [ main, develop, fix/adult-pcr-antiarrhythmics, fix/distribution-assets-pwa, fix/pcr-mobile-interface-6a, fix/profile-auth-separation, fix/registration-validation-professions, fix/registration-state-layout, fix/sound-settings-presentation ]
+    branches: [ main, develop, fix/adult-pcr-antiarrhythmics, fix/distribution-assets-pwa, fix/pcr-mobile-interface-6a, fix/profile-auth-separation, fix/registration-validation-professions, fix/registration-state-layout, fix/sound-settings-presentation, fix/appearance-settings-presentation ]
   pull_request:
     branches: [ main, develop ]
 

@@ -130,11 +130,13 @@ function updateThemeSelector(theme) {
     try {
         document.querySelectorAll('.theme-option').forEach(option => {
             option.classList.remove('active');
+            option.setAttribute('aria-pressed', 'false');
         });
 
         const selectedOption = document.getElementById(`theme-${theme}`);
         if (selectedOption) {
             selectedOption.classList.add('active');
+            selectedOption.setAttribute('aria-pressed', 'true');
         }
     } catch (error) {
         console.error('Erro ao atualizar seletor de tema:', error);

@@ -1182,3 +1182,146 @@ body[data-theme="dark"] .settings-badge {
         transform: none !important;
     }
 }
+
+/* Compact appearance panel. Only presentation; theme keys/selection are preserved. */
+body #theme-settings-modal { animation: none; }
+body #theme-settings-modal .modal-content.appearance-panel {
+    display: flex;
+    flex-direction: column;
+    width: calc(100% - 24px);
+    max-width: 440px;
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    padding: 0;
+    overflow: hidden;
+    background: var(--ui-surface);
+    color: var(--ui-text);
+    border: 1px solid var(--ui-border);
+    border-radius: 16px;
+    animation: none;
+    will-change: auto;
+}
+body #theme-settings-modal .appearance-header {
+    position: relative;
+    flex: 0 0 auto;
+    padding: 16px 68px 14px 16px;
+    border-bottom: 1px solid var(--ui-border);
+}
+body #theme-settings-modal .appearance-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 4px;
+    padding: 0;
+    border: 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: normal;
+    text-align: left;
+    color: var(--ui-text);
+}
+body #theme-settings-modal .appearance-header h3::after { content: none; }
+body #theme-settings-modal .appearance-header p { margin: 0; font-size: .8125rem; line-height: 1.45; color: var(--ui-muted); }
+body #theme-settings-modal .appearance-icon { flex: 0 0 20px; width: 20px; height: 20px; color: var(--ui-info-text); }
+body #theme-settings-modal .appearance-header .close-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--ui-border);
+    border-radius: 10px;
+    background: var(--ui-raised);
+    color: var(--ui-text);
+    font-size: 1.5rem;
+    line-height: 1;
+    box-shadow: none;
+    transform: none;
+    transition: border-color .15s ease;
+}
+body #theme-settings-modal .appearance-content { min-height: 0; padding: 16px; overflow-y: auto; overscroll-behavior: contain; }
+body #theme-settings-modal .theme-selector { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin: 0; padding: 0; }
+body #theme-settings-modal .theme-option {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr) 20px;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    width: 100%;
+    min-height: 68px;
+    margin: 0;
+    padding: 10px 12px;
+    border: 2px solid var(--ui-border);
+    border-radius: 12px;
+    background: var(--ui-surface);
+    color: var(--ui-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: none;
+    transform: none;
+    animation: none;
+    transition: border-color .15s ease;
+    will-change: auto;
+    touch-action: manipulation;
+}
+body #theme-settings-modal .theme-option::before,
+body #theme-settings-modal .theme-option::after { content: none; }
+body #theme-settings-modal .theme-option:hover { border-color: var(--ui-info-text); }
+body #theme-settings-modal .theme-option.active { background: var(--ui-info-bg); border-color: var(--ui-info-text); }
+body #theme-settings-modal .appearance-option-copy { display: block; min-width: 0; }
+body #theme-settings-modal .appearance-option-name { display: block; font-size: .9375rem; font-weight: 700; line-height: 1.5; color: var(--ui-text); }
+body #theme-settings-modal .appearance-option-description { display: block; margin-top: 2px; font-size: .8125rem; font-weight: 400; line-height: 1.45; color: var(--ui-muted); }
+body #theme-settings-modal .theme-checkmark {
+    position: static;
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--ui-info-text);
+    font-size: 1rem;
+    line-height: 1;
+    opacity: 0;
+    box-shadow: none;
+    transform: none;
+    animation: none;
+}
+body #theme-settings-modal .theme-option.active .theme-checkmark { opacity: 1; }
+body #theme-settings-modal .appearance-hint { margin: 12px 0 0; font-size: .8125rem; line-height: 1.45; color: var(--ui-muted); }
+body #theme-settings-modal .appearance-footer { flex: 0 0 auto; padding: 12px 16px; padding-bottom: max(12px, env(safe-area-inset-bottom)); border-top: 1px solid var(--ui-border); }
+body #theme-settings-modal .appearance-done-btn {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    min-height: 44px;
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--ui-action);
+    border-radius: 10px;
+    background: var(--ui-action);
+    color: var(--ui-on-action);
+    font: inherit;
+    font-size: .875rem;
+    font-weight: 600;
+    line-height: 1.4;
+    box-shadow: none;
+    transform: none;
+    transition: border-color .15s ease;
+    touch-action: manipulation;
+}
+body #theme-settings-modal button:focus-visible { outline: 3px solid var(--ui-info-text); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+    body #theme-settings-modal,
+    body #theme-settings-modal *,
+    body #theme-settings-modal *::before,
+    body #theme-settings-modal *::after { animation: none !important; transition: none !important; }
+}

@@ -13,6 +13,7 @@ import { serveDist } from './server.mjs';
 import { checkPCRInterface, enableVisualIcons } from './pcr-interface.mjs';
 import { checkProfileAuth } from './profile-auth.mjs';
 import { checkSoundSettings } from './sound-settings.mjs';
+import { checkAppearanceSettings } from './appearance-settings.mjs';
 import { SIAV_PROJECT_REF, SIAV_PROJECT_URL } from '../../src/config/public-supabase.js';
 
 let root, temporaryDirectory, server, browser, workerConfig;
@@ -264,5 +265,13 @@ test('Sons em retrato: controles proporcionais, temas, rolagem e preferências s
   try {
     const page = await readyPage(context);
     await checkSoundSettings(page);
+  } finally { await context.close(); }
+}, { timeout: 120000 });
+
+test('Aparência em retrato: opções compactas, contraste, teclado, persistência e modo automático', async () => {
+  const { context } = await contextFor('Pixel 5');
+  try {
+    const page = await readyPage(context);
+    await checkAppearanceSettings(page);
   } finally { await context.close(); }
 }, { timeout: 120000 });
