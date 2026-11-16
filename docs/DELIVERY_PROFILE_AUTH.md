@@ -67,7 +67,7 @@ Recuperação de senha por e-mail é a evolução recomendada em entrega própri
 | 390 px, claro | [Abrir](screenshots/profile-auth/profile-390-light-login.png) | [Abrir](screenshots/profile-auth/profile-390-light-register.png) |
 | 390 px, escuro | [Abrir](screenshots/profile-auth/profile-390-dark-login.png) | [Abrir](screenshots/profile-auth/profile-390-dark-register.png) |
 
-[Aviso vermelho temporário, 390 px](screenshots/profile-auth/profile-390-dark-notice.png).
+[Detalhe do aviso vermelho temporário, 390 px](screenshots/profile-auth/profile-390-dark-notice.png). Esta captura recorta apenas o aviso para permitir revisar suas cores e texto.
 
 ## Reteste no aparelho e reversão
 

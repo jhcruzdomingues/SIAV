@@ -108,7 +108,8 @@ export async function checkProfileAuth(page) {
   });
   assert.deepEqual(noticeStyle, { background: 'rgb(254, 242, 242)', border: 'rgb(153, 27, 27)', color: 'rgb(127, 29, 29)' });
   await page.setViewportSize({ width: 390, height: 844 });
-  await capture(390, 'dark', 'notice');
+  if (directory) await page.locator('#auth-notice').screenshot({
+    path: join(directory, 'profile-390-dark-notice.png'), animations: 'disabled', timeout: 5000 });
   await page.locator('#auth-notice').waitFor({ state: 'hidden', timeout: 8000 });
   assert.deepEqual(remoteRequests, []);
 }
