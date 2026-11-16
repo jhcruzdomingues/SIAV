@@ -1413,164 +1413,162 @@
         </div>
     </div>
 
-    <div id="sound-settings-modal" class="modal large-modal">
+    <div id="sound-settings-modal" class="modal large-modal" role="dialog" aria-modal="true" aria-labelledby="sound-settings-title">
         <div class="modal-content">
             <div class="sound-settings-header">
-                <h3><i class="fas fa-volume-up"></i> Configurações de Sons</h3>
-                <p>Personalize os sons e alertas do SIAV</p>
+                <h3 id="sound-settings-title"><svg class="sound-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 5 6 9H3v6h3l5 4V5Z"></path><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"></path></svg>Sons e alertas</h3>
+                <p>Ajuste o volume e os sons do aplicativo.</p>
                 <button type="button" onclick="closeModal('sound-settings-modal')" class="close-btn" aria-label="Fechar">&times;</button>
             </div>
 
             <div class="sound-settings-content">
                 <div class="sound-setting-group">
                     <div class="setting-row">
-                        <label class="setting-label">
-                            <i class="fas fa-power-off"></i> Ativar Sons
-                        </label>
+                        <label class="setting-label" for="sounds-enabled-toggle">Ativar sons</label>
                         <label class="switch">
-                            <input type="checkbox" id="sounds-enabled-toggle" checked>
-                            <span class="slider"></span>
+                            <input type="checkbox" id="sounds-enabled-toggle" role="switch" checked>
+                            <span class="slider" aria-hidden="true"></span>
                         </label>
                     </div>
                 </div>
 
                 <div class="sound-setting-group">
-                    <h4><i class="fas fa-sliders-h"></i> Volume Global</h4>
+                    <h4><label for="volume-slider">Volume geral</label></h4>
                     <p class="sound-description">Ajuste o volume de todos os sons do aplicativo</p>
                     <div class="volume-control">
                         <div class="volume-slider-wrapper">
                             <input type="range" id="volume-slider" min="0" max="100" value="70" step="1">
                         </div>
-                        <span id="volume-value">70%</span>
+                        <output id="volume-value" for="volume-slider">70%</output>
                     </div>
                 </div>
 
                 <div class="sound-settings-divider"></div>
 
                 <div class="sound-setting-group">
-                    <h4><i class="fas fa-bolt"></i> Som de Desfibrilação</h4>
+                    <h4><label for="shock-sound-select">Desfibrilação</label></h4>
                     <p class="sound-description">Alerta sonoro ao aplicar choque elétrico</p>
 
                     <div class="sound-selector">
                         <select id="shock-sound-select" class="sound-select">
-                            <option value="">Selecione um som...</option>
+                            <option value="">Selecionar som</option>
                             <optgroup label="Biblioteca Padrão">
-                                <option value="sounds/library/shocks/shock-1.mp3">Som de Choque 1</option>
-                                <option value="sounds/library/shocks/shock-2.mp3">Som de Choque 2</option>
-                                <option value="sounds/library/shocks/shock-3.mp3">Som de Choque 3</option>
+                                <option value="sounds/library/shocks/shock-1.mp3">Choque 1</option>
+                                <option value="sounds/library/shocks/shock-2.mp3">Choque 2</option>
+                                <option value="sounds/library/shocks/shock-3.mp3">Choque 3</option>
                             </optgroup>
                             <optgroup label="Sons Personalizados" id="shock-custom-group">
                             </optgroup>
                         </select>
-                        <button class="preview-btn" onclick="previewSound('shock')">
+                        <button type="button" class="preview-btn" onclick="previewSound('shock')">
                             <i class="fas fa-play"></i> Testar
                         </button>
                     </div>
 
                     <div class="upload-area">
                         <input type="file" id="upload-shock-sound" accept="audio/*" style="display: none;">
-                        <button class="upload-btn" onclick="document.getElementById('upload-shock-sound').click()">
-                            <i class="fas fa-upload"></i> Adicionar Som Personalizado
+                        <button type="button" class="upload-btn" onclick="document.getElementById('upload-shock-sound').click()">
+                            <i class="fas fa-upload"></i> Adicionar som personalizado
                         </button>
                     </div>
                 </div>
 
                 <div class="sound-setting-group">
-                    <h4><i class="fas fa-bell"></i> Som de Checagem de Ritmo</h4>
+                    <h4><label for="alert-sound-select">Checagem de ritmo</label></h4>
                     <p class="sound-description">Lembrete a cada 2 minutos para verificar ritmo cardíaco</p>
 
                     <div class="sound-selector">
                         <select id="alert-sound-select" class="sound-select">
-                            <option value="">Selecione um som...</option>
+                            <option value="">Selecionar som</option>
                             <optgroup label="Biblioteca Padrão">
-                                <option value="sounds/library/alerts/alert-1.mp3">Som de Alerta 1</option>
-                                <option value="sounds/library/alerts/alert-2.mp3">Som de Alerta 2</option>
-                                <option value="sounds/library/alerts/alert-3.mp3">Som de Alerta 3</option>
-                                <option value="sounds/library/alerts/alert-4.mp3">Som de Alerta 4</option>
-                                <option value="sounds/library/alerts/alert-5.mp3">Som de Alerta 5</option>
+                                <option value="sounds/library/alerts/alert-1.mp3">Alerta 1</option>
+                                <option value="sounds/library/alerts/alert-2.mp3">Alerta 2</option>
+                                <option value="sounds/library/alerts/alert-3.mp3">Alerta 3</option>
+                                <option value="sounds/library/alerts/alert-4.mp3">Alerta 4</option>
+                                <option value="sounds/library/alerts/alert-5.mp3">Alerta 5</option>
                             </optgroup>
                             <optgroup label="Sons Personalizados" id="alert-custom-group">
                             </optgroup>
                         </select>
-                        <button class="preview-btn" onclick="previewSound('alert')">
+                        <button type="button" class="preview-btn" onclick="previewSound('alert')">
                             <i class="fas fa-play"></i> Testar
                         </button>
                     </div>
 
                     <div class="upload-area">
                         <input type="file" id="upload-alert-sound" accept="audio/*" style="display: none;">
-                        <button class="upload-btn" onclick="document.getElementById('upload-alert-sound').click()">
-                            <i class="fas fa-upload"></i> Adicionar Som Personalizado
+                        <button type="button" class="upload-btn" onclick="document.getElementById('upload-alert-sound').click()">
+                            <i class="fas fa-upload"></i> Adicionar som personalizado
                         </button>
                     </div>
                 </div>
 
                 <div class="sound-setting-group">
-                    <h4><i class="fas fa-syringe"></i> Som de Medicação</h4>
+                    <h4><label for="drug-sound-select">Medicação</label></h4>
                     <p class="sound-description">Confirmação sonora ao registrar medicamentos</p>
 
                     <div class="sound-selector">
                         <select id="drug-sound-select" class="sound-select">
-                            <option value="">Selecione um som...</option>
+                            <option value="">Selecionar som</option>
                             <optgroup label="Biblioteca Padrão">
-                                <option value="sounds/library/drugs/drug-1.mp3">Som de Medicação 1</option>
-                                <option value="sounds/library/drugs/drug-2.mp3">Som de Medicação 2</option>
-                                <option value="sounds/library/drugs/drug-3.mp3">Som de Medicação 3</option>
+                                <option value="sounds/library/drugs/drug-1.mp3">Medicação 1</option>
+                                <option value="sounds/library/drugs/drug-2.mp3">Medicação 2</option>
+                                <option value="sounds/library/drugs/drug-3.mp3">Medicação 3</option>
                             </optgroup>
                             <optgroup label="Sons Personalizados" id="drug-custom-group">
                             </optgroup>
                         </select>
-                        <button class="preview-btn" onclick="previewSound('drug')">
+                        <button type="button" class="preview-btn" onclick="previewSound('drug')">
                             <i class="fas fa-play"></i> Testar
                         </button>
                     </div>
 
                     <div class="upload-area">
                         <input type="file" id="upload-drug-sound" accept="audio/*" style="display: none;">
-                        <button class="upload-btn" onclick="document.getElementById('upload-drug-sound').click()">
-                            <i class="fas fa-upload"></i> Adicionar Som Personalizado
+                        <button type="button" class="upload-btn" onclick="document.getElementById('upload-drug-sound').click()">
+                            <i class="fas fa-upload"></i> Adicionar som personalizado
                         </button>
                     </div>
                 </div>
 
                 <div class="sound-setting-group">
-                    <h4><i class="fas fa-heartbeat"></i> Som do Metrônomo</h4>
+                    <h4><label for="metronome-sound-select">Metrônomo</label></h4>
                     <p class="sound-description">Ritmo das compressões torácicas (100-120 bpm)</p>
 
                     <div class="sound-selector">
                         <select id="metronome-sound-select" class="sound-select">
-                            <option value="">Selecione um som...</option>
+                            <option value="">Selecionar som</option>
                             <optgroup label="Biblioteca Padrão">
-                                <option value="sounds/library/metronome/metronome-1.mp3">Som de Metrônomo 1</option>
-                                <option value="sounds/library/metronome/metronome-2.wav">Som de Metrônomo 2</option>
-                                <option value="sounds/library/metronome/metronome-3.wav">Som de Metrônomo 3</option>
-                                <option value="sounds/library/metronome/metronome-4.mp3">Som de Metrônomo 4</option>
+                                <option value="sounds/library/metronome/metronome-1.mp3">Metrônomo 1</option>
+                                <option value="sounds/library/metronome/metronome-2.wav">Metrônomo 2</option>
+                                <option value="sounds/library/metronome/metronome-3.wav">Metrônomo 3</option>
+                                <option value="sounds/library/metronome/metronome-4.mp3">Metrônomo 4</option>
                             </optgroup>
                             <optgroup label="Sons Personalizados" id="metronome-custom-group">
                             </optgroup>
                         </select>
-                        <button class="preview-btn" onclick="previewSound('metronome')">
+                        <button type="button" class="preview-btn" onclick="previewSound('metronome')">
                             <i class="fas fa-play"></i> Testar
                         </button>
                     </div>
 
                     <div class="upload-area">
                         <input type="file" id="upload-metronome-sound" accept="audio/*" style="display: none;">
-                        <button class="upload-btn" onclick="document.getElementById('upload-metronome-sound').click()">
-                            <i class="fas fa-upload"></i> Adicionar Som Personalizado
+                        <button type="button" class="upload-btn" onclick="document.getElementById('upload-metronome-sound').click()">
+                            <i class="fas fa-upload"></i> Adicionar som personalizado
                         </button>
                     </div>
                 </div>
             </div>
 
             <div class="sound-settings-footer">
-                <button class="btn-back" onclick="backToSettingsMenu()">
+                <button type="button" class="btn-back" onclick="backToSettingsMenu()">
                     <i class="fas fa-arrow-left"></i> Voltar
                 </button>
-                <button class="btn-reset" onclick="resetSoundSettings()">
+                <button type="button" class="btn-reset" onclick="resetSoundSettings()">
                     <i class="fas fa-undo"></i> Restaurar
                 </button>
-                <button class="btn-save-sounds" onclick="saveSoundSettings()">
+                <button type="button" class="btn-save-sounds" onclick="saveSoundSettings()">
                     <i class="fas fa-save"></i> Salvar
                 </button>
             </div>

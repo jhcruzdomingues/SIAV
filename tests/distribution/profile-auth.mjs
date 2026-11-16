@@ -11,6 +11,11 @@ export async function checkProfileAuth(page) {
   };
   const oneModal = async id => {
     await page.locator(`#${id}.show`).waitFor();
+    // Measure final touch targets, after the existing scale-in animation.
+    await page.locator(`#${id}`).evaluate(async el => {
+      await Promise.all([...el.getAnimations(), ...el.querySelector('.modal-content').getAnimations()]
+        .map(animation => animation.finished.catch(() => {})));
+    });
     assert.deepEqual(await page.locator('.modal.show').evaluateAll(xs => xs.map(x => x.id)), [id]);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${id}: horizontal overflow`);
     const close = page.locator(`#${id} .close-btn`);

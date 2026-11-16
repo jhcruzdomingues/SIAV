@@ -12,6 +12,7 @@ import { STATIC_ASSETS, SOUND_ASSETS } from '../../scripts/distribution-assets.m
 import { serveDist } from './server.mjs';
 import { checkPCRInterface, enableVisualIcons } from './pcr-interface.mjs';
 import { checkProfileAuth } from './profile-auth.mjs';
+import { checkSoundSettings } from './sound-settings.mjs';
 import { SIAV_PROJECT_REF, SIAV_PROJECT_URL } from '../../src/config/public-supabase.js';
 
 let root, temporaryDirectory, server, browser, workerConfig;
@@ -193,7 +194,7 @@ for (const device of ['iPhone 13', 'iPhone SE']) {
       }
       await page.locator('#theme-settings-modal .close-btn').tap();
       await page.locator('#nav-dashboard').tap();
-      await page.locator('#profile-modal').waitFor({ state: 'visible' });
+      await page.locator('#profile-modal.show').waitFor({ state: 'visible' });
       assert.equal(await page.locator('.modal.show').count(), 1);
       await page.locator('#profile-modal .close-btn').tap();
       await page.locator('#nav-home').tap();
@@ -255,5 +256,13 @@ test('Perfil em retrato: login/cadastro explícitos, 7 larguras, dois temas e er
   try {
     const page = await readyPage(context);
     await checkProfileAuth(page);
+  } finally { await context.close(); }
+}, { timeout: 120000 });
+
+test('Sons em retrato: controles proporcionais, temas, rolagem e preferências sem backend', async () => {
+  const { context } = await contextFor('Pixel 5');
+  try {
+    const page = await readyPage(context);
+    await checkSoundSettings(page);
   } finally { await context.close(); }
 }, { timeout: 120000 });
