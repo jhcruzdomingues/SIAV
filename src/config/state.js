@@ -65,6 +65,7 @@ const defaultState = {
   totalPauseSeconds: 0,
   resuscitationTiming: null,
   roscAchieved: false,
+  encounterOutcome: null,
 
   // Metrônomo
   metronomeActive: false,
@@ -157,6 +158,7 @@ export function resetPCRState() {
   state.totalPauseSeconds = 0;
   state.resuscitationTiming = null;
   state.roscAchieved = false;
+  state.encounterOutcome = null;
   state.tempRhythmData = { rhythm: null, notes: null };
 
   compressionCycle.active = false;

@@ -178,6 +178,7 @@ export function startPCR() {
     state.shockCount = 0;
     state.shocks = [];
     state.medications = [];
+    state.encounterOutcome = null;
     // Only a new encounter resets notes; ROSC recurrence preserves this collection.
     state.notes = [];
     const notesInput = document.getElementById('clinical-notes');
@@ -247,6 +248,7 @@ export function finishPCR() {
 }
 
 export function executePCRFinish() {
+    if (!state.pcrActive) return;
     closeTimingEpisode('encounter-end');
     syncTimingTotals();
 

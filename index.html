@@ -129,11 +129,6 @@
                         <div id="ac-cycle-progress" class="ac-progress-fill"></div>
                     </div>
 
-                    <div class="compression-control">
-                        <button id="compressions-btn" type="button" class="btn-compressions" data-compression-state="ready" aria-label="Iniciar compressões" aria-pressed="false">
-                            <span class="compression-action-text">INICIAR COMPRESSÕES</span>
-                        </button>
-                    </div>
                     <section class="ac-main-display" aria-label="Conduta atual e próximo passo">
                         <div class="ac-instruction-panel">
                             <div class="ac-guidance-header">
@@ -168,11 +163,16 @@
                     </section>
                 </div>
 
-                <p id="compression-measurement" class="measurement-summary" aria-live="off">Medição de compressões informada pelo operador.</p>
-
+                <div class="compression-control">
+                    <button id="compressions-btn" type="button" class="btn-compressions" data-compression-state="ready" aria-label="Iniciar compressões" aria-pressed="false">
+                        <span class="compression-action-text">INICIAR COMPRESSÕES</span>
+                    </button>
+                </div>
                 <button id="rhythm-conduta-btn" class="btn-check-rhythm" aria-label="Checar ritmo cardíaco do paciente">
                     <i class="fas fa-heart-pulse"></i> CHECAR RITMO
                 </button>
+
+                <p id="compression-measurement" class="measurement-summary" aria-live="off">Medição de compressões informada pelo operador.</p>
 
                 <div class="metronome-section" role="group" aria-label="Metrônomo de 100 a 120 BPM">
                     <button id="bpm-minus" type="button" class="btn-bpm" aria-label="Diminuir BPM">−</button>
@@ -206,10 +206,6 @@
                     </button>
                 </div>
 
-                <button id="rosc-btn" class="btn-rosc" aria-label="Registrar retorno da circulação espontânea">
-                    <i class="fas fa-heart-circle-check"></i> RCE OBTIDO (PULSO +)
-                </button>
-
                 <button id="restart-pcr-btn" class="secondary-btn" hidden>CONFIRMAR NOVA PCR APÓS ROSC</button>
 
                 <div class="timeline-container">
@@ -222,7 +218,7 @@
                     </div>
                 </div>
 
-                <button id="finish-pcr-btn" class="btn-finish">FINALIZAR ATENDIMENTO</button>
+                <button id="finish-pcr-btn" type="button" class="btn-finish" aria-haspopup="dialog" aria-controls="finish-attendance-modal">FINALIZAR ATENDIMENTO</button>
             </section>
             
             <section id="rhythm-selector-screen" class="screen">
@@ -919,6 +915,28 @@
                     <button type="submit" id="patient-start-btn" class="primary-btn">INICIAR ATENDIMENTO ADULTO</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div id="finish-attendance-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="finish-attendance-title" aria-describedby="finish-attendance-description">
+        <div class="modal-content finish-attendance-panel">
+            <div class="finish-attendance-header">
+                <h3 id="finish-attendance-title">Finalizar atendimento</h3>
+                <button id="finish-attendance-close" type="button" aria-label="Voltar à PCR sem finalizar">&times;</button>
+            </div>
+            <p id="finish-attendance-description">Selecione o motivo do encerramento.</p>
+            <div class="finish-attendance-options">
+                <button id="rosc-btn" type="button" data-finish-outcome="rosc">
+                    <span>RCE OBTIDO</span><small>Retorno da circulação espontânea</small>
+                </button>
+                <button id="finish-death-btn" type="button" data-finish-outcome="death">
+                    <span>ÓBITO</span><small>Registrar óbito informado pela equipe</small>
+                </button>
+                <button id="finish-cancelled-btn" type="button" data-finish-outcome="cancelled">
+                    <span>CANCELAR ATENDIMENTO</span><small>Encerrar sem declarar desfecho clínico</small>
+                </button>
+            </div>
+            <p class="finish-attendance-note">Os registros existentes não serão apagados.</p>
         </div>
     </div>
 

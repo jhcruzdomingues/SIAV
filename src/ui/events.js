@@ -2,10 +2,11 @@ import { restartPCRAfterROSC } from '../pcr/core.js';
 import { state } from '../config/state.js';
 import { showScreen, openModal, closeModal, showTransientAlert } from './dom.js';
 import { showPatientModal, savePatientData, updatePatientStartAction, cancelPatientSetup } from './patient.js';
-import { finishPCR, handleTimingVisibility, handleTimingPageHide } from '../pcr/core.js';
+import { handleTimingVisibility, handleTimingPageHide } from '../pcr/core.js';
 import { handleCompressionAction } from './compressions.js';
+import { showFinishAttendance, closeFinishAttendance, chooseFinishOutcome, handleFinishAttendanceKey } from './finish-attendance.js';
 import { toggleMetronome, adjustBPM } from './audio.js';
-import { showRhythmSelectorScreen, selectRhythmOption, processRhythmSelection, applyShockAndResume, roscObtido } from '../pcr/rhythm.js';
+import { showRhythmSelectorScreen, selectRhythmOption, processRhythmSelection, applyShockAndResume } from '../pcr/rhythm.js';
 import { showMedModal, updateMedicationDose, recordMedication, cancelMedicationRecord, selectMedication } from '../pcr/medications.js';
 import { showNotesModal, saveNotes } from '../pcr/log.js';
 import { showVitalsModal, recordVitals } from '../pcr/vitals.js';
@@ -90,7 +91,7 @@ export function registerAllEvents() {
         }
         showRhythmSelectorScreen(false);
     });
-    document.getElementById('rosc-btn')?.addEventListener('click', roscObtido);
+    document.querySelectorAll('[data-finish-outcome]').forEach(button => button.addEventListener('click', () => chooseFinishOutcome(button.dataset.finishOutcome)));
     document.getElementById('restart-pcr-btn')?.addEventListener('click', restartPCRAfterROSC);
 
     document.querySelectorAll('#rhythm-selector-screen .rhythm-option-btn').forEach(btn => {
@@ -122,7 +123,8 @@ export function registerAllEvents() {
     document.getElementById('record-vitals-btn')?.addEventListener('click', recordVitals);
     document.getElementById('cancel-vitals-btn')?.addEventListener('click', () => closeModal('vitals-modal'));
 
-    document.getElementById('finish-pcr-btn')?.addEventListener('click', finishPCR);
+    document.getElementById('finish-pcr-btn')?.addEventListener('click', showFinishAttendance);
+    document.getElementById('finish-attendance-close')?.addEventListener('click', closeFinishAttendance);
     document.getElementById('save-glasgow-btn')?.addEventListener('click', saveGlasgow);
     document.getElementById('close-glasgow-btn')?.addEventListener('click', () => closeModal('glasgow-modal'));
 
@@ -151,7 +153,10 @@ export function registerAllEvents() {
     });
     document.querySelectorAll('.modal').forEach(modal => {
         modal.addEventListener('click', event => {
-            if (event.target === modal) closeModal(modal.id);
+            if (event.target === modal) {
+                if (modal.id === 'finish-attendance-modal') closeFinishAttendance();
+                else closeModal(modal.id);
+            }
         });
     });
     document.getElementById('dashboard-user-info')?.addEventListener('click', showProfileModal);
@@ -257,6 +262,7 @@ export function registerAllEvents() {
 
     // Configura atalhos de teclado globais
     document.addEventListener('keydown', (e) => {
+        if (handleFinishAttendanceKey(e)) return;
         const active = document.activeElement;
         if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT' || active.isContentEditable)) return;
 

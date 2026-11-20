@@ -65,6 +65,7 @@ assert(await page.locator('#patient-form button[type="submit"]').textContent()==
 await page.locator('#cancel-patient-btn').tap();
 page.removeAllListeners('dialog'); page.on('dialog',dialog=>dialog.accept());
 await page.locator('#finish-pcr-btn').tap();
+await page.locator('#finish-cancelled-btn').tap();
 await page.locator('#start-pcr-card').tap();
 assert(await page.locator('#start-pcr-no-data-btn').count()===0,'ação única permite iniciar também sem dados');
 assert(await page.locator('#patient-form button[type="submit"]').textContent()==='INICIAR ATENDIMENTO ADULTO','novo preparo identifica algoritmo adulto na ação de início');

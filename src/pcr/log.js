@@ -2,6 +2,7 @@ import { state } from '../config/state.js';
 import { supabase } from '../config/supabase.js';
 import { formatTime } from '../utils/formatters.js';
 import { getTimingSummary } from './timing.js';
+import { ENCOUNTER_OUTCOMES, isEncounterOutcome } from './outcomes.js';
 import { showScreen, closeModal, openModal, showTransientAlert } from '../ui/dom.js';
 
 export function showNotesModal() {
@@ -175,6 +176,9 @@ export async function deleteLogEntry(logId) {
 }
 
 export function generateEvolution(saveLog) {
+    const outcome = state.encounterOutcome;
+    const recordedOutcome = outcome && isEncounterOutcome(outcome.type) ? ENCOUNTER_OUTCOMES[outcome.type].label : null;
+    const outcomeOperation = /^[0-9a-f-]{36}$/i.test(outcome?.id || '') ? outcome.id : 'N/I';
     const timing = getTimingSummary();
     const totalDurationSeconds = state.resuscitationTiming ? Math.floor(timing.totalMs / 1000) : state.pcrSeconds;
     const patientName = state.patient.name;
@@ -216,7 +220,8 @@ export function generateEvolution(saveLog) {
 
             <h3 style="margin-top: 20px;">RESUMO ANALÍTICO DE PERFORMANCE (AHA)</h3>
             <ul>
-                <li><strong>Desfecho Final:</strong> ${state.roscAchieved ? 'ROSC ALCANÇADO' : 'PCR NÃO REVERTIDA'}</li>
+                <li><strong>Desfecho Final:</strong> ${recordedOutcome || (state.roscAchieved ? 'ROSC ALCANÇADO' : 'PCR NÃO REVERTIDA')}</li>
+                ${recordedOutcome ? `<li><strong>Registro do desfecho:</strong> ${formatEffectiveTime(outcome.timestamp)}; operação ${outcomeOperation}. Escolha confirmada pelo operador.</li>` : ''}
                 <li><strong>Tempo acumulado de PCR:</strong> ${formatTime(totalDurationSeconds)} (soma dos episódios até ROSC ou encerramento; inclui preparo e pausas)</li>
                 <li><strong>Tempo administrativo desde o início:</strong> ${formatTime(Math.max(0, Math.floor((Date.now() - state.pcrStartTime) / 1000)))}</li>
                 <li><strong>Compressões registradas:</strong> ${state.resuscitationTiming ? formatTime(compressionDuration) : 'N/I'}</li>

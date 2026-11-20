@@ -226,6 +226,14 @@ export function roscObtido() {
     
     if (!confirm("CONFIRMAR: O paciente obteve Retorno da Circulação Espontânea (RCE/ROSC)?")) return;
     
+    if (!recordROSC()) return;
+    if (typeof window.finishPCR === 'function') window.finishPCR();
+}
+
+// Reuse the exact clinical transition after an explicit UI confirmation.
+// Administrative completion is owned by the caller, not this transition.
+export function recordROSC() {
+    if (!isClinicalArrestActive()) return false;
     state.roscAchieved = true;
     state.clinical.status = 'rosc';
     state.clinical.pendingShock = null;
@@ -241,5 +249,5 @@ export function roscObtido() {
     if (typeof window.addEvent === 'function') window.addEvent('ROSC OBTIDO - Pulso presente, Circulação Espontânea', 'success');
     
     if (typeof window.showTransientAlert === 'function') window.showTransientAlert('✅ ROSC OBTIDO! Finalizando RCP e iniciando Cuidados Pós-PCR.', 'success', 4000);
-    if (typeof window.finishPCR === 'function') window.finishPCR();
+    return true;
 }

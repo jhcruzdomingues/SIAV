@@ -28,7 +28,7 @@ export async function checkAlertsAndCompressions(page) {
     assert.deepEqual(clipped, [], `Clipped PCR controls: ${selector}`);
   };
   const timerBox = () => page.locator('.ac-timers-dashboard').evaluate(el => {
-    const r = el.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height };
+    const r = el.getBoundingClientRect(); return { x: r.x + scrollX, y: r.y + scrollY, width: r.width, height: r.height };
   });
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.locator('#start-pcr-card').tap(); await page.locator('#patient-start-btn').tap();
@@ -76,7 +76,13 @@ export async function checkAlertsAndCompressions(page) {
       await noClip('#compressions-btn, #compression-resume-alert');
       await page.evaluate(() => scrollTo(0, 0));
       const actionBox = await button.boundingBox();
-      assert.ok(actionBox.height >= 44 && actionBox.height <= 72 && actionBox.y >= 0 && actionBox.y + actionBox.height <= page.viewportSize().height, 'Paused action must be compact and in the first viewport');
+      assert.ok(actionBox.height >= 44 && actionBox.height <= 72, 'Paused action must remain compact');
+      const order = await page.evaluate(() => {
+        const bottom = selector => document.querySelector(selector).getBoundingClientRect().bottom;
+        const top = selector => document.querySelector(selector).getBoundingClientRect().top;
+        return bottom('.ac-main-display') <= top('#compressions-btn') && bottom('#compressions-btn') <= top('#rhythm-conduta-btn');
+      });
+      assert.equal(order, true, 'User requested instructions → RCP → check rhythm');
       if ([320, 390].includes(width)) await capture(`pcr-${width}-${theme}-paused`);
       await button.tap();
       assert.equal(await button.getAttribute('data-compression-state'), 'running');
@@ -108,9 +114,9 @@ export async function checkAlertsAndCompressions(page) {
   await page.locator('#pcr-screen.active').waitFor();
   assert.equal(await button.getAttribute('data-compression-state'), 'running');
   assert.equal(await notice.isVisible(), false);
-  // Keep the synthetic ROSC screen open without invoking export/persistence UI.
-  await page.evaluate(() => { window.finishPCR = () => {}; });
+  await page.locator('#finish-pcr-btn').tap();
   page.once('dialog', dialog => dialog.accept()); await page.locator('#rosc-btn').tap();
+  assert.equal(await page.evaluate(() => window.SIAV.state.pcrActive), false);
   assert.equal(await button.isDisabled(), true); assert.equal(await notice.isVisible(), false);
   assert.equal(await button.evaluate(el => getComputedStyle(el).animationName), 'none');
 }

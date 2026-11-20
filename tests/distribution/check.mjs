@@ -17,6 +17,7 @@ import { checkAppearanceSettings } from './appearance-settings.mjs';
 import { checkPatientEntry } from './patient-entry.mjs';
 import { checkAlertsAndCompressions } from './pcr-alerts-compressions.mjs';
 import { checkAdrenalineGuidance } from './pcr-adrenaline-guidance.mjs';
+import { checkFinishAttendance } from './pcr-finish-attendance.mjs';
 import { SIAV_PROJECT_REF, SIAV_PROJECT_URL } from '../../src/config/public-supabase.js';
 
 let root, temporaryDirectory, server, browser, workerConfig;
@@ -300,5 +301,13 @@ test('PCR: relógio de adrenalina, registro sintético pela interface e orienta�
   try {
     const page = await readyPage(context);
     await checkAdrenalineGuidance(page);
+  } finally { await context.close(); }
+}, { timeout: 120000 });
+
+test('PCR: instruções → RCP → ritmo e encerramento explícito, três motivos e confirmação mobile', async () => {
+  const { context } = await contextFor('Pixel 5');
+  try {
+    const page = await readyPage(context);
+    await checkFinishAttendance(page);
   } finally { await context.close(); }
 }, { timeout: 120000 });
