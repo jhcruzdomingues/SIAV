@@ -359,7 +359,7 @@ body #patient-modal :is(button, input):focus-visible { outline: 3px solid var(--
     body #patient-modal * { animation: none !important; transition: none !important; }
 }
 
-/* Guidance only: the approved timer strip keeps its markup and sizing. */
+/* One guidance panel; the third timer is reserved for documented adrenaline. */
 body #pcr-action-center {
     --guidance-bg: var(--ui-raised);
     --guidance-ink: var(--ui-text);
@@ -382,8 +382,13 @@ body #pcr-action-center .ac-main-display {
     color: var(--ui-text);
     box-shadow: none;
 }
-body #pcr-action-center .ac-instruction-panel { min-width: 0; width: 100%; gap: 10px; }
-body #pcr-action-center .ac-guidance-header { display: flex; align-items: center; gap: 8px; min-width: 0; }
+body #pcr-action-center .ac-instruction-panel { min-width: 0; width: 100%; gap: 10px; text-align: center; }
+body #pcr-action-center .ac-guidance-header { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; }
+body #pcr-action-center .ac-step-label { color: var(--guidance-ink); font-size: .6875rem; font-weight: 700; line-height: 1.5; letter-spacing: .06em; }
+body #pcr-action-center .ac-next-step { border-top: 1px solid var(--guidance-border); padding-top: 12px; }
+body #pcr-action-center .ac-next-step[hidden] { display: none; }
+body #pcr-action-center #ac-next-text { margin: 4px 0 0; color: var(--ui-text); font-size: .875rem; line-height: 1.5; overflow-wrap: break-word; }
+body #pcr-action-center .ac-timer-caption { display: block; margin-top: 4px; color: #cbd5e1; font-size: .625rem; line-height: 1.4; text-align: center; }
 body #pcr-action-center .ac-guidance-header .ac-icon {
     flex: 0 0 20px;
     width: 20px;
@@ -479,6 +484,7 @@ body #pcr-screen #compression-resume-alert {
     line-height: 1.5;
 }
 body #pcr-screen #compression-resume-alert[hidden] { display: none; }
+body #pcr-screen .ac-instruction-panel #compression-resume-alert { margin: 0; font-size: .8125rem; }
 body #pcr-screen #compressions-btn {
     display: flex;
     flex-direction: row;

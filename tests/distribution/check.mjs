@@ -16,6 +16,7 @@ import { checkSoundSettings } from './sound-settings.mjs';
 import { checkAppearanceSettings } from './appearance-settings.mjs';
 import { checkPatientEntry } from './patient-entry.mjs';
 import { checkAlertsAndCompressions } from './pcr-alerts-compressions.mjs';
+import { checkAdrenalineGuidance } from './pcr-adrenaline-guidance.mjs';
 import { SIAV_PROJECT_REF, SIAV_PROJECT_URL } from '../../src/config/public-supabase.js';
 
 let root, temporaryDirectory, server, browser, workerConfig;
@@ -291,5 +292,13 @@ test('PCR: avisos, controle único de compressões, pausa/retomada e faixa de te
   try {
     const page = await readyPage(context);
     await checkAlertsAndCompressions(page);
+  } finally { await context.close(); }
+}, { timeout: 120000 });
+
+test('PCR: relógio de adrenalina, registro sintético pela interface e orientação unificada em retrato', async () => {
+  const { context } = await contextFor('Pixel 5');
+  try {
+    const page = await readyPage(context);
+    await checkAdrenalineGuidance(page);
   } finally { await context.close(); }
 }, { timeout: 120000 });

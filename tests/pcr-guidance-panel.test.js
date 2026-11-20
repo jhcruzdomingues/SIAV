@@ -44,6 +44,7 @@ describe('Avisos de PCR: síntese sem perder informações clínicas', () => {
         vi.spyOn(brain, 'getProtocolNextStep').mockImplementationOnce(() => { throw new Error('SYNTHETIC renderer error'); });
         expect(() => updatePcrGuidance()).not.toThrow();
         expect(el('ac-primary-text').textContent).toBe('Orientação indisponível');
+        expect(el('ac-next-text').textContent).toBe(''); expect(el('ac-next-step').hidden).toBe(true);
         expect(el('ac-dose-text').textContent).toBe(''); expect(el('ac-dose-container').style.display).toBe('none');
         expect(el('ac-safety-note').style.display).not.toBe('none');
         updatePcrGuidance(); expect(el('ac-dose-text').textContent).not.toBe('');
@@ -60,5 +61,46 @@ describe('Avisos de PCR: síntese sem perder informações clínicas', () => {
         const before = JSON.stringify({ clinical: state.clinical, medications: state.medications, shocks: state.shocks, timing: state.resuscitationTiming, start: state.pcrStartTime, seconds: state.pcrSeconds });
         updatePcrGuidance(); updatePcrGuidance();
         expect(JSON.stringify({ clinical: state.clinical, medications: state.medications, shocks: state.shocks, timing: state.resuscitationTiming, start: state.pcrStartTime, seconds: state.pcrSeconds })).toBe(before);
+    });
+    it('reúne orientação, pausa, ressalvas e próximo passo em um só painel, fora dos relógios', () => {
+        updatePcrGuidance();
+        const panel = document.querySelector('#pcr-screen .ac-main-display');
+        expect(document.querySelectorAll('#pcr-screen .ac-main-display')).toHaveLength(1);
+        for (const id of ['ac-primary-text', 'compression-resume-alert', 'ac-safety-note', 'ac-next-step', 'pcr-feedback-banner']) expect(panel.contains(el(id))).toBe(true);
+        expect(panel.contains(el('ac-drug-countdown'))).toBe(false);
+        expect(panel.textContent).toContain('AGORA'); expect(panel.textContent).toContain('PRÓXIMO PASSO');
+    });
+    it('RCP em curso anuncia reavaliação ao fim do ciclo sem antecipar dose ou choque', () => {
+        state.clinical.step = 4; state.shockCount = 1;
+        updatePcrGuidance();
+        expect(el('ac-primary-text').textContent).toBe(brain.getProtocolNextStep(getClinicalSnapshot()).message);
+        expect(el('ac-next-text').textContent).toBe('Ao fim do ciclo, reavalie o ritmo.');
+        expect(el('ac-dose-container').style.display).toBe('none');
+        expect(el('ac-next-text').textContent).not.toMatch(/adrenalina|amiodarona|lidocaína|choque/i);
+    });
+    it('na avaliação, o próximo passo mantém a condição de desfibrilar somente se indicado', () => {
+        compressionCycle.currentPhase = 'rhythm_check'; updatePcrGuidance();
+        expect(el('ac-next-text').textContent).toBe(brain.getProtocolNextStep(getClinicalSnapshot()).details);
+        expect(el('ac-next-text').textContent).toContain('se indicado');
+        expect(el('ac-dose-container').style.display).toBe('none');
+    });
+    it('ROSC mostra cuidados pós-parada e confirmação de nova PCR, sem dose de PCR', () => {
+        state.roscAchieved = true; state.clinical.status = 'rosc'; updatePcrGuidance();
+        expect(el('ac-primary-text').textContent).toContain('CUIDADOS PÓS-PARADA');
+        expect(el('ac-next-text').textContent).toContain('confirmação explícita');
+        expect(el('ac-safety-note').style.display).toBe('none');
+        expect(el('ac-dose-container').style.display).toBe('none');
+    });
+    it('histórico incerto e pediatria mantêm revisão, sem anunciar dose adulta futura', () => {
+        state.patient.algorithm = 'pediatric'; updatePcrGuidance();
+        expect(el('ac-next-text').textContent).toContain('Confirme os dados e o percurso');
+        expect(el('ac-dose-container').style.display).toBe('none');
+        expect(el('ac-safety-note').textContent).toContain('Não inferir o protocolo');
+    });
+    it('encerramento retira o próximo passo para não manter orientação antiga', () => {
+        updatePcrGuidance(); expect(el('ac-next-step').hidden).toBe(false);
+        state.pcrActive = false; state.clinical.status = 'inactive'; updatePcrGuidance();
+        expect(el('ac-next-step').hidden).toBe(true); expect(el('ac-next-text').textContent).toBe('');
+        expect(el('ac-dose-container').style.display).toBe('none');
     });
 });

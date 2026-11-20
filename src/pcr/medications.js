@@ -1,8 +1,9 @@
 import { state, intervals } from '../config/state.js';
 import { closeModal, openModal, showTransientAlert } from '../ui/dom.js';
 import { addMedication } from './events.js';
-import { getAntiarrhythmicHistory, evaluateMedicationGuidance, getProtocolNextStep } from '../protocols/medical.js';
+import { getAntiarrhythmicHistory, evaluateMedicationGuidance } from '../protocols/medical.js';
 import { getClinicalSnapshot, isClinicalArrestActive, newOperationId } from './clinical.js';
+import { updateAdrenalineTimerDisplay } from '../ui/pcr-adrenaline-timer.js';
 
 const medNames = { adrenalina: 'Adrenalina', amiodarona: 'Amiodarona', lidocaina: 'Lidocaína', atropina: 'Atropina', bicarbonato: 'Bicarbonato de Sódio', sulfato: 'Sulfato de Magnésio' };
 const formOperation = () => document.getElementById('med-modal')?.dataset.operationId;
@@ -199,30 +200,10 @@ export function startDrugTimer() {
 
 export function stopDrugTimer() {
     if (intervals.drugTimer) { clearInterval(intervals.drugTimer); intervals.drugTimer = null; }
-    const labelEl = document.getElementById('ac-drug-timer-label');
-    const countdownEl = document.getElementById('ac-drug-countdown');
-    if (labelEl) labelEl.textContent = 'MEDICAÇÃO';
-    if (countdownEl) {
-        countdownEl.textContent = '--:--';
-        countdownEl.className = 'ac-timer-value';
-    }
+    updateAdrenalineTimerDisplay(getClinicalSnapshot());
 }
 
 export function updateDrugStatusDisplay() {
-    const label = document.getElementById('ac-drug-timer-label');
-    const value = document.getElementById('ac-drug-countdown');
-    if (!label || !value) return;
-    const snapshot = getClinicalSnapshot();
-    const step = getProtocolNextStep(snapshot);
-    const guidance = step.medicationGuidance;
-    label.textContent = 'ORIENTAÇÃO CLÍNICA';
-    if (!isClinicalArrestActive()) value.textContent = state.roscAchieved ? 'ROSC' : 'INATIVA';
-    else if (step.criticalAction === 'DRUG') value.textContent = 'VER CONDUTAS';
-    else if (Object.values(guidance).some(entry => entry.status === 'review')) value.textContent = 'REAVALIAR';
-    else {
-        const seconds = guidance.adrenalina?.secondsUntilDue;
-        value.textContent = seconds > 0 ? `${Math.floor(seconds / 60)}:${String(Math.ceil(seconds % 60)).padStart(2, '0')}` : 'AGUARDAR';
-    }
-    value.className = 'ac-timer-value';
+    updateAdrenalineTimerDisplay(getClinicalSnapshot());
     if (document.getElementById('med-modal')?.classList.contains('show')) updateMedicationDose();
 }

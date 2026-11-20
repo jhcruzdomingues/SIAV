@@ -119,8 +119,9 @@
                             <span id="ac-cycle-timer-display" class="ac-timer-value">--:--</span>
                         </div>
                         <div class="ac-timer-box drug-time" id="ac-drug-timer-container">
-                            <span id="ac-drug-timer-label" class="ac-timer-label">MEDICAÇÃO</span>
+                            <span id="ac-drug-timer-label" class="ac-timer-label">ADRENALINA</span>
                             <span id="ac-drug-countdown" class="ac-timer-value">--:--</span>
+                            <span id="ac-drug-timer-context" class="ac-timer-caption">sem registro</span>
                         </div>
                     </div>
 
@@ -129,17 +130,18 @@
                     </div>
 
                     <div class="compression-control">
-                        <p id="compression-resume-alert" class="compression-resume-alert" role="status" aria-live="polite" hidden>Compressões interrompidas. Retome a RCP quando seguro.</p>
                         <button id="compressions-btn" type="button" class="btn-compressions" data-compression-state="ready" aria-label="Iniciar compressões" aria-pressed="false">
                             <span class="compression-action-text">INICIAR COMPRESSÕES</span>
                         </button>
                     </div>
-                    <div class="ac-main-display">
+                    <section class="ac-main-display" aria-label="Conduta atual e próximo passo">
                         <div class="ac-instruction-panel">
                             <div class="ac-guidance-header">
                                 <div id="ac-icon" class="ac-icon" aria-hidden="true"><i class="fas fa-heartbeat"></i></div>
                                 <div id="ac-status-badge" class="ac-badge">PREPARAÇÃO</div>
                             </div>
+                            <span class="ac-step-label">AGORA</span>
+                            <p id="compression-resume-alert" class="compression-resume-alert" role="status" aria-live="polite" hidden>Compressões interrompidas. Retome a RCP quando seguro.</p>
                             <h2 id="ac-primary-text" class="ac-hud-title" aria-live="polite" aria-atomic="true">Pronto para iniciar!</h2>
                             <div id="ac-dose-container" class="ac-hud-dose" style="display: none;">
                                 <div class="ac-dose-content">
@@ -148,6 +150,10 @@
                                 </div>
                             </div>
                             <p id="ac-safety-note" class="ac-safety-note" style="display: none;"></p>
+                            <div id="ac-next-step" class="ac-next-step" hidden>
+                                <span class="ac-step-label">PRÓXIMO PASSO</span>
+                                <p id="ac-next-text"></p>
+                            </div>
                             <details id="ac-context-details" class="ac-context-details">
                                 <summary>Ver orientação completa</summary>
                                 <div id="ac-details-container" class="ac-hud-details">
@@ -159,7 +165,7 @@
                                 <div class="pcr-feedback-text" id="pcr-feedback-text"></div>
                             </div>
                         </div>
-                    </div>
+                    </section>
                 </div>
 
                 <p id="compression-measurement" class="measurement-summary" aria-live="off">Medição de compressões informada pelo operador.</p>

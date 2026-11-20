@@ -1,6 +1,7 @@
 import { state, compressionCycle } from '../config/state.js';
 import { getClinicalSnapshot, isClinicalArrestActive } from '../pcr/clinical.js';
 import { getProtocolNextStep } from '../protocols/medical.js';
+import { updateAdrenalineTimerDisplay } from './pcr-adrenaline-timer.js';
 
 export function feedbackCritico(btnId) {
     if ('vibrate' in navigator) navigator.vibrate([120, 60, 120]);
@@ -21,6 +22,18 @@ const show = (node, visible, display = 'block') => {
     if (node) node.style.display = visible ? display : 'none';
 };
 let guidanceFailureReported = false;
+
+// Presentation of the existing sequence only. Never predict the next rhythm,
+// shock, medication or dose: those require their real recorded assessment.
+function nextAction(snapshot, step) {
+    if (snapshot.roscAchieved || snapshot.clinical?.status === 'rosc') return step.details;
+    if (!snapshot.pcrActive) return '';
+    if (['rhythm_check', 'shock_advised'].includes(snapshot.currentPhase)) return step.details;
+    if (snapshot.currentPhase === 'preparation') return 'Após avaliar o ritmo, siga a conduta indicada.';
+    if (Object.values(step.medicationGuidance || {}).some(entry => entry.status === 'review')) return 'Confirme os dados e o percurso registrados antes de seguir a orientação automática.';
+    if (snapshot.currentPhase === 'compressions') return 'Ao fim do ciclo, reavalie o ritmo.';
+    return '';
+}
 
 function updateCompressionControls() {
     let phaseClass = 'status-preparation', badge = 'PREPARAÇÃO', icon = 'fas fa-heartbeat';
@@ -78,6 +91,9 @@ function renderUnavailable() {
     setText(document.getElementById('ac-details-text'), '');
     const context = document.getElementById('ac-context-details');
     if (context) context.hidden = true;
+    const next = document.getElementById('ac-next-step');
+    if (next) next.hidden = true;
+    setText(document.getElementById('ac-next-text'), '');
     if (!guidanceFailureReported) console.error('Falha ao atualizar a orientação da PCR.');
     guidanceFailureReported = true;
 }
@@ -87,7 +103,9 @@ export function updatePcrGuidance() {
         const center = document.getElementById('pcr-action-center');
         const visual = updateCompressionControls();
         if (!center) return true;
-        const step = getProtocolNextStep(getClinicalSnapshot());
+        const snapshot = getClinicalSnapshot();
+        updateAdrenalineTimerDisplay(snapshot);
+        const step = getProtocolNextStep(snapshot);
         if (step.criticalAction === 'DRUG') {
             visual.phaseClass = 'status-danger'; visual.badge = 'AÇÃO CRÍTICA'; visual.icon = 'fas fa-syringe';
         } else if (step.style === 'warning') visual.phaseClass = 'status-warning';
@@ -101,6 +119,10 @@ export function updatePcrGuidance() {
         }
         // The original clinical message/dose remain the source of the display.
         setText(document.getElementById('ac-primary-text'), step.message);
+        const next = nextAction(snapshot, step);
+        setText(document.getElementById('ac-next-text'), next);
+        const nextPanel = document.getElementById('ac-next-step');
+        if (nextPanel) nextPanel.hidden = !next;
         const dose = document.getElementById('ac-dose-container');
         setText(document.getElementById('ac-dose-text'), (step.dose || '').replace(/; /g, '\n').replace(/ OU /g, '\nOU '));
         show(dose, !!step.dose, 'flex');
@@ -108,7 +130,6 @@ export function updatePcrGuidance() {
         const guidance = Object.values(step.medicationGuidance || {});
         const warnings = (step.style === 'warning' || step.criticalAction === 'DRUG')
             ? guidance.filter(entry => entry.status === 'review').map(entry => entry.reason).filter(Boolean) : [];
-        if (state.roscAchieved && step.details) warnings.push(step.details);
         const adrenaline = step.medicationGuidance?.adrenalina;
         if (adrenaline?.status === 'due' && adrenaline.reason) {
             const marker = 'a cada ', index = adrenaline.reason.indexOf(marker);
