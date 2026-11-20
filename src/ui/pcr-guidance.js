@@ -14,103 +14,131 @@ export function feedbackCritico(btnId) {
     }
 }
 
-export function updatePcrGuidance() {
-    const actionCenter = document.getElementById('pcr-action-center');
-    const badge = document.getElementById('ac-status-badge');
-    const cycleCounter = document.getElementById('ac-cycle-counter');
-    const iconContainer = document.getElementById('ac-icon');
-    const primaryText = document.getElementById('ac-primary-text');
-    
-    const compBtn = document.getElementById('compressions-btn');
-    
-    if (!actionCenter || !compBtn) return;
+const setText = (node, value = '') => {
+    if (node && node.textContent !== value) node.textContent = value;
+};
+const show = (node, visible, display = 'block') => {
+    if (node) node.style.display = visible ? display : 'none';
+};
+let guidanceFailureReported = false;
 
-    const protocolStep = getProtocolNextStep(getClinicalSnapshot());
-    
-    let phaseClass = 'status-preparation';
-    let badgeText = 'PREPARAÇÃO';
-    let iconClass = 'fas fa-heartbeat';
-    let compBtnText = 'INICIAR COMPRESSÕES';
-    let compBtnStyle = 'linear-gradient(135deg, var(--success), #219a52)';
-
-    switch(compressionCycle.currentPhase) {
-        case 'rosc':
-            phaseClass = 'status-preparation'; badgeText = 'ROSC';
-            compBtnText = 'ROSC — PCR INTERROMPIDA';
-            compBtn.disabled = true; break;
-        case 'preparation':
-            phaseClass = 'status-preparation'; badgeText = 'PREPARAÇÃO'; iconClass = 'fas fa-heartbeat';
-            compBtnText = 'INICIAR COMPRESSÕES'; compBtnStyle = 'linear-gradient(135deg, var(--success), #219a52)';
-            compBtn.disabled = false; break;
+function updateCompressionControls() {
+    let phaseClass = 'status-preparation', badge = 'PREPARAÇÃO', icon = 'fas fa-heartbeat';
+    let action = 'INICIAR COMPRESSÕES', disabled = false;
+    switch (compressionCycle.currentPhase) {
+        case 'rosc': badge = 'ROSC'; action = 'ROSC — PCR INTERROMPIDA'; disabled = true; break;
         case 'compressions':
-            phaseClass = 'status-compressions'; badgeText = compressionCycle.paused ? 'REGISTRO DE COMPRESSÕES PAUSADO' : 'RCP ATIVA'; iconClass = 'fas fa-hands-helping';
-            compBtnText = compressionCycle.paused ? 'REGISTRAR RETOMADA DAS COMPRESSÕES' : 'RCP EM ANDAMENTO'; compBtnStyle = 'linear-gradient(135deg, var(--warning), #e67e22)';
-            compBtn.disabled = !compressionCycle.paused; break;
-        case 'rhythm_check':
-            phaseClass = 'status-rhythm'; badgeText = 'AVALIAÇÃO'; iconClass = 'fas fa-wave-square';
-            compBtnText = 'RETOMAR COMPRESSÕES'; compBtnStyle = 'linear-gradient(135deg, var(--success), #219a52)'; 
-            compBtn.disabled = false; break;
-        case 'shock_advised':
-            phaseClass = 'status-shock'; badgeText = 'AFASTAR!'; iconClass = 'fas fa-bolt';
-            compBtnText = 'RETOMAR COMPRESSÕES'; compBtnStyle = 'linear-gradient(135deg, var(--success), #219a52)'; 
-            compBtn.disabled = false; break;
+            phaseClass = 'status-compressions'; badge = compressionCycle.paused ? 'PAUSADO' : 'RCP ATIVA'; icon = 'fas fa-hands-helping';
+            action = compressionCycle.paused ? 'RETOMAR COMPRESSÕES' : 'PAUSAR COMPRESSÕES';
+            disabled = false; break;
+        case 'rhythm_check': phaseClass = 'status-rhythm'; badge = 'AVALIAÇÃO'; icon = 'fas fa-wave-square'; action = 'RETOMAR COMPRESSÕES'; break;
+        case 'shock_advised': phaseClass = 'status-shock'; badge = 'AFASTAR!'; icon = 'fas fa-bolt'; action = 'RETOMAR COMPRESSÕES'; break;
     }
-    if (!isClinicalArrestActive()) compBtn.disabled = true;
-    const pause = document.getElementById('pause-compressions-btn');
-    if (pause) pause.disabled = !isClinicalArrestActive() || compressionCycle.currentPhase !== 'compressions' || compressionCycle.paused;
+    if (!isClinicalArrestActive()) {
+        disabled = true;
+        if (!state.roscAchieved) { badge = 'ENCERRADO'; action = 'ATENDIMENTO ENCERRADO'; phaseClass = 'status-preparation'; }
+    }
+    const button = document.getElementById('compressions-btn');
+    const paused = isClinicalArrestActive() && compressionCycle.paused && compressionCycle.currentPhase !== 'preparation';
+    const running = isClinicalArrestActive() && compressionCycle.currentPhase === 'compressions' && !compressionCycle.paused;
+    if (button) {
+        if (button.dataset.actionText !== action || !button.querySelector('.compression-action-icon')) {
+            const ns = 'http://www.w3.org/2000/svg';
+            const symbol = document.createElementNS(ns, 'svg'); symbol.setAttribute('viewBox', '0 0 24 24');
+            symbol.setAttribute('aria-hidden', 'true'); symbol.setAttribute('focusable', 'false'); symbol.classList.add('compression-action-icon');
+            const shape = document.createElementNS(ns, 'path');
+            shape.setAttribute('d', running ? 'M6 5h4v14H6zM14 5h4v14h-4z' : 'M8 5v14l11-7z');
+            symbol.appendChild(shape);
+            const label = document.createElement('span'); label.className = 'compression-action-text'; label.textContent = action;
+            button.textContent = ''; button.append(symbol, label); button.dataset.actionText = action;
+        }
+        button.disabled = disabled; button.style.removeProperty('background'); button.setAttribute('aria-label', action);
+        button.dataset.compressionState = paused ? 'paused' : running ? 'running' : disabled ? 'inactive' : 'ready';
+        button.setAttribute('aria-pressed', String(running));
+        if (paused) button.setAttribute('aria-describedby', 'compression-resume-alert');
+        else button.removeAttribute('aria-describedby');
+    }
+    const resumeAlert = document.getElementById('compression-resume-alert');
+    if (resumeAlert) resumeAlert.hidden = !paused;
     const restart = document.getElementById('restart-pcr-btn');
     if (restart) restart.hidden = !(state.pcrActive && state.roscAchieved);
-    
-    // Override visual se for ação crítica de protocolo (Ex: Adrenalina Imediata)
-    if (protocolStep.criticalAction === 'DRUG') {
-        phaseClass = 'status-danger';
-        badgeText = 'AÇÃO CRÍTICA';
-        iconClass = 'fas fa-syringe';
-    }
+    return { phaseClass, badge, icon };
+}
 
-    // Aplica no DOM
-    actionCenter.className = `pcr-action-center ${phaseClass}`;
-    badge.textContent = badgeText;
-    iconContainer.innerHTML = `<i class="${iconClass}"></i>`;
-    
-    // Formata o texto principal (HUD style)
-    let mainTitle = protocolStep.message;
-    if (mainTitle.includes('—')) {
-        const parts = mainTitle.split('—');
-        primaryText.innerHTML = `<span class="ac-title-main">${parts[0].trim()}</span> <span class="ac-title-sub">${parts[1].trim()}</span>`;
-    } else if (mainTitle.includes(':')) {
-        const parts = mainTitle.split(':');
-        primaryText.innerHTML = `<span class="ac-title-main">${parts[0].trim()}</span> <span class="ac-title-sub">${parts[1].trim()}</span>`;
-    } else {
-        primaryText.textContent = mainTitle;
-    }
+function renderUnavailable() {
+    updateCompressionControls();
+    const center = document.getElementById('pcr-action-center');
+    if (center) center.className = 'pcr-action-center status-warning';
+    setText(document.getElementById('ac-status-badge'), 'REVISÃO NECESSÁRIA');
+    setText(document.getElementById('ac-primary-text'), 'Orientação indisponível');
+    setText(document.getElementById('ac-dose-text'), '');
+    show(document.getElementById('ac-dose-container'), false);
+    setText(document.getElementById('ac-safety-note'), 'Confira o protocolo e os dados registrados antes de seguir a orientação.');
+    show(document.getElementById('ac-safety-note'), true);
+    setText(document.getElementById('ac-details-text'), '');
+    const context = document.getElementById('ac-context-details');
+    if (context) context.hidden = true;
+    if (!guidanceFailureReported) console.error('Falha ao atualizar a orientação da PCR.');
+    guidanceFailureReported = true;
+}
 
-    // Pega os containers fixos
-    const doseContainer = document.getElementById('ac-dose-container');
-    const doseText = document.getElementById('ac-dose-text');
-    const detailsContainer = document.getElementById('ac-details-container');
-    const detailsText = document.getElementById('ac-details-text');
-    
-    if (doseContainer && doseText) {
-        if (protocolStep.dose) {
-            doseText.textContent = protocolStep.dose;
-            doseContainer.style.display = 'flex';
-        } else {
-            doseContainer.style.display = 'none';
+export function updatePcrGuidance() {
+    try {
+        const center = document.getElementById('pcr-action-center');
+        const visual = updateCompressionControls();
+        if (!center) return true;
+        const step = getProtocolNextStep(getClinicalSnapshot());
+        if (step.criticalAction === 'DRUG') {
+            visual.phaseClass = 'status-danger'; visual.badge = 'AÇÃO CRÍTICA'; visual.icon = 'fas fa-syringe';
+        } else if (step.style === 'warning') visual.phaseClass = 'status-warning';
+        const className = `pcr-action-center ${visual.phaseClass}`;
+        if (center.className !== className) center.className = className;
+        setText(document.getElementById('ac-status-badge'), visual.badge);
+        const icon = document.getElementById('ac-icon');
+        if (icon && icon.dataset.icon !== visual.icon) {
+            const glyph = document.createElement('i'); glyph.className = visual.icon; glyph.setAttribute('aria-hidden', 'true');
+            icon.textContent = ''; icon.appendChild(glyph); icon.dataset.icon = visual.icon;
         }
-    }
-    
-    if (detailsContainer && detailsText) {
-        if (protocolStep.details) {
-            detailsText.textContent = protocolStep.details;
-            detailsContainer.style.display = 'flex';
-        } else {
-            detailsContainer.style.display = 'none';
+        // The original clinical message/dose remain the source of the display.
+        setText(document.getElementById('ac-primary-text'), step.message);
+        const dose = document.getElementById('ac-dose-container');
+        setText(document.getElementById('ac-dose-text'), (step.dose || '').replace(/; /g, '\n').replace(/ OU /g, '\nOU '));
+        show(dose, !!step.dose, 'flex');
+
+        const guidance = Object.values(step.medicationGuidance || {});
+        const warnings = (step.style === 'warning' || step.criticalAction === 'DRUG')
+            ? guidance.filter(entry => entry.status === 'review').map(entry => entry.reason).filter(Boolean) : [];
+        if (state.roscAchieved && step.details) warnings.push(step.details);
+        const adrenaline = step.medicationGuidance?.adrenalina;
+        if (adrenaline?.status === 'due' && adrenaline.reason) {
+            const marker = 'a cada ', index = adrenaline.reason.indexOf(marker);
+            warnings.push(index >= 0 ? 'Intervalo: ' + adrenaline.reason.slice(index + marker.length) : adrenaline.reason);
         }
+        const antiDue = ['amiodarona', 'lidocaina'].some(id => step.medicationGuidance?.[id]?.status === 'due');
+        if (antiDue && step.details) {
+            const firstSentence = step.details.split('. ')[0];
+            warnings.unshift(firstSentence.endsWith('.') ? firstSentence : firstSentence + '.');
+            const reasons = ['amiodarona', 'lidocaina'].map(id => step.medicationGuidance?.[id])
+                .filter(entry => entry?.status === 'due' && entry.reason).map(entry => entry.reason);
+            for (const reason of new Set(reasons)) warnings.push(reason.includes('mantendo o fármaco registrado') ? 'Manter o fármaco registrado.' : reason);
+        }
+        const safety = document.getElementById('ac-safety-note');
+        setText(safety, [...new Set(warnings)].join('\n'));
+        show(safety, warnings.length > 0);
+
+        const context = document.getElementById('ac-context-details');
+        if (context) {
+            const encounter = String(state.pcrStartTime);
+            if (context.dataset.encounter !== encounter) { context.open = false; context.dataset.encounter = encounter; }
+            context.hidden = !step.details;
+        }
+        setText(document.getElementById('ac-details-text'), step.details || '');
+        show(document.getElementById('ac-details-container'), !!step.details, 'flex');
+        setText(document.getElementById('ac-cycle-counter'), `CICLO ${compressionCycle.cycleCount}`);
+        guidanceFailureReported = false;
+        return true;
+    } catch {
+        renderUnavailable();
+        return false;
     }
-
-    cycleCounter.textContent = `CICLO ${compressionCycle.cycleCount}`;
-
-    compBtn.innerHTML = `<span>💪</span><span>${compBtnText}</span>`;
-    compBtn.style.background = compBtnStyle;
 }

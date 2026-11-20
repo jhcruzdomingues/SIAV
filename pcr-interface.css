@@ -358,3 +358,165 @@ body #patient-modal :is(button, input):focus-visible { outline: 3px solid var(--
     body #patient-modal,
     body #patient-modal * { animation: none !important; transition: none !important; }
 }
+
+/* Guidance only: the approved timer strip keeps its markup and sizing. */
+body #pcr-action-center {
+    --guidance-bg: var(--ui-raised);
+    --guidance-ink: var(--ui-text);
+    --guidance-border: var(--ui-border);
+    animation: none;
+}
+body #pcr-action-center.status-compressions { --guidance-bg: var(--ui-success-bg); --guidance-ink: var(--ui-success-text); }
+body #pcr-action-center.status-rhythm { --guidance-bg: var(--ui-info-bg); --guidance-ink: var(--ui-info-text); }
+body #pcr-action-center.status-shock,
+body #pcr-action-center.status-warning { --guidance-bg: var(--ui-warning-bg); --guidance-ink: var(--ui-warning-text); }
+body #pcr-action-center.status-danger { --guidance-bg: var(--ui-danger-bg); --guidance-ink: var(--ui-danger-text); }
+body #pcr-action-center .ac-main-display {
+    display: block;
+    min-width: 0;
+    padding: 12px;
+    margin: 12px 0 0;
+    border: 1px solid var(--guidance-border);
+    border-radius: 10px;
+    background: var(--guidance-bg);
+    color: var(--ui-text);
+    box-shadow: none;
+}
+body #pcr-action-center .ac-instruction-panel { min-width: 0; width: 100%; gap: 10px; }
+body #pcr-action-center .ac-guidance-header { display: flex; align-items: center; gap: 8px; min-width: 0; }
+body #pcr-action-center .ac-guidance-header .ac-icon {
+    flex: 0 0 20px;
+    width: 20px;
+    min-width: 20px;
+    height: 20px;
+    align-self: center;
+    border-radius: 0;
+    background: transparent;
+    color: var(--guidance-ink);
+    font-size: 1rem;
+    animation: none;
+}
+body #pcr-action-center .ac-badge {
+    margin: 0;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: var(--guidance-ink);
+    color: var(--ui-surface);
+    font-size: .6875rem;
+    line-height: 1.4;
+    letter-spacing: .02em;
+    box-shadow: none;
+}
+body #pcr-action-center .ac-hud-title {
+    display: block;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    color: var(--ui-text);
+    font-size: 1rem;
+    line-height: 1.45;
+    font-weight: 700;
+    letter-spacing: normal;
+    text-transform: none;
+    overflow-wrap: break-word;
+}
+body #pcr-action-center .ac-hud-dose {
+    min-width: 0;
+    border: 1px solid var(--guidance-border);
+    border-radius: 8px;
+    background: var(--ui-surface);
+    box-shadow: none;
+    overflow: visible;
+}
+body #pcr-action-center .ac-dose-content { min-width: 0; width: 100%; padding: 10px; gap: 6px; }
+body #pcr-action-center .ac-dose-label { color: var(--ui-muted); font-size: .6875rem; line-height: 1.4; letter-spacing: .02em; }
+body #pcr-action-center .ac-dose-value {
+    color: var(--guidance-ink);
+    font-family: inherit;
+    font-size: .875rem;
+    font-weight: 700;
+    line-height: 1.6;
+    letter-spacing: normal;
+    white-space: pre-line;
+    overflow-wrap: break-word;
+}
+body #pcr-action-center .ac-safety-note { margin: 0; font-size: .8125rem; line-height: 1.5; color: var(--guidance-ink); white-space: pre-line; }
+body #pcr-action-center .ac-context-details { min-width: 0; border-top: 1px solid var(--guidance-border); }
+body #pcr-action-center .ac-context-details[hidden] { display: none; }
+body #pcr-action-center .ac-context-details summary {
+    min-height: 44px;
+    padding: 12px 0;
+    color: var(--guidance-ink);
+    font-size: .8125rem;
+    line-height: 1.5;
+    font-weight: 600;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+body #pcr-action-center .ac-context-details summary:focus-visible { outline: 3px solid var(--guidance-ink); outline-offset: 2px; }
+body #pcr-action-center .ac-hud-details { padding: 0 0 8px; border: 0; background: transparent; }
+body #pcr-action-center .ac-details-content { color: var(--ui-text); font-size: .8125rem; line-height: 1.6; font-weight: 400; }
+body #pcr-action-center .pcr-feedback-banner.show { margin: 0; padding: 10px; gap: 8px; }
+body #pcr-action-center .pcr-feedback-icon { flex: 0 0 18px; font-size: 1rem; }
+body #pcr-action-center .pcr-feedback-text { min-width: 0; font-size: .8125rem; line-height: 1.5; }
+@media (prefers-reduced-motion: reduce) {
+    body #pcr-action-center,
+    body #pcr-action-center .ac-icon,
+    body #pcr-action-center .pcr-feedback-banner { animation: none !important; transition: none !important; }
+}
+
+/* One compression control: start / pause / resume, in the main PCR panel only. */
+body #pcr-screen .compression-control { margin: 16px 0 12px; }
+body #pcr-screen #compression-resume-alert {
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--ui-danger-text);
+    border-radius: 10px;
+    background: var(--ui-danger-bg);
+    color: var(--ui-danger-text);
+    font-size: .875rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+body #pcr-screen #compression-resume-alert[hidden] { display: none; }
+body #pcr-screen #compressions-btn {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 56px;
+    margin: 0;
+    padding: 14px 12px;
+    border: 2px solid var(--ui-action);
+    border-radius: 12px;
+    background: var(--ui-action);
+    color: var(--ui-on-action);
+    font: inherit;
+    font-size: .875rem;
+    font-weight: 700;
+    line-height: 1.5;
+    letter-spacing: normal;
+    text-align: center;
+    white-space: normal;
+    box-shadow: none;
+    transform: none;
+    animation: none;
+    transition: border-color .15s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+body #pcr-screen #compressions-btn .compression-action-icon { flex: 0 0 22px; width: 22px; height: 22px; fill: currentColor; }
+body #pcr-screen #compressions-btn .compression-action-text { min-width: 0; color: inherit; font-size: inherit; line-height: inherit; }
+body #pcr-screen #compressions-btn[data-compression-state="paused"] { background: #b91c1c; border-color: #b91c1c; }
+body #pcr-screen #compressions-btn[data-compression-state="paused"]:not(:disabled) { animation: compression-resume-attention 2s ease-in-out infinite; }
+body #pcr-screen #compressions-btn:disabled { opacity: .65; cursor: default; animation: none; }
+body #pcr-screen #compressions-btn:focus-visible { outline: 3px solid var(--ui-info-text); outline-offset: 3px; }
+@keyframes compression-resume-attention {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(185, 28, 28, .12); }
+    50% { box-shadow: 0 0 0 6px rgba(185, 28, 28, .25); }
+}
+@media (prefers-reduced-motion: reduce) {
+    body #pcr-screen #compressions-btn { animation: none !important; transition: none !important; }
+}

@@ -2,7 +2,8 @@ import { restartPCRAfterROSC } from '../pcr/core.js';
 import { state } from '../config/state.js';
 import { showScreen, openModal, closeModal, showTransientAlert } from './dom.js';
 import { showPatientModal, savePatientData, updatePatientStartAction, cancelPatientSetup } from './patient.js';
-import { startCompressions, finishPCR, pauseCompressions, handleTimingVisibility, handleTimingPageHide } from '../pcr/core.js';
+import { finishPCR, handleTimingVisibility, handleTimingPageHide } from '../pcr/core.js';
+import { handleCompressionAction } from './compressions.js';
 import { toggleMetronome, adjustBPM } from './audio.js';
 import { showRhythmSelectorScreen, selectRhythmOption, processRhythmSelection, applyShockAndResume, roscObtido } from '../pcr/rhythm.js';
 import { showMedModal, updateMedicationDose, recordMedication, cancelMedicationRecord, selectMedication } from '../pcr/medications.js';
@@ -74,8 +75,7 @@ export function registerAllEvents() {
     document.querySelectorAll('input[name="patient-protocol"]').forEach(input => input.addEventListener('change', updatePatientStartAction));
     document.getElementById('cancel-patient-btn')?.addEventListener('click', cancelPatientSetup);
 
-    document.getElementById('compressions-btn')?.addEventListener('click', startCompressions);
-    document.getElementById('pause-compressions-btn')?.addEventListener('click', pauseCompressions);
+    document.getElementById('compressions-btn')?.addEventListener('click', handleCompressionAction);
     document.addEventListener('visibilitychange', handleTimingVisibility);
     window.addEventListener('pagehide', handleTimingPageHide);
     window.addEventListener('pageshow', handleTimingVisibility);
@@ -262,8 +262,13 @@ export function registerAllEvents() {
 
         switch (e.code) {
             case 'KeyC': {
+                // The shortcut follows the same visible control, never a hidden
+                // screen/modal, copy shortcut, or held key that could toggle RCP.
+                if (e.repeat || e.ctrlKey || e.metaKey || e.altKey
+                    || !document.getElementById('pcr-screen')?.classList.contains('active')
+                    || document.querySelector('.modal.show')) break;
                 const compBtn = document.getElementById('compressions-btn');
-                if (compBtn && !compBtn.disabled) startCompressions();
+                if (compBtn && !compBtn.disabled) { e.preventDefault(); handleCompressionAction(); }
                 break;
             }
             case 'KeyM': {

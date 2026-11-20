@@ -15,6 +15,7 @@ import { checkProfileAuth } from './profile-auth.mjs';
 import { checkSoundSettings } from './sound-settings.mjs';
 import { checkAppearanceSettings } from './appearance-settings.mjs';
 import { checkPatientEntry } from './patient-entry.mjs';
+import { checkAlertsAndCompressions } from './pcr-alerts-compressions.mjs';
 import { SIAV_PROJECT_REF, SIAV_PROJECT_URL } from '../../src/config/public-supabase.js';
 
 let root, temporaryDirectory, server, browser, workerConfig;
@@ -282,5 +283,13 @@ test('Entrada de PCR: formulário opcional, adulto visível, troca manual, ediç
   try {
     const page = await readyPage(context);
     await checkPatientEntry(page);
+  } finally { await context.close(); }
+}, { timeout: 120000 });
+
+test('PCR: avisos, controle único de compressões, pausa/retomada e faixa de tempos estável', async () => {
+  const { context } = await contextFor('Pixel 5');
+  try {
+    const page = await readyPage(context);
+    await checkAlertsAndCompressions(page);
   } finally { await context.close(); }
 }, { timeout: 120000 });

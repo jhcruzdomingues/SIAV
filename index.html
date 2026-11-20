@@ -106,12 +106,6 @@
                     </div>
                 </div>
 
-                <!-- SMART FEEDBACK BANNER (Substitui pop-ups voadores) -->
-                <div id="pcr-feedback-banner" class="pcr-feedback-banner">
-                    <div class="pcr-feedback-icon"><i class="fas fa-info-circle"></i></div>
-                    <div class="pcr-feedback-text" id="pcr-feedback-text"></div>
-                </div>
-
                 <!-- NOVO CENTRO DE AÇÃO UNIFICADO (UX Revolucionária) -->
                 <div id="pcr-action-center" class="pcr-action-center status-preparation">
                     <!-- O HUD DE CRONÔMETROS -->
@@ -134,39 +128,40 @@
                         <div id="ac-cycle-progress" class="ac-progress-fill"></div>
                     </div>
 
+                    <div class="compression-control">
+                        <p id="compression-resume-alert" class="compression-resume-alert" role="status" aria-live="polite" hidden>Compressões interrompidas. Retome a RCP quando seguro.</p>
+                        <button id="compressions-btn" type="button" class="btn-compressions" data-compression-state="ready" aria-label="Iniciar compressões" aria-pressed="false">
+                            <span class="compression-action-text">INICIAR COMPRESSÕES</span>
+                        </button>
+                    </div>
                     <div class="ac-main-display">
-                        <div id="ac-icon" class="ac-icon"><i class="fas fa-heartbeat"></i></div>
                         <div class="ac-instruction-panel">
-                            <div id="ac-status-badge" class="ac-badge">PREPARAÇÃO</div>
-                            <h2 id="ac-primary-text" class="ac-hud-title">Pronto para iniciar!</h2>
-                            
+                            <div class="ac-guidance-header">
+                                <div id="ac-icon" class="ac-icon" aria-hidden="true"><i class="fas fa-heartbeat"></i></div>
+                                <div id="ac-status-badge" class="ac-badge">PREPARAÇÃO</div>
+                            </div>
+                            <h2 id="ac-primary-text" class="ac-hud-title" aria-live="polite" aria-atomic="true">Pronto para iniciar!</h2>
                             <div id="ac-dose-container" class="ac-hud-dose" style="display: none;">
-                                <div class="ac-dose-icon"><i class="fas fa-prescription-bottle-alt"></i></div>
                                 <div class="ac-dose-content">
-                                    <span class="ac-dose-label">DOSE RECOMENDADA</span>
+                                    <span class="ac-dose-label">ORIENTAÇÃO DE DOSE</span>
                                     <span id="ac-dose-text" class="ac-dose-value">--</span>
                                 </div>
                             </div>
-                            
-                            <div id="ac-details-container" class="ac-hud-details">
-                                <div class="ac-details-icon"><i class="fas fa-info-circle"></i></div>
-                                <div id="ac-details-text" class="ac-details-content">Aguardando início do atendimento</div>
+                            <p id="ac-safety-note" class="ac-safety-note" style="display: none;"></p>
+                            <details id="ac-context-details" class="ac-context-details">
+                                <summary>Ver orientação completa</summary>
+                                <div id="ac-details-container" class="ac-hud-details">
+                                    <div id="ac-details-text" class="ac-details-content">Aguardando início do atendimento</div>
+                                </div>
+                            </details>
+                            <div id="pcr-feedback-banner" class="pcr-feedback-banner" role="status" aria-live="polite">
+                                <div class="pcr-feedback-icon"><i class="fas fa-info-circle"></i></div>
+                                <div class="pcr-feedback-text" id="pcr-feedback-text"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <button id="compressions-btn" class="btn-compressions" aria-label="Iniciar compressões torácicas">
-                    <div class="btn-compressions-icon">
-                        <i class="fas fa-compress-arrows-alt"></i>
-                    </div>
-                    <div class="btn-compressions-text">
-                        <span>COMPRESSÕES TORÁCICAS</span>
-                        <small><i class="fas fa-sync-alt"></i> Ciclo 30:2 • <i class="fas fa-heartbeat"></i> 100-120 bpm</small>
-                    </div>
-                </button>
-
-                <button id="pause-compressions-btn" type="button" class="secondary-btn wide-btn" disabled>REGISTRAR PAUSA DAS COMPRESSÕES</button>
                 <p id="compression-measurement" class="measurement-summary" aria-live="off">Medição de compressões informada pelo operador.</p>
 
                 <button id="rhythm-conduta-btn" class="btn-check-rhythm" aria-label="Checar ritmo cardíaco do paciente">

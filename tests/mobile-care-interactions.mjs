@@ -33,7 +33,7 @@ assert(await page.evaluate(()=>window.SIAV.state.patient.algorithm)==='adult','s
 assert(await page.evaluate(()=>window.SIAV.state.patient.age)==='N/I','idade ausente não inferida');
 await page.locator('#compressions-btn').tap();
 await page.waitForTimeout(1100);
-await page.locator('#pause-compressions-btn').tap();
+await page.locator('#compressions-btn').tap();
 const deadline=await page.evaluate(()=>window.compressionCycle.deadline);
 await page.locator('#compressions-btn').tap();
 assert(await page.evaluate(()=>window.compressionCycle.deadline)===deadline,'retomada mantém prazo do ciclo');
