@@ -66,11 +66,13 @@ describe('Regressões com módulos e HTML reais', () => {
         shock(); expect(state.clinical.step).toBe(6);
         record('adrenalina', 1);
         shock(); expect(state.clinical.step).toBe(8);
-        expect(text()).toContain('AMIODARONA OU LIDOCAÍNA');
+        expect(text()).toBe('Antiarrítmico indicado');
+        expect(input('ac-dose-text').textContent).toContain('AMIODARONA: 300 mg EV/IO');
+        expect(input('ac-dose-text').textContent).toContain('OU LIDOCAÍNA: 1-1.5 mg/kg EV/IO');
         record('amiodarona', 300);
         const first = state.medications.at(-1);
         expect(first).toMatchObject({ amount: 300, dose: '300 mg', route: 'EV', timestamp: NOW, recordedAt: NOW, requiresReview: false });
-        expect(text()).not.toContain('CONDUTAS');
+        expect(input('ac-dose-container').style.display).toBe('none');
         prepare('amiodarona', 150);
         expect(input('med-preview-value').textContent).not.toContain('Orientação do passo atual');
         shock(); expect(state.clinical.step).toBe(6);
@@ -84,7 +86,9 @@ describe('Regressões com módulos e HTML reais', () => {
         shock(); expect(state.clinical.step).toBe(6);
         shock(); expect(state.shockCount).toBe(2);
         expect(state.clinical.step).toBe(8);
-        expect(text()).toContain('AMIODARONA OU LIDOCAÍNA');
+        expect(text()).toBe('Antiarrítmico indicado');
+        expect(input('ac-dose-text').textContent).toContain('AMIODARONA: 300 mg EV/IO');
+        expect(input('ac-dose-text').textContent).toContain('OU LIDOCAÍNA: 1-1.5 mg/kg EV/IO');
     });
     it('FV → AESP → FV volta ao passo 6 após terceiro choque total sem antecipar antiarrítmico', () => {
         shock(); shock(); record('adrenalina', 1);

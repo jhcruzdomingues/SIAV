@@ -131,16 +131,16 @@
 
                     <section class="ac-main-display" aria-label="Conduta atual e próximo passo">
                         <div class="ac-instruction-panel">
-                            <div class="ac-guidance-header">
+                            <div class="ac-guidance-header" hidden>
                                 <div id="ac-icon" class="ac-icon" aria-hidden="true"><i class="fas fa-heartbeat"></i></div>
                                 <div id="ac-status-badge" class="ac-badge">PREPARAÇÃO</div>
                             </div>
                             <span class="ac-step-label">AGORA</span>
                             <p id="compression-resume-alert" class="compression-resume-alert" role="status" aria-live="polite" hidden>Compressões interrompidas. Retome a RCP quando seguro.</p>
-                            <h2 id="ac-primary-text" class="ac-hud-title" aria-live="polite" aria-atomic="true">Pronto para iniciar!</h2>
+                            <h2 id="ac-primary-text" class="ac-hud-title" aria-live="polite" aria-atomic="true" aria-describedby="ac-status-badge">Pronto para iniciar!</h2>
                             <div id="ac-dose-container" class="ac-hud-dose" style="display: none;">
                                 <div class="ac-dose-content">
-                                    <span class="ac-dose-label">ORIENTAÇÃO DE DOSE</span>
+                                    <span class="ac-dose-label">DOSE INDICADA</span>
                                     <span id="ac-dose-text" class="ac-dose-value">--</span>
                                 </div>
                             </div>

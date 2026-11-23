@@ -23,15 +23,35 @@ const show = (node, visible, display = 'block') => {
 };
 let guidanceFailureReported = false;
 
+function conciseInstruction(step) {
+    if (step.criticalAction === 'DRUG') {
+        const due = Object.entries(step.medicationGuidance || {}).filter(([, entry]) => entry.status === 'due').map(([id]) => id);
+        const epi = due.includes('adrenalina'), anti = due.some(id => ['amiodarona', 'lidocaina'].includes(id));
+        if (epi && anti) return 'Medicações indicadas';
+        if (epi) return 'Adrenalina indicada';
+        if (anti) return 'Antiarrítmico indicado';
+    }
+    // Copy changes only when the existing protocol emits this exact message.
+    // An unknown/new clinical message is displayed in full, never guessed.
+    const messages = new Map([
+        ['SUPORTE BÁSICO — AVALIAR RITMO E INICIAR RCP', 'Iniciar RCP e avaliar ritmo'],
+        ['AVALIAR RITMO — MINIMIZAR PAUSA', 'Avaliar ritmo. Minimizar pausa.'],
+        ['RCP DE ALTA QUALIDADE — 100 A 120 BPM', 'RCP de alta qualidade — 100 a 120/min'],
+        ['RCP CONTÍNUA — BUSCAR CAUSAS (5H/5T)', 'Manter RCP e buscar causas (5H/5T)'],
+        ['REAVALIAR CONDUTA — SEM DOSE AUTOMÁTICA', 'Reavaliar conduta']
+    ]);
+    return messages.get(step.message) || step.message;
+}
+
 // Presentation of the existing sequence only. Never predict the next rhythm,
 // shock, medication or dose: those require their real recorded assessment.
 function nextAction(snapshot, step) {
     if (snapshot.roscAchieved || snapshot.clinical?.status === 'rosc') return step.details;
     if (!snapshot.pcrActive) return '';
     if (['rhythm_check', 'shock_advised'].includes(snapshot.currentPhase)) return step.details;
-    if (snapshot.currentPhase === 'preparation') return 'Após avaliar o ritmo, siga a conduta indicada.';
-    if (Object.values(step.medicationGuidance || {}).some(entry => entry.status === 'review')) return 'Confirme os dados e o percurso registrados antes de seguir a orientação automática.';
-    if (snapshot.currentPhase === 'compressions') return 'Ao fim do ciclo, reavalie o ritmo.';
+    if (snapshot.currentPhase === 'preparation') return 'Seguir a conduta do ritmo confirmado.';
+    if (Object.values(step.medicationGuidance || {}).some(entry => entry.status === 'review')) return 'Conferir dados antes de novas doses.';
+    if (snapshot.currentPhase === 'compressions') return 'Reavaliar ritmo ao fim do ciclo.';
     return '';
 }
 
@@ -117,8 +137,8 @@ export function updatePcrGuidance() {
             const glyph = document.createElement('i'); glyph.className = visual.icon; glyph.setAttribute('aria-hidden', 'true');
             icon.textContent = ''; icon.appendChild(glyph); icon.dataset.icon = visual.icon;
         }
-        // The original clinical message/dose remain the source of the display.
-        setText(document.getElementById('ac-primary-text'), step.message);
+        // Eligibility, drug names, doses and routes still come from the protocol.
+        setText(document.getElementById('ac-primary-text'), conciseInstruction(step));
         const next = nextAction(snapshot, step);
         setText(document.getElementById('ac-next-text'), next);
         const nextPanel = document.getElementById('ac-next-step');
@@ -132,8 +152,8 @@ export function updatePcrGuidance() {
             ? guidance.filter(entry => entry.status === 'review').map(entry => entry.reason).filter(Boolean) : [];
         const adrenaline = step.medicationGuidance?.adrenalina;
         if (adrenaline?.status === 'due' && adrenaline.reason) {
-            const marker = 'a cada ', index = adrenaline.reason.indexOf(marker);
-            warnings.push(index >= 0 ? 'Intervalo: ' + adrenaline.reason.slice(index + marker.length) : adrenaline.reason);
+            const interval = adrenaline.reason.match(/a cada ([^.,]+ min)/);
+            warnings.push(interval ? `Intervalo: ${interval[1]}.` : adrenaline.reason);
         }
         const antiDue = ['amiodarona', 'lidocaina'].some(id => step.medicationGuidance?.[id]?.status === 'due');
         if (antiDue && step.details) {
@@ -153,8 +173,9 @@ export function updatePcrGuidance() {
             if (context.dataset.encounter !== encounter) { context.open = false; context.dataset.encounter = encounter; }
             context.hidden = !step.details;
         }
-        setText(document.getElementById('ac-details-text'), step.details || '');
-        show(document.getElementById('ac-details-container'), !!step.details, 'flex');
+        const fullContext = [step.message, step.details].filter(Boolean).join('\n');
+        setText(document.getElementById('ac-details-text'), fullContext);
+        show(document.getElementById('ac-details-container'), !!fullContext, 'flex');
         setText(document.getElementById('ac-cycle-counter'), `CICLO ${compressionCycle.cycleCount}`);
         guidanceFailureReported = false;
         return true;

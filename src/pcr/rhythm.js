@@ -206,11 +206,12 @@ export function applyShockAndResume() {
 
         const shockMsg = `CHOQUE APLICADO (${energyValue}J) - Retomar RCP!`;
         if (typeof window.addEvent === 'function') window.addEvent(shockMsg, 'critical');
-        if (typeof window.showTransientAlert === 'function') window.showTransientAlert(shockMsg, 'success', 4000);
 
         if (typeof window.updatePcrGuidance === 'function') window.updatePcrGuidance();
         if (typeof window.startCompressions === 'function') window.startCompressions(); 
         showScreen('pcr');
+        // Publish confirmation only after its destination panel is visible.
+        if (typeof window.showTransientAlert === 'function') window.showTransientAlert(`Choque de ${energyValue} J registrado.`, 'success', 4000);
     } catch (error) {
         console.error('Erro ao aplicar choque:', error);
         alert('Erro ao registrar choque. Por favor, tente novamente.');

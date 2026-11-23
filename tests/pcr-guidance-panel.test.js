@@ -22,13 +22,13 @@ describe('Avisos de PCR: síntese sem perder informações clínicas', () => {
     it('preserva mensagem, doses e ressalva de alternativas, deixando o contexto completo acessível', () => {
         const source = brain.getProtocolNextStep(getClinicalSnapshot());
         updatePcrGuidance();
-        expect(el('ac-primary-text').textContent).toBe(source.message);
+        expect(el('ac-primary-text').textContent).toBe('Medicações indicadas');
         for (const entry of Object.values(source.medicationGuidance).filter(x => x.status === 'due')) expect(el('ac-dose-text').textContent).toContain(entry.dose);
         expect(el('ac-safety-note').textContent).toContain('alternativas, não uma associação');
         expect(el('ac-safety-note').textContent).toContain('Intervalo: 3–5 min');
         expect(el('ac-safety-note').textContent).toContain('Manter o fármaco registrado.');
         expect(el('ac-safety-note').style.display).not.toBe('none');
-        expect(el('ac-details-text').textContent).toBe(source.details);
+        expect(el('ac-details-text').textContent).toBe(`${source.message}\n${source.details}`);
         expect(el('ac-context-details').open).toBe(false);
     });
     it('ressalvas de revisão ficam visíveis, sem depender de abrir os detalhes', () => {
@@ -73,8 +73,9 @@ describe('Avisos de PCR: síntese sem perder informações clínicas', () => {
     it('RCP em curso anuncia reavaliação ao fim do ciclo sem antecipar dose ou choque', () => {
         state.clinical.step = 4; state.shockCount = 1;
         updatePcrGuidance();
-        expect(el('ac-primary-text').textContent).toBe(brain.getProtocolNextStep(getClinicalSnapshot()).message);
-        expect(el('ac-next-text').textContent).toBe('Ao fim do ciclo, reavalie o ritmo.');
+        expect(el('ac-primary-text').textContent).toBe('RCP de alta qualidade — 100 a 120/min');
+        expect(el('ac-details-text').textContent).toContain(brain.getProtocolNextStep(getClinicalSnapshot()).message);
+        expect(el('ac-next-text').textContent).toBe('Reavaliar ritmo ao fim do ciclo.');
         expect(el('ac-dose-container').style.display).toBe('none');
         expect(el('ac-next-text').textContent).not.toMatch(/adrenalina|amiodarona|lidocaína|choque/i);
     });
@@ -93,7 +94,7 @@ describe('Avisos de PCR: síntese sem perder informações clínicas', () => {
     });
     it('histórico incerto e pediatria mantêm revisão, sem anunciar dose adulta futura', () => {
         state.patient.algorithm = 'pediatric'; updatePcrGuidance();
-        expect(el('ac-next-text').textContent).toContain('Confirme os dados e o percurso');
+        expect(el('ac-next-text').textContent).toBe('Conferir dados antes de novas doses.');
         expect(el('ac-dose-container').style.display).toBe('none');
         expect(el('ac-safety-note').textContent).toContain('Não inferir o protocolo');
     });
@@ -102,5 +103,30 @@ describe('Avisos de PCR: síntese sem perder informações clínicas', () => {
         state.pcrActive = false; state.clinical.status = 'inactive'; updatePcrGuidance();
         expect(el('ac-next-step').hidden).toBe(true); expect(el('ac-next-text').textContent).toBe('');
         expect(el('ac-dose-container').style.display).toBe('none');
+    });
+    it('adrenalina isolada tem título curto, dose e intervalo visíveis, com o original nos detalhes', () => {
+        state.clinical.step = 6;
+        const source = brain.getProtocolNextStep(getClinicalSnapshot()); updatePcrGuidance();
+        expect(el('ac-primary-text').textContent).toBe('Adrenalina indicada');
+        expect(el('ac-dose-text').textContent).toBe(source.dose);
+        expect(el('ac-safety-note').textContent).toBe('Intervalo: 3–5 min.');
+        expect(el('ac-details-text').textContent).toContain(source.message);
+        expect(el('ac-details-text').textContent).toContain(source.details);
+        expect(document.querySelector('.ac-guidance-header').hidden).toBe(true);
+        expect(el('ac-primary-text').getAttribute('aria-describedby')).toBe('ac-status-badge');
+    });
+    it('antiarrítmico isolado mantém nomes, alternativas e doses no bloco indicado', () => {
+        state.medications.push({ id: 'SYNTHETIC-EPI', name: 'Adrenalina', amount: 1, unit: 'mg', route: 'EV', timestamp: Date.now(), recordedAt: Date.now(), episodeId: state.clinical.episodeId, isRetrospective: false, requiresReview: false });
+        updatePcrGuidance();
+        expect(el('ac-primary-text').textContent).toBe('Antiarrítmico indicado');
+        expect(el('ac-dose-text').textContent).toContain('AMIODARONA: 300 mg EV/IO');
+        expect(el('ac-dose-text').textContent).toContain('OU LIDOCAÍNA: 1-1.5 mg/kg EV/IO');
+        expect(el('ac-dose-text').textContent).not.toContain('ADRENALINA');
+        expect(el('ac-safety-note').textContent).toContain('alternativas, não uma associação');
+    });
+    it('mensagem futura do protocolo permanece integral, sem síntese presumida', () => {
+        const source = brain.getProtocolNextStep(getClinicalSnapshot());
+        vi.spyOn(brain, 'getProtocolNextStep').mockReturnValueOnce({ ...source, message: 'MENSAGEM FUTURA DO PROTOCOLO', criticalAction: null });
+        updatePcrGuidance(); expect(el('ac-primary-text').textContent).toBe('MENSAGEM FUTURA DO PROTOCOLO');
     });
 });

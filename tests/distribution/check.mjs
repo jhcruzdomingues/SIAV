@@ -18,6 +18,7 @@ import { checkPatientEntry } from './patient-entry.mjs';
 import { checkAlertsAndCompressions } from './pcr-alerts-compressions.mjs';
 import { checkAdrenalineGuidance } from './pcr-adrenaline-guidance.mjs';
 import { checkFinishAttendance } from './pcr-finish-attendance.mjs';
+import { checkShockFeedback } from './pcr-shock-feedback.mjs';
 import { SIAV_PROJECT_REF, SIAV_PROJECT_URL } from '../../src/config/public-supabase.js';
 
 let root, temporaryDirectory, server, browser, workerConfig;
@@ -310,4 +311,10 @@ test('PCR: instruções → RCP → ritmo e encerramento explícito, três motiv
     const page = await readyPage(context);
     await checkFinishAttendance(page);
   } finally { await context.close(); }
+}, { timeout: 120000 });
+
+test('PCR pós-choque: largura preservada, feedback local e instruções objetivas em retrato', async () => {
+  const { context } = await contextFor('Pixel 5');
+  try { const page = await readyPage(context); await checkShockFeedback(page); }
+  finally { await context.close(); }
 }, { timeout: 120000 });
