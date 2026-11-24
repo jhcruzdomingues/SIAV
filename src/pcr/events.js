@@ -2,6 +2,7 @@
 // Módulo para gerenciar eventos clínicos, anotações e medicamentos do PCR
 
 import { state } from '../config/state.js';
+import { medicationRegistrationAllowed } from '../utils/medication-registration.js';
 
 export function addEventToTimeline(type, description, data = {}) {
   const event = {
@@ -29,8 +30,7 @@ export function addMedication(medication) {
   if (state.medications.some(entry => entry?.id === medication.id)) return null;
   const recordedAt = Date.now();
   if (!Number.isFinite(medication.amount) || medication.amount <= 0
-      || !['mg', 'g', 'mEq'].includes(medication.unit)
-      || !['EV', 'IO', 'ET'].includes(medication.route)
+      || !medicationRegistrationAllowed(medication)
       || !Number.isFinite(medication.timestamp) || medication.timestamp > recordedAt) {
     throw new Error('Informe quantidade, unidade, via e horário efetivos válidos.');
   }

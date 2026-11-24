@@ -5,9 +5,9 @@ import { getAntiarrhythmicHistory, evaluateMedicationGuidance } from '../protoco
 import { getClinicalSnapshot, isClinicalArrestActive, newOperationId } from './clinical.js';
 import { updateAdrenalineTimerDisplay } from '../ui/pcr-adrenaline-timer.js';
 import { weightDoseMg } from '../utils/dose-math.js';
-import { MEDICATIONS } from '../utils/medications.js';
+import { MEDICATION_REGISTRATION, registrationUnitRouteAllowed } from '../utils/medication-registration.js';
 
-const medNames = { adrenalina: 'Adrenalina', amiodarona: 'Amiodarona', lidocaina: 'Lidocaína', atropina: 'Atropina', bicarbonato: 'Bicarbonato de Sódio', sulfato: 'Sulfato de Magnésio' };
+const medNames = Object.fromEntries(Object.entries(MEDICATION_REGISTRATION).map(([id, entry]) => [id, entry.name]));
 const reviewText = new Map([
     ['Reavaliar: percurso clínico incompleto; registrar avaliação de ritmo.', 'Reavaliar: confirme o ritmo e o histórico. Indicação não verificada.'],
     ['Reavaliar antiarrítmicos: dose tardia, histórico incompleto, outro episódio ou fármacos associados. O PDF não fundamenta uma nova dose automática.', 'Reavaliar: histórico de antiarrítmicos incerto. Sem dose automática.'],
@@ -24,11 +24,22 @@ const reviewText = new Map([
 
 // Presentation only: eligibility and numeric presets remain in the shared evaluator.
 function selectionWarning(id, entry) {
+    if (MEDICATION_REGISTRATION[id]?.warning) return MEDICATION_REGISTRATION[id].warning;
     if (!entry) return id === 'atropina' ? 'Atropina não é medicação de rotina na PCR.'
         : 'Uso em situações específicas. O app não verifica esta indicação.';
     if (entry.status === 'not_due' && entry.secondsUntilDue > 0) return 'Aguarde o intervalo. A próxima dose ainda não está indicada.';
     if (entry.reason === 'Sem dose automática neste passo do algoritmo.') return `${medNames[id]} não indicada neste passo.`;
     return reviewText.get(entry.reason) || 'Indicação não verificada. Reavalie antes de medicar.';
+}
+
+function updateRegistrationOptions(id) {
+    const config = MEDICATION_REGISTRATION[id] || MEDICATION_REGISTRATION.adrenalina;
+    document.querySelectorAll('#medication-unit option').forEach(option => {
+        option.hidden = option.disabled = !config.units.includes(option.value);
+    });
+    document.querySelectorAll('input[name="administration-route"]').forEach(input => {
+        input.closest('label').hidden = input.disabled = !config.routes.includes(input.value);
+    });
 }
 const formOperation = () => document.getElementById('med-modal')?.dataset.operationId;
 function formFeedback(message) {
@@ -89,7 +100,9 @@ export function selectMedication(id) {
     if (select.value !== id) {
         select.value = id;
         document.getElementById('medication-dose').value = '';
-        document.getElementById('medication-unit').value = MEDICATIONS[id].unit;
+        document.getElementById('medication-unit').value = MEDICATION_REGISTRATION[id].unit;
+        const route = document.querySelector('input[name="administration-route"]:checked')?.value;
+        if (!MEDICATION_REGISTRATION[id].routes.includes(route)) document.getElementById('route-ev').checked = true;
         document.getElementById('medication-confirmed').checked = false;
         document.getElementById('medication-edit-details').open = false;
         delete document.getElementById('med-modal').dataset.selection;
@@ -139,6 +152,10 @@ export function showMedModal() {
     if (route) route.checked = true;
     const editor = document.getElementById('medication-edit-details');
     if (editor) editor.open = false;
+    for (const id of ['medication-special-options', 'medication-other-options']) {
+        const group = document.getElementById(id);
+        if (group) group.open = false;
+    }
     const preview = document.getElementById('med-preview-panel');
     if (preview) preview.style.display = 'none';
     const button = document.getElementById('record-med-btn');
@@ -150,6 +167,7 @@ export function showMedModal() {
 
 export function updateMedicationDose() {
     const id = document.getElementById('medication-select')?.value;
+    updateRegistrationOptions(id);
     const snapshot = getClinicalSnapshot();
     const entry = evaluateMedicationGuidance(snapshot)[id];
     const modal = document.getElementById('med-modal');
@@ -176,7 +194,7 @@ export function updateMedicationDose() {
     if (weightField) weightField.hidden = !range || range.hasWeight;
     const warning = !!id && (retrospective || !['EV', 'IO'].includes(route) || entry?.status !== 'due');
     const text = !id ? '' : retrospective ? 'Registro anterior. Informe o horário real; não é indicação de nova dose.'
-        : route && !['EV', 'IO'].includes(route) ? 'Via fora do algoritmo. Apenas registro manual, sem sugestão de dose.'
+        : route && !['EV', 'IO'].includes(route) && !MEDICATION_REGISTRATION[id]?.manualOnly ? 'Via fora do algoritmo. Apenas registro manual, sem sugestão de dose.'
             : range ? (range.hasWeight ? `Faixa: ${range.min}–${range.max} mg (${snapshot.patient.weight} kg).` : 'Informe o peso. Não estime a dose.')
             : entry?.status === 'due' ? (entry.number ? `${entry.number}ª dose` : '')
                 : selectionWarning(id, entry);
@@ -208,7 +226,9 @@ export function updateMedicationDose() {
     if (doseUnit) doseUnit.textContent = document.getElementById('medication-unit')?.value || 'mg';
     const button = document.getElementById('record-med-btn');
     if (button) {
-        button.disabled = !id || !formOperation() || !Number.isFinite(amount) || amount <= 0 || (!quick && !document.getElementById('medication-confirmed')?.checked);
+        button.disabled = !medNames[id] || !formOperation() || !Number.isFinite(amount) || amount <= 0
+            || !registrationUnitRouteAllowed(id, document.getElementById('medication-unit')?.value, route)
+            || (!quick && !document.getElementById('medication-confirmed')?.checked);
         const label = button.querySelector('.sub-text');
         if (label) label.textContent = !id ? 'Selecione a medicação' : quick ? `${medNames[id]} · ${amount} ${doseUnit?.textContent} · ${route}`
             : rangeEntry ? 'Informe a dose administrada' : 'Confira os dados do registro manual';
@@ -251,6 +271,7 @@ export function recordMedication() {
         const recordedAt = Date.now();
         const timestamp = isRetrospective ? (timeValue ? new Date(timeValue).getTime() : NaN) : recordedAt;
         if (!medNames[id] || !raw || !Number.isFinite(amount) || amount <= 0) throw new Error('Informe a quantidade exata efetivamente administrada.');
+        if (!registrationUnitRouteAllowed(id, unit, route)) throw new Error('Confira a unidade e a via da apresentação selecionada.');
         const snapshot = getClinicalSnapshot();
         const modal = document.getElementById('med-modal');
         if (modal.dataset.encounterStart !== String(state.pcrStartTime) || modal.dataset.episodeId !== state.clinical?.episodeId) {

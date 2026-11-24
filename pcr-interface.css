@@ -592,6 +592,9 @@ body #med-modal .med-primary-options .med-pro-title { color: var(--ui-info-text)
 body #med-modal .med-btn-pro.selected { border: 2px solid var(--ui-action); background: var(--ui-action); color: #fff; padding: 9px 3px; }
 body #med-modal .med-btn-pro.selected .med-pro-title { color: #fff; }
 body #med-modal .med-group-label { margin: 10px 0 6px; color: var(--ui-muted); font-size: .75rem; }
+body #med-modal .med-routine-alternative .med-btn-pro { grid-column: 1 / -1; }
+body #med-modal .med-catalog-group { margin: 4px 0; }
+body #med-modal .med-catalog-group > summary { min-height: 44px; padding: 10px 2px; color: var(--ui-muted); font-size: .8125rem; line-height: 1.5; cursor: pointer; }
 body #med-modal .med-preview-panel { margin: 12px 0 8px; padding: 12px; border: 1px solid var(--ui-border); border-radius: 10px; background: var(--ui-raised); color: var(--ui-text); text-align: left; animation: none; }
 body #med-modal #med-preview-value { margin: 4px 0 10px; color: var(--ui-muted); font: inherit; font-size: .8125rem; line-height: 1.5; letter-spacing: 0; }
 body #med-modal #med-preview-value.is-warning { padding: 8px 10px; border-left: 3px solid var(--ui-warning-text); border-radius: 6px; color: var(--ui-warning-text); background: var(--ui-warning-bg); }

@@ -112,6 +112,7 @@ export function registerAllEvents() {
     });
     for (const id of ['medication-dose', 'medication-unit', 'medication-confirmed', 'medication-effective-at']) {
         for (const event of ['input', 'change']) document.getElementById(id)?.addEventListener(event, () => {
+            if (id !== 'medication-confirmed') document.getElementById('medication-confirmed').checked = false;
             clearCareFeedback('medication-form-feedback'); updateMedicationDose();
         });
     }
@@ -119,8 +120,12 @@ export function registerAllEvents() {
 
     document.getElementById('record-med-btn')?.addEventListener('click', recordMedication);
     document.getElementById('confirm-medication-weight')?.addEventListener('click', confirmMedicationWeight);
-    document.getElementById('medication-timing')?.addEventListener('change', updateMedicationDose);
-    document.querySelectorAll('input[name="administration-route"]').forEach(input => input.addEventListener('change', updateMedicationDose));
+    const reviewChangedAdministration = () => {
+        document.getElementById('medication-confirmed').checked = false;
+        clearCareFeedback('medication-form-feedback'); updateMedicationDose();
+    };
+    document.getElementById('medication-timing')?.addEventListener('change', reviewChangedAdministration);
+    document.querySelectorAll('input[name="administration-route"]').forEach(input => input.addEventListener('change', reviewChangedAdministration));
     document.getElementById('cancel-med-btn')?.addEventListener('click', cancelMedicationRecord);
 
     document.getElementById('notes-btn')?.addEventListener('click', showNotesModal);

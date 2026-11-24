@@ -936,13 +936,28 @@
                 <button type="button" class="med-btn-pro" data-med="adrenalina" aria-pressed="false"><span class="med-pro-title">Adrenalina</span></button>
                 <button type="button" class="med-btn-pro" data-med="amiodarona" aria-pressed="false"><span class="med-pro-title">Amiodarona</span></button>
             </div>
-            <p class="med-group-label">Outras medicações</p>
-            <div class="med-grid-pro med-other-options" role="group" aria-label="Outras medicações">
+            <div class="med-grid-pro med-other-options med-routine-alternative" role="group" aria-label="Alternativa à amiodarona">
                 <button type="button" class="med-btn-pro" data-med="lidocaina" aria-pressed="false"><span class="med-pro-title">Lidocaína</span></button>
-                <button type="button" class="med-btn-pro" data-med="atropina" aria-pressed="false"><span class="med-pro-title">Atropina</span></button>
-                <button type="button" class="med-btn-pro" data-med="bicarbonato" aria-pressed="false"><span class="med-pro-title">Bicarbonato</span></button>
-                <button type="button" class="med-btn-pro" data-med="sulfato" aria-pressed="false"><span class="med-pro-title">Sulfato de Mg</span></button>
             </div>
+            <details id="medication-special-options" class="med-catalog-group">
+                <summary>Causas específicas · registro manual</summary>
+                <div class="med-grid-pro med-specific-options" role="group" aria-label="Medicações de causas específicas">
+                <button type="button" class="med-btn-pro" data-med="sulfato" aria-pressed="false"><span class="med-pro-title">Sulfato de Mg</span></button>
+                <button type="button" class="med-btn-pro" data-med="bicarbonato" aria-pressed="false"><span class="med-pro-title">Bicarbonato 8,4%</span></button>
+                <button type="button" class="med-btn-pro" data-med="gluconato_calcio" aria-pressed="false"><span class="med-pro-title">Gluconato de cálcio 10%</span></button>
+                <button type="button" class="med-btn-pro" data-med="cloreto_calcio" aria-pressed="false"><span class="med-pro-title">Cloreto de cálcio 10%</span></button>
+                <button type="button" class="med-btn-pro" data-med="naloxona" aria-pressed="false"><span class="med-pro-title">Naloxona</span></button>
+                <button type="button" class="med-btn-pro" data-med="glicose50" aria-pressed="false"><span class="med-pro-title">Glicose 50%</span></button>
+                <button type="button" class="med-btn-pro" data-med="alteplase" aria-pressed="false"><span class="med-pro-title">Alteplase</span></button>
+                <button type="button" class="med-btn-pro" data-med="tenecteplase" aria-pressed="false"><span class="med-pro-title">Tenecteplase</span></button>
+                </div>
+            </details>
+            <details id="medication-other-options" class="med-catalog-group">
+                <summary>Outros registros</summary>
+                <div class="med-grid-pro" role="group" aria-label="Outras medicações sem indicação de rotina">
+                    <button type="button" class="med-btn-pro" data-med="atropina" aria-pressed="false"><span class="med-pro-title">Atropina</span></button>
+                </div>
+            </details>
             <input type="hidden" id="medication-select" value="">
             <div id="medication-weight-field" hidden>
                 <label for="medication-weight">Informe o peso para calcular a faixa (kg)</label>
@@ -962,6 +977,8 @@
                         <div class="med-route-options">
                         <label><input type="radio" id="route-ev" name="administration-route" value="EV" checked>EV</label>
                         <label><input type="radio" id="route-io" name="administration-route" value="IO">IO</label>
+                        <label hidden><input type="radio" id="route-im" name="administration-route" value="IM" disabled>IM</label>
+                        <label hidden><input type="radio" id="route-in" name="administration-route" value="IN" disabled>IN</label>
                         </div>
                     </fieldset>
                 </div>
@@ -970,7 +987,7 @@
             <details id="medication-edit-details" hidden>
                 <summary>Alterar unidade, horário ou via</summary>
                 <label for="medication-unit">Unidade</label>
-                <select id="medication-unit"><option value="mg">mg</option><option value="g">g</option><option value="mEq">mEq</option></select>
+                <select id="medication-unit"><option value="mg">mg</option><option value="g">g</option><option value="mEq">mEq</option><option value="mL" hidden disabled>mL</option></select>
                 <label for="medication-timing">Momento da administração</label>
                 <select id="medication-timing"><option value="realtime">Administrada agora</option><option value="retrospective">Registrar administração anterior</option></select>
                 <div id="medication-effective-field" hidden>

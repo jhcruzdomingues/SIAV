@@ -19,8 +19,8 @@ export async function checkMedicationClarity(page) {
         .filter(n => n.getClientRects().length && n.clientWidth && (n.scrollWidth > n.clientWidth + 1 || n.scrollHeight > n.clientHeight + 1))
         .map(n => n.id || n.textContent);
       const warning = el.querySelector('#med-preview-value');
-      return { panel: rect('.modal-content'), body: rect('.med-form-body'), preview: rect('#med-preview-panel'), dose: rect('#medication-dose'), ev: rect('.med-route-options label:first-child'),
-        io: rect('.med-route-options label:last-child'), unit: rect('#medication-dose-unit'), footer: rect('#record-med-btn'), clipped,
+      return { panel: rect('.modal-content'), body: rect('.med-form-body'), preview: rect('#med-preview-panel'), dose: rect('#medication-dose'), ev: rect('.med-route-options label:has(#route-ev)'),
+        io: rect('.med-route-options label:has(#route-io)'), unit: rect('#medication-dose-unit'), footer: rect('#record-med-btn'), clipped,
         warningInk: getComputedStyle(warning).color, warningSurface: getComputedStyle(warning).backgroundColor };
     });
     const tag = `${width}/${theme}/${manual ? 'manual' : 'preset'}`;
@@ -78,6 +78,7 @@ export async function checkMedicationClarity(page) {
   await med.locator('#medication-confirmed').check();
   assert.equal(await med.locator('#record-med-btn').isDisabled(), true, 'Exact amount still required');
   assert.equal(await page.evaluate(() => window.SIAV.state.medications.length), 0);
+  await med.locator('#medication-special-options > summary').tap();
   await med.locator('[data-med="bicarbonato"]').tap();
   assert.equal(await med.locator('#medication-unit').inputValue(), 'mEq');
   assert.equal(await med.locator('#medication-confirmed').isChecked(), false);

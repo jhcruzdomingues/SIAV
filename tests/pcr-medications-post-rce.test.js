@@ -15,6 +15,9 @@ import { getClinicalSnapshot } from '../src/pcr/clinical.js';
 import { evaluateMedicationGuidance } from '../src/protocols/medical.js';
 import { getTimingSummary } from '../src/pcr/timing.js';
 import { weightDoseMg } from '../src/utils/dose-math.js';
+import { addMedication } from '../src/pcr/events.js';
+import { MEDICATION_REGISTRATION } from '../src/utils/medication-registration.js';
+import { MEDICATIONS, calculateDose } from '../src/utils/medications.js';
 
 const body = readFileSync('index.html', 'utf8').match(/<body[^>]*>([\s\S]*)<\/body>/i)[1];
 const NOW = 1_800_000_000_000;
@@ -176,10 +179,12 @@ describe('Sinais vitais somente após RCE confirmado, antes do relatório', () =
 });
 
 describe('Seleção de medicamento, dose fixa e cálculo somente quando indicado', () => {
-    it('destaca adrenalina/amiodarona acima das outras quatro e não adiciona trombolítico', () => {
+    it('destaca rotina e mantém causas específicas e atropina separadas, sem sugestões novas', () => {
         expect([...document.querySelectorAll('.med-primary-options [data-med]')].map(el => el.dataset.med)).toEqual(['adrenalina', 'amiodarona']);
-        expect(document.querySelectorAll('.med-other-options [data-med]')).toHaveLength(4);
-        expect(document.querySelector('[data-med="alteplase"]')).toBeNull();
+        expect([...document.querySelectorAll('.med-other-options [data-med]')].map(el => el.dataset.med)).toEqual(['lidocaina']);
+        expect(document.querySelectorAll('.med-specific-options [data-med]')).toHaveLength(8);
+        expect(document.querySelector('[data-med="alteplase"]').closest('details').id).toBe('medication-special-options');
+        expect(document.querySelector('[data-med="atropina"]').closest('details').id).toBe('medication-other-options');
     });
     it('selecionar e trocar não registra; confirmar dose padrão registra uma operação rastreável', () => {
         opportunity(); openMed('amiodarona'); document.querySelector('[data-med="adrenalina"]').click();
@@ -256,6 +261,104 @@ describe('Seleção de medicamento, dose fixa e cálculo somente quando indicado
         opportunity(8); meds.updateMedicationDose(); expect(el('record-med-btn').disabled).toBe(true);
         meds.recordMedication(); expect(state.medications).toEqual([]);
         el('medication-confirmed').checked = true; meds.recordMedication(); expect(state.medications[0].requiresReview).toBe(true);
+    });
+});
+
+const specificEntries = ['gluconato_calcio', 'cloreto_calcio', 'naloxona', 'alteplase', 'tenecteplase', 'glicose50'];
+describe('Catálogo de registro de causas específicas, sem prescrição automática', () => {
+    it.each(specificEntries)('%s está disponível, mas não recebe dose de rotina nem dose calculada', id => {
+        opportunity(8); openMed(id);
+        expect(el('medication-dose').value).toBe(''); expect(el('record-med-btn').disabled).toBe(true);
+        expect(el('med-preview-name').textContent).toBe(MEDICATION_REGISTRATION[id].name);
+        expect(el('med-preview-value').getAttribute('role')).toBe('alert');
+        expect(el('medication-unit').value).toBe(MEDICATION_REGISTRATION[id].unit);
+        expect(el('medication-review-confirmation').hidden).toBe(false);
+        expect(el('medication-weight-field').hidden).toBe(true);
+        expect(evaluateMedicationGuidance(getClinicalSnapshot())[id]).toBeUndefined();
+        expect(MEDICATIONS[id]).toBeUndefined(); expect(calculateDose(id, 70)).toBe('Medicação não encontrada');
+        meds.recordMedication(); expect(state.medications).toEqual([]);
+    });
+    it.each(specificEntries)('%s exige dose exata e revisão; registra uma operação e conserva o nome/apresentação', id => {
+        opportunity(8); openMed(id); change('medication-dose', '7.25');
+        meds.recordMedication(); expect(state.medications).toEqual([]);
+        el('medication-confirmed').click(); el('record-med-btn').click(); meds.recordMedication();
+        expect(state.medications).toHaveLength(1);
+        expect(state.medications[0]).toMatchObject({ medicationId: id, name: MEDICATION_REGISTRATION[id].name,
+            amount: 7.25, unit: MEDICATION_REGISTRATION[id].unit, route: 'EV', requiresReview: true,
+            timestamp: NOW, recordedAt: NOW, episodeId: state.clinical.episodeId });
+        expect(state.medications[0].id).toBeTruthy();
+        const report = generateEvolution(false);
+        expect(report).toContain(MEDICATION_REGISTRATION[id].name);
+        expect(report).toContain(`7.25 ${MEDICATION_REGISTRATION[id].unit} via EV`);
+    });
+    it.each(['IM', 'IN'])('naloxona permite documentar via %s sem extrapolar a faixa IV', route => {
+        opportunity(10); openMed('naloxona');
+        expect(el('route-' + route.toLowerCase()).closest('label').hidden).toBe(false);
+        el('route-' + route.toLowerCase()).click(); change('medication-dose', '0.73');
+        expect(el('med-preview-value').textContent).toContain('RCP/ventilação');
+        expect(el('record-med-btn').disabled).toBe(true); el('medication-confirmed').click(); el('record-med-btn').click();
+        expect(state.medications[0]).toMatchObject({ name: 'Naloxona', route, amount: 0.73, unit: 'mg', requiresReview: true });
+        document.querySelector('[data-med="amiodarona"]').click();
+        expect(el('route-ev').checked).toBe(true); expect(el('route-' + route.toLowerCase()).disabled).toBe(true);
+        expect(el('medication-confirmed').checked).toBe(false);
+    });
+    it.each(['gluconato_calcio', 'cloreto_calcio', 'glicose50'])('%s registra mL sem converter automaticamente para massa ou outra apresentação', id => {
+        opportunity(10); openMed(id); change('medication-dose', '3.7'); el('medication-confirmed').click(); el('record-med-btn').click();
+        expect(state.medications[0].dose).toBe('3.7 mL'); expect(state.medications[0].amount).toBe(3.7);
+        expect(el('medication-unit').querySelector('[value="mg"]').disabled).toBe(true);
+    });
+    it.each(specificEntries)('%s exige marcação de revisão também na função de gravação direta', id => {
+        const entry = { id: crypto.randomUUID(), medicationId: id, name: MEDICATION_REGISTRATION[id].name,
+            amount: 5, unit: MEDICATION_REGISTRATION[id].unit, route: 'EV', timestamp: NOW, requiresReview: false };
+        expect(() => addMedication(entry)).toThrow(); expect(state.medications).toEqual([]);
+        expect(addMedication({ ...entry, requiresReview: true })).not.toBeNull();
+    });
+    it.each([['adrenalina', 'mg', 'IN'], ['amiodarona', 'mg', 'IM'], ['adrenalina', 'mL', 'EV'],
+        ['naloxona', 'mL', 'IN'], ['gluconato_calcio', 'mL', 'IM'], ['glicose50', 'g', 'EV'],
+        ['alteplase', 'mg', 'ET'], ['tenecteplase', 'mg', 'IM']])('unidade/via não permitidas não gravam %s (%s/%s)', (id, unit, route) => {
+        opportunity(10); openMed(id); change('medication-dose', '5'); el('medication-unit').value = unit;
+        el('route-' + route.toLowerCase()).checked = true; el('medication-confirmed').checked = true; meds.updateMedicationDose();
+        expect(el('record-med-btn').disabled).toBe(true); meds.recordMedication(); expect(state.medications).toEqual([]);
+        expect(() => addMedication({ id: crypto.randomUUID(), medicationId: id, name: MEDICATION_REGISTRATION[id].name,
+            amount: 5, unit, route, timestamp: NOW, requiresReview: true })).toThrow();
+    });
+    it('ID de naloxona não autoriza nome forjado nem libera unidades novas para registros legados desconhecidos', () => {
+        expect(() => addMedication({ id: 'FORGED', medicationId: 'naloxona', name: 'Amiodarona', amount: 1,
+            unit: 'mg', route: 'IN', timestamp: NOW, requiresReview: true })).toThrow();
+        expect(() => addMedication({ id: 'UNKNOWN', name: 'SINTETICO', amount: 1, unit: 'mL', route: 'EV', timestamp: NOW })).toThrow();
+        expect(state.medications).toEqual([]);
+    });
+    it.each(['medication-dose', 'medication-effective-at', 'medication-timing', 'route-in'])('alterar %s invalida revisão manual anterior', id => {
+        opportunity(10); openMed('naloxona'); change('medication-dose', '0.73'); el('medication-confirmed').click();
+        expect(el('record-med-btn').disabled).toBe(false);
+        if (id === 'route-in') el(id).click();
+        else if (id === 'medication-timing') { el(id).value = 'retrospective'; el(id).dispatchEvent(new Event('change', { bubbles: true })); }
+        else change(id, id === 'medication-dose' ? '0.81' : '2026-01-01T00:00');
+        expect(el('medication-confirmed').checked).toBe(false); expect(el('record-med-btn').disabled).toBe(true);
+    });
+    it('trocar uma apresentação de cálcio apaga dose e revisão, sem equivalência de volume entre sais', () => {
+        opportunity(10); openMed('gluconato_calcio'); change('medication-dose', '3.7'); el('medication-confirmed').click();
+        document.querySelector('[data-med="cloreto_calcio"]').click();
+        expect(el('medication-dose').value).toBe(''); expect(el('medication-confirmed').checked).toBe(false);
+        expect(el('medication-unit').value).toBe('mL'); expect(state.medications).toEqual([]);
+    });
+    it.each(['pediatric', null])('novas opções em protocolo %s permanecem registros manuais sem doses adultas', algorithm => {
+        opportunity(8); state.patient.algorithm = algorithm; openMed('gluconato_calcio');
+        expect(el('medication-dose').value).toBe(''); expect(el('medication-weight-field').hidden).toBe(true);
+        expect(el('medication-review-confirmation').hidden).toBe(false); expect(el('record-med-btn').disabled).toBe(true);
+    });
+    it('um modal novo recolhe causas específicas, outros registros e não herda dose, via IN ou revisão', () => {
+        openMed('naloxona'); el('medication-special-options').open = true; el('medication-other-options').open = true;
+        el('route-in').click(); change('medication-dose', '0.73'); el('medication-confirmed').click();
+        meds.cancelMedicationRecord(); meds.showMedModal();
+        expect(el('medication-special-options').open).toBe(false); expect(el('medication-other-options').open).toBe(false);
+        expect(el('medication-dose').value).toBe(''); expect(el('medication-confirmed').checked).toBe(false);
+        expect(el('route-ev').checked).toBe(true); expect(el('route-in').disabled).toBe(true);
+    });
+    it('contexto ou atendimento alterado não registra medicamento específico no paciente seguinte', () => {
+        opportunity(10); openMed('glicose50'); change('medication-dose', '3.7'); el('medication-confirmed').click();
+        core.executePCRFinish(); core.startPCR(); opportunity(10); meds.recordMedication();
+        expect(state.medications).toEqual([]); expect(el('medication-form-feedback').textContent).toContain('atendimento mudou');
     });
 });
 
