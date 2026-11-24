@@ -152,6 +152,34 @@ export async function checkProfileAuth(page) {
   assert.equal(await page.evaluate(() => window.__registrationTestCalls), 1);
   if (directory) await page.screenshot({ path: join(directory, 'registration-password-confirm.png'), animations: 'disabled' });
   assert.equal(await page.evaluate(() => window.SIAV.state.currentUser.isLoggedIn), false);
+  // Known provider failures are translated; no account/email/backend call is made.
+  assert.equal(await page.locator('#register-password').getAttribute('minlength'), '8');
+  await page.locator('#register-password').fill('TESTE12');
+  await page.locator('#register-password-confirm').fill('TESTE12');
+  const previousCalls = await page.evaluate(() => window.__registrationTestCalls);
+  await page.locator('#register-form-full button[type=submit]').tap();
+  assert.equal(await page.evaluate(() => window.__registrationTestCalls), previousCalls);
+  await page.locator('#register-password').fill('TESTE123');
+  await page.locator('#register-password-confirm').fill('TESTE123');
+  await page.setViewportSize({ width: 320, height: 568 });
+  for (const [code, status, expected] of [
+    ['unexpected_failure', 500, /falha interna/],
+    ['over_email_send_rate_limit', 429, /limite/],
+    ['email_address_not_authorized', 403, /e-mails autorizados da equipe/],
+  ]) {
+    await page.evaluate(({ code, status }) => {
+      window.SIAV.supabase.auth.signUp = async () => ({ data: null,
+        error: { code, status, message: 'SYNTHETIC_PRIVATE SQL public.profiles token password' } });
+    }, { code, status });
+    await page.locator('#register-form-full button[type=submit]').tap();
+    const feedback = page.locator('#register-feedback');
+    await feedback.waitFor({ state: 'visible' });
+    assert.match(await feedback.textContent(), expected);
+    assert.doesNotMatch(await feedback.textContent(), /SYNTHETIC_PRIVATE|public.profiles|token|password/);
+    assert.equal(await feedback.evaluate(el => el.scrollWidth > el.clientWidth + 1), false);
+    assert.equal(await page.evaluate(() => window.SIAV.state.currentUser.isLoggedIn), false);
+    assert.equal(await page.locator('#register-form-full button[type=submit]').isEnabled(), true);
+  }
   await page.locator('#register-back-login-btn').tap(); await oneModal('login-modal');
   // An ambiguous server error keeps the login open and offers explicit registration.
   await page.evaluate(() => {

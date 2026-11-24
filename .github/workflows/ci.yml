@@ -2,7 +2,7 @@ name: CI - Testes e Build
 
 on:
   push:
-    branches: [ main, develop, fix/adult-pcr-antiarrhythmics, fix/distribution-assets-pwa, fix/pcr-mobile-interface-6a, fix/profile-auth-separation, fix/registration-validation-professions, fix/registration-state-layout, fix/sound-settings-presentation, fix/appearance-settings-presentation, fix/patient-entry-mobile, fix/pcr-alerts-compression-toggle, fix/pcr-adrenaline-unified-guidance, fix/pcr-finish-attendance-modal, fix/pcr-shock-feedback-mobile, fix/pcr-direct-command-panel, fix/pcr-medications-post-rce ]
+    branches: [ main, develop, fix/adult-pcr-antiarrhythmics, fix/distribution-assets-pwa, fix/pcr-mobile-interface-6a, fix/profile-auth-separation, fix/registration-validation-professions, fix/registration-state-layout, fix/sound-settings-presentation, fix/appearance-settings-presentation, fix/patient-entry-mobile, fix/pcr-alerts-compression-toggle, fix/pcr-adrenaline-unified-guidance, fix/pcr-finish-attendance-modal, fix/pcr-shock-feedback-mobile, fix/pcr-direct-command-panel, fix/pcr-medications-post-rce, fix/signup-profile-recovery ]
   pull_request:
     branches: [ main, develop ]
 
@@ -29,6 +29,9 @@ jobs:
 
       - name: 🧪 Executar testes
         run: npm run test:run
+
+      - name: 🗄️ Regressão do cadastro em PostgreSQL descartável
+        run: npm run test:database
 
       - name: 📊 Gerar relatório de cobertura
         run: npm run test:coverage

@@ -185,6 +185,61 @@ describe('Perfil: login e cadastro explícitos', () => {
 });
 
 describe('Cadastro: confirmação de senha e registro por profissão', () => {
+    it('alinha os campos e bloqueia sete caracteres antes de chamar o serviço', async () => {
+        fillRegistration();
+        expect(el('register-password').minLength).toBe(8);
+        expect(el('register-password-confirm').minLength).toBe(8);
+        expect(el('register-password').placeholder).toContain('8');
+        el('register-password').value = 'TESTE12'; el('register-password-confirm').value = 'TESTE12';
+        await handleRegistrationFromForm(eventFor('register-form-full'));
+        expect(api.signUp).not.toHaveBeenCalled();
+        expect(el('register-feedback').textContent).toContain('pelo menos 8 caracteres');
+        expect(el('register-password').validity.valid).toBe(false);
+    });
+    it('corrigir para oito caracteres libera envio sem alterar a senha digitada', async () => {
+        fillRegistration(); el('register-password').value = 'TESTE12'; el('register-password-confirm').value = 'TESTE12';
+        await handleRegistrationFromForm(eventFor('register-form-full'));
+        el('register-password').value = ' TESTE12'; el('register-password-confirm').value = ' TESTE12';
+        el('register-password').dispatchEvent(new Event('input'));
+        await handleRegistrationFromForm(eventFor('register-form-full'));
+        expect(api.signUp).toHaveBeenCalledTimes(1);
+        expect(api.signUp.mock.calls[0][0].password).toBe(' TESTE12');
+    });
+    it('não aplica a nova regra de cadastro às senhas de contas existentes no login', async () => {
+        el('login-email').value = email; el('login-password').value = 'ANTIGA';
+        await handleLogin(eventFor('login-form'));
+        expect(api.signInWithPassword).toHaveBeenCalledWith({ email, password: 'ANTIGA' });
+        expect(api.signUp).not.toHaveBeenCalled();
+    });
+    it.each([
+        [{ code: 'unexpected_failure', status: 500 }, 'falha interna'],
+        [{ status: 503 }, 'falha interna'],
+        [{ code: 'weak_password', status: 422 }, 'pelo menos 8 caracteres'],
+        [{ code: 'email_address_invalid' }, 'formato do e-mail'],
+        [{ code: 'email_address_not_authorized', status: 403 }, 'e-mails autorizados da equipe'],
+        [{ code: 'over_email_send_rate_limit', status: 429 }, 'limite'],
+        [{ code: 'over_request_rate_limit' }, 'limite'],
+        [{ code: 'signup_disabled' }, 'indisponível'],
+        [{ code: 'email_provider_disabled' }, 'indisponível'],
+        [{ name: 'AuthRetryableFetchError' }, 'conectar ao serviço'],
+    ])('traduz o erro %j sem expor mensagens brutas ou autenticar', async (error, expected) => {
+        const sensitive = 'SYNTHETIC_PRIVATE server SQL public.profiles token password pessoa@example.invalid';
+        api.signUp.mockResolvedValueOnce({ data: { user: null, session: null }, error: { ...error, message: sensitive } });
+        fillRegistration(); await handleRegistrationFromForm(eventFor('register-form-full'));
+        expect(el('register-feedback').textContent).toContain(expected);
+        expect(el('register-feedback').textContent).not.toContain(sensitive);
+        expect(el('register-feedback').textContent).not.toContain('public.profiles');
+        expect(state.currentUser.isLoggedIn).toBe(false);
+        expect(el('register-password').value).toBe(password);
+        expect(el('register-form-full').querySelector('button[type=submit]').disabled).toBe(false);
+        expect(api.signUp).toHaveBeenCalledTimes(1);
+    });
+    it.each(['user_already_exists', 'user_not_found', 'unknown'])('erro %s não revela existência de conta', async code => {
+        api.signUp.mockResolvedValueOnce({ data: null, error: { code, message: 'SYNTHETIC account exists' } });
+        fillRegistration(); await handleRegistrationFromForm(eventFor('register-form-full'));
+        expect(el('register-feedback').textContent).toBe('Não foi possível concluir o cadastro agora. Tente novamente mais tarde.');
+        expect(state.currentUser.isLoggedIn).toBe(false);
+    });
     it('exige confirmação e bloqueia senhas diferentes antes de chamar o SDK', async () => {
         fillRegistration();
         expect(el('register-password-confirm').required).toBe(true);

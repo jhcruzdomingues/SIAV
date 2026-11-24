@@ -1,3 +1,5 @@
+import { MIN_REGISTRATION_PASSWORD_LENGTH } from './auth-errors.js';
+
 // Descriptive registration data only. These choices never grant clinical permissions.
 const professions = [
     { name: 'Médico(a)', council: 'CRM', example: '000000' },
@@ -38,9 +40,12 @@ export function validateRegistrationPasswords() {
     const password = document.getElementById('register-password');
     const confirmation = document.getElementById('register-password-confirm');
     if (!password || !confirmation) return '';
+    const lengthMessage = password.value.length < MIN_REGISTRATION_PASSWORD_LENGTH
+        ? `Use uma senha com pelo menos ${MIN_REGISTRATION_PASSWORD_LENGTH} caracteres.` : '';
+    password.setCustomValidity(lengthMessage);
     const message = !confirmation.value ? 'Confirme a senha.' : confirmation.value !== password.value ? 'As senhas não coincidem. Digite a mesma senha nos dois campos.' : '';
     confirmation.setCustomValidity(message);
-    return message;
+    return lengthMessage || message;
 }
 
 export function validateRegistrationFields() {

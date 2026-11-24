@@ -12,6 +12,7 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "test:run": "vitest run",
+    "test:database": "node --test --test-concurrency=1 tests/database/signup-profiles.mjs",
     "deploy": "npm run build && echo 'Build pronto! Envie a pasta dist/ para seu servidor'",
     "test:distribution": "node --test tests/distribution/check.mjs"
   },

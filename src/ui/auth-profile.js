@@ -3,6 +3,7 @@ import { supabase } from '../config/supabase.js';
 import { closeModal, openModal, showScreen } from './dom.js';
 import { fetchPcrLogs } from '../pcr/log.js';
 import { validateRegistrationFields } from './registration-fields.js';
+import { registrationErrorMessage } from './auth-errors.js';
 
 const DEFAULT_USER_DATA = {
     name: 'Convidado',
@@ -288,7 +289,7 @@ export async function handleRegistration(email, password, { form = null, metadat
         showProfileModal();
         return true;
     } catch (error) {
-        authFeedback(form, 'Não foi possível concluir o cadastro. Confira os dados e tente novamente.');
+        authFeedback(form, registrationErrorMessage(error));
         return false;
     }
 }
