@@ -178,7 +178,7 @@
                 <div class="pcr-actions-grid">
                     <button id="med-btn" class="btn-action btn-drug">
                         <i class="fas fa-syringe"></i>
-                        <span>Droga</span>
+                        <span>Medicações</span>
                     </button>
                     <button id="notes-btn" class="btn-action btn-notes">
                         <i class="fas fa-clipboard"></i>
@@ -187,10 +187,6 @@
                     <button id="hs-ts-btn" class="btn-action btn-causes">
                         <i class="fas fa-vials"></i>
                         <span>5H's & 5T's</span>
-                    </button>
-                    <button id="vitals-btn" class="btn-action btn-vitals">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Sinais Vitais</span>
                     </button>
                 </div>
 
@@ -928,58 +924,48 @@
         </div>
     </div>
 
-    <div id="med-modal" class="modal">
+    <div id="med-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="med-modal-title">
         <div class="modal-content med-modal-custom">
-            <div class="med-modal-header">
-                <div class="med-icon-wrapper">
-                    <i class="fas fa-syringe"></i>
-                </div>
-                <h3>Registrar medicamento administrado</h3>
-                <p>Diretrizes AHA 2025</p>
+            <div class="care-modal-heading">
+                <h3 id="med-modal-title">Registrar medicação</h3>
+                <button id="cancel-med-btn" type="button" class="care-modal-close" aria-label="Fechar sem registrar medicação">×</button>
             </div>
-            
-            <div class="med-grid-pro">
-                <button type="button" class="med-btn-pro" data-med="adrenalina">
-                    <span class="med-pro-title">Adrenalina</span>
-                    <span class="med-pro-subtitle">Vasopressor</span>
-                </button>
-                <button type="button" class="med-btn-pro" data-med="amiodarona">
-                    <span class="med-pro-title">Amiodarona</span>
-                    <span class="med-pro-subtitle">Antiarrítmico</span>
-                </button>
-                <button type="button" class="med-btn-pro" data-med="lidocaina">
-                    <span class="med-pro-title">Lidocaína</span>
-                    <span class="med-pro-subtitle">Antiarrítmico</span>
-                </button>
-                <button type="button" class="med-btn-pro" data-med="atropina">
-                    <span class="med-pro-title">Atropina</span>
-                    <span class="med-pro-subtitle">Bradicardia</span>
-                </button>
-                <button type="button" class="med-btn-pro" data-med="bicarbonato">
-                    <span class="med-pro-title">Bicarbonato</span>
-                    <span class="med-pro-subtitle">Acidose/HiperK</span>
-                </button>
-                <button type="button" class="med-btn-pro" data-med="sulfato">
-                    <span class="med-pro-title">Sulfato de Mg</span>
-                    <span class="med-pro-subtitle">Torsades</span>
-                </button>
+            <div class="med-form-body">
+            <p class="registration-instruction">Registre somente a dose administrada.</p>
+            <div class="med-grid-pro med-primary-options" role="group" aria-label="Adrenalina e amiodarona">
+                <button type="button" class="med-btn-pro" data-med="adrenalina" aria-pressed="false"><span class="med-pro-title">Adrenalina</span></button>
+                <button type="button" class="med-btn-pro" data-med="amiodarona" aria-pressed="false"><span class="med-pro-title">Amiodarona</span></button>
             </div>
-            
+            <p class="med-group-label">Outras medicações</p>
+            <div class="med-grid-pro med-other-options" role="group" aria-label="Outras medicações">
+                <button type="button" class="med-btn-pro" data-med="lidocaina" aria-pressed="false"><span class="med-pro-title">Lidocaína</span></button>
+                <button type="button" class="med-btn-pro" data-med="atropina" aria-pressed="false"><span class="med-pro-title">Atropina</span></button>
+                <button type="button" class="med-btn-pro" data-med="bicarbonato" aria-pressed="false"><span class="med-pro-title">Bicarbonato</span></button>
+                <button type="button" class="med-btn-pro" data-med="sulfato" aria-pressed="false"><span class="med-pro-title">Sulfato de Mg</span></button>
+            </div>
             <input type="hidden" id="medication-select" value="">
-            <p id="medication-registration-summary" class="registration-summary" aria-live="polite">Selecione o medicamento efetivamente administrado.</p>
-            <p class="registration-instruction">Seleção não grava. Toque no botão somente para registrar a dose já administrada.</p>
-            <button id="record-med-btn" class="med-action-btn" disabled>
-                <i class="fas fa-check-circle"></i>
-                <div class="med-action-text">
-                    <span class="main-text">REGISTRAR DOSE ADMINISTRADA</span>
-                    <span class="sub-text">Selecione uma droga</span>
+            <div id="medication-weight-field" hidden>
+                <label for="medication-weight">Informe o peso para calcular a faixa (kg)</label>
+                <div class="med-weight-row">
+                    <input type="number" id="medication-weight" min="0.1" max="500" step="any" inputmode="decimal" placeholder="Peso confirmado">
+                    <button id="confirm-medication-weight" type="button" class="secondary-btn">Confirmar peso</button>
                 </div>
-            </button>
-
-            <details id="medication-edit-details">
-                <summary>EDITAR ADMINISTRAÇÃO / REGISTRO MANUAL</summary>
-                <label for="medication-dose">Quantidade exata efetivamente administrada</label>
-                <input type="number" id="medication-dose" min="0" step="any" inputmode="decimal" required>
+            </div>
+            <div class="med-preview-panel" id="med-preview-panel" style="display: none;">
+                <strong id="med-preview-name"></strong>
+                <p id="med-preview-value" aria-live="polite"></p>
+                <div class="med-dose-row">
+                    <div><label for="medication-dose">Dose aplicada</label>
+                        <div class="med-dose-input"><input type="number" id="medication-dose" min="0" step="any" inputmode="decimal" required><span id="medication-dose-unit">mg</span></div>
+                    </div>
+                    <fieldset class="med-route-field"><legend>Via</legend>
+                        <label><input type="radio" id="route-ev" name="administration-route" value="EV" checked>EV</label>
+                        <label><input type="radio" id="route-io" name="administration-route" value="IO">IO</label>
+                    </fieldset>
+                </div>
+            </div>
+            <details id="medication-edit-details" hidden>
+                <summary>Editar unidade, horário ou registro manual</summary>
                 <label for="medication-unit">Unidade</label>
                 <select id="medication-unit"><option value="mg">mg</option><option value="g">g</option><option value="mEq">mEq</option></select>
                 <label for="medication-timing">Momento da administração</label>
@@ -988,29 +974,14 @@
                     <label for="medication-effective-at">Horário efetivo (hora local)</label>
                     <input type="datetime-local" id="medication-effective-at" step="1">
                 </div>
-                <label id="medication-review-confirmation"><input type="checkbox" id="medication-confirmed">Revisei os dados da administração real e o contexto deste registro manual</label>
+                <label class="med-manual-route"><input type="radio" id="route-et" name="administration-route" value="ET">ET · registro manual, sem sugestão de dose</label>
+                <label id="medication-review-confirmation"><input type="checkbox" id="medication-confirmed">Conferi dose, via, horário e contexto do registro manual.</label>
             </details>
-
-            <div class="med-preview-panel" id="med-preview-panel" style="display: none;">
-                <div class="med-preview-header">
-                    <i class="fas fa-prescription-bottle-alt"></i>
-                    <span id="med-preview-name">Adrenalina</span>
-                </div>
-                <span id="med-preview-value" class="med-preview-value">1 mg</span>
-                
-                <div class="route-selector-pro">
-                    <div class="route-options">
-                        <input type="radio" id="route-ev" name="administration-route" value="EV" checked>
-                        <label for="route-ev">EV</label>
-                        <input type="radio" id="route-io" name="administration-route" value="IO">
-                        <label for="route-io">IO</label>
-                        <input type="radio" id="route-et" name="administration-route" value="ET">
-                        <label for="route-et">ET</label>
-                    </div>
-                </div>
+            <p id="medication-form-feedback" role="alert" hidden></p>
             </div>
-
-            <button id="cancel-med-btn" class="cancel-btn wide-btn" style="margin-top: 12px; background: transparent; border: 2px solid var(--border-color); color: var(--text-primary); font-weight: 700; box-shadow: none;">CANCELAR</button>
+            <button id="record-med-btn" type="button" class="med-action-btn" disabled>
+                <span class="med-action-text"><span class="main-text">CONFIRMAR REGISTRO</span><span class="sub-text">Selecione a medicação</span></span>
+            </button>
         </div>
     </div>
 
@@ -1027,48 +998,29 @@
         </div>
     </div>
 
-    <div id="vitals-modal" class="modal">
-        <div class="modal-content">
-            <h3>Registro de Sinais Vitais</h3>
-            <p>Registre o estado do paciente (não deve ser feito durante RCP ativa).</p>
-            
-            <div class="vitals-grid">
-                <div>
-                    <label for="vital-pa-sistolica">PA Sistólica:</label>
-                    <input type="number" id="vital-pa-sistolica" placeholder="Ex: 120">
-                </div>
-                <div>
-                    <label for="vital-pa-diastolica">PA Diastólica:</label>
-                    <input type="number" id="vital-pa-diastolica" placeholder="Ex: 80">
-                </div>
-                
-                <div>
-                    <label for="vital-fc">Frequência Cardíaca (bpm):</label>
-                    <input type="number" id="vital-fc" placeholder="Ex: 85">
-                </div>
-                <div>
-                    <label for="vital-fr">Frequência Resp. (ipm):</label>
-                    <input type="number" id="vital-fr" placeholder="Ex: 16">
-                </div>
-
-                <div>
-                    <label for="vital-spo2">SpO₂ (%):</label>
-                    <input type="number" id="vital-spo2" placeholder="Ex: 98">
-                </div>
-                <div>
-                    <label for="vital-temp">Temperatura (°C):</label>
-                    <input type="text" id="vital-temp" placeholder="Ex: 36.5">
-                </div>
+    <div id="vitals-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="vitals-modal-title" aria-describedby="vitals-modal-description">
+        <div class="modal-content post-rce-vitals">
+            <div class="care-modal-heading">
+                <h3 id="vitals-modal-title">Sinais vitais após RCE</h3>
+                <button id="close-vitals-btn" type="button" class="care-modal-close" aria-label="Voltar ao atendimento sem desfazer o RCE">×</button>
             </div>
-
-            <label for="vital-notes">Observações Adicionais:</label>
-            <textarea id="vital-notes" rows="2" placeholder="Ex: Glasgow 15, sem déficit focal."></textarea>
-
-            <button id="record-vitals-btn" class="primary-btn">REGISTRAR SINAIS VITAIS</button>
-            <button id="cancel-vitals-btn" class="cancel-btn">Cancelar</button>
+            <p id="vitals-modal-description">RCE confirmado. Informe apenas as medidas obtidas para incluí-las no relatório.</p>
+            <div class="vitals-grid">
+                <div><label for="vital-pa-sistolica">PA sistólica (mmHg)</label><input type="number" id="vital-pa-sistolica" inputmode="numeric" placeholder="Não informada"></div>
+                <div><label for="vital-pa-diastolica">PA diastólica (mmHg)</label><input type="number" id="vital-pa-diastolica" inputmode="numeric" placeholder="Não informada"></div>
+                <div><label for="vital-fc">FC (bpm)</label><input type="number" id="vital-fc" inputmode="numeric" placeholder="Não informada"></div>
+                <div><label for="vital-fr">FR (irpm)</label><input type="number" id="vital-fr" inputmode="numeric" placeholder="Não informada"></div>
+                <div><label for="vital-spo2">SpO₂ (%)</label><input type="number" id="vital-spo2" inputmode="decimal" step="any" placeholder="Não informada"></div>
+                <div><label for="vital-temp">Temperatura (°C)</label><input type="text" id="vital-temp" inputmode="decimal" placeholder="Não informada"></div>
+            </div>
+            <label for="vital-notes">Observações</label>
+            <textarea id="vital-notes" rows="2"></textarea>
+            <p id="vitals-form-feedback" role="alert" hidden></p>
+            <button id="record-vitals-btn" type="button" class="primary-btn">SALVAR E FINALIZAR</button>
+            <button id="cancel-vitals-btn" type="button" class="cancel-btn">FINALIZAR SEM INFORMAR</button>
         </div>
     </div>
-    
+
     <div id="protocol-detail-modal" class="modal large-modal">
         <div class="modal-content protocol-content-box">
             <button onclick="closeModal('protocol-detail-modal')" class="close-btn"><i class="fas fa-times"></i></button>

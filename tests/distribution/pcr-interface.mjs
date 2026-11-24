@@ -96,7 +96,7 @@ export async function checkPCRInterface(page, device) {
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${screen}/${theme}: horizontal overflow`);
       await contrast('.screen.active h2, .screen.active .section-description, .screen.active .protocol-title, .screen.active .protocol-desc');
     }
-    for (const id of ['patient-modal', 'med-modal', 'notes-modal', 'vitals-modal', 'glasgow-modal', 'login-modal', 'profile-modal']) {
+    for (const id of ['patient-modal', 'med-modal', 'notes-modal', 'glasgow-modal', 'login-modal', 'profile-modal']) {
       await page.evaluate(id => window.openModal(id), id);
       await page.locator('#' + id + '.show').waitFor();
       await contrast(`#${id} h3, #${id} label`);

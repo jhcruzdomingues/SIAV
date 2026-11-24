@@ -7,15 +7,20 @@ import { handleCompressionAction } from './compressions.js';
 import { showFinishAttendance, closeFinishAttendance, chooseFinishOutcome, handleFinishAttendanceKey } from './finish-attendance.js';
 import { toggleMetronome, adjustBPM } from './audio.js';
 import { showRhythmSelectorScreen, selectRhythmOption, processRhythmSelection, applyShockAndResume } from '../pcr/rhythm.js';
-import { showMedModal, updateMedicationDose, recordMedication, cancelMedicationRecord, selectMedication } from '../pcr/medications.js';
+import { showMedModal, updateMedicationDose, recordMedication, cancelMedicationRecord, selectMedication, confirmMedicationWeight } from '../pcr/medications.js';
 import { showNotesModal, saveNotes } from '../pcr/log.js';
-import { showVitalsModal, recordVitals } from '../pcr/vitals.js';
+import { recordVitals, skipPostRceVitals, closeVitalsModal, handleVitalsKey } from '../pcr/vitals.js';
 import { showGlasgowModal, saveGlasgow } from './glasgow.js';
 import { handleLogin, handleRegistrationFromForm, handleProfileUpdate, logout, showProfileModal, showRegistrationModal, showLoginModal, updateDashboard } from './auth-profile.js';
 import { checkAccess, startSubscriptionFlow } from '../services/permissions.js';
 import { showProtocolDetail, showStudyDetail, toggleCause, closeTreatmentFullscreen, createStudyHSTsList } from '../protocols/guidelines.js';
 import { checkAndIncrementSimulationUse } from '../services/storage.js';
 import { initializeRegistrationFields, updateRegistrationProfession, validateRegistrationPasswords } from './registration-fields.js';
+
+function clearCareFeedback(id) {
+    const feedback = document.getElementById(id);
+    if (feedback) { feedback.textContent = ''; feedback.hidden = true; }
+}
 
 export function registerAllEvents() {
     createStudyHSTsList();
@@ -106,11 +111,14 @@ export function registerAllEvents() {
         button.addEventListener('click', () => selectMedication(button.dataset.med));
     });
     for (const id of ['medication-dose', 'medication-unit', 'medication-confirmed', 'medication-effective-at']) {
-        document.getElementById(id)?.addEventListener('input', updateMedicationDose);
-        document.getElementById(id)?.addEventListener('change', updateMedicationDose);
+        for (const event of ['input', 'change']) document.getElementById(id)?.addEventListener(event, () => {
+            clearCareFeedback('medication-form-feedback'); updateMedicationDose();
+        });
     }
+    document.getElementById('medication-weight')?.addEventListener('input', () => clearCareFeedback('medication-form-feedback'));
 
     document.getElementById('record-med-btn')?.addEventListener('click', recordMedication);
+    document.getElementById('confirm-medication-weight')?.addEventListener('click', confirmMedicationWeight);
     document.getElementById('medication-timing')?.addEventListener('change', updateMedicationDose);
     document.querySelectorAll('input[name="administration-route"]').forEach(input => input.addEventListener('change', updateMedicationDose));
     document.getElementById('cancel-med-btn')?.addEventListener('click', cancelMedicationRecord);
@@ -119,9 +127,12 @@ export function registerAllEvents() {
     document.getElementById('save-notes-btn')?.addEventListener('click', saveNotes);
     document.getElementById('cancel-notes-btn')?.addEventListener('click', () => closeModal('notes-modal'));
 
-    document.getElementById('vitals-btn')?.addEventListener('click', showVitalsModal);
     document.getElementById('record-vitals-btn')?.addEventListener('click', recordVitals);
-    document.getElementById('cancel-vitals-btn')?.addEventListener('click', () => closeModal('vitals-modal'));
+    document.getElementById('cancel-vitals-btn')?.addEventListener('click', skipPostRceVitals);
+    document.getElementById('close-vitals-btn')?.addEventListener('click', closeVitalsModal);
+    document.querySelectorAll('#vitals-modal input, #vitals-modal textarea').forEach(input => {
+        input.addEventListener('input', () => clearCareFeedback('vitals-form-feedback'));
+    });
 
     document.getElementById('finish-pcr-btn')?.addEventListener('click', showFinishAttendance);
     document.getElementById('finish-attendance-close')?.addEventListener('click', closeFinishAttendance);
@@ -155,6 +166,7 @@ export function registerAllEvents() {
         modal.addEventListener('click', event => {
             if (event.target === modal) {
                 if (modal.id === 'finish-attendance-modal') closeFinishAttendance();
+                else if (modal.id === 'vitals-modal') closeVitalsModal();
                 else closeModal(modal.id);
             }
         });
@@ -263,6 +275,7 @@ export function registerAllEvents() {
     // Configura atalhos de teclado globais
     document.addEventListener('keydown', (e) => {
         if (handleFinishAttendanceKey(e)) return;
+        if (handleVitalsKey(e)) return;
         const active = document.activeElement;
         if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT' || active.isContentEditable)) return;
 

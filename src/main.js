@@ -26,7 +26,8 @@ import { MEDICATIONS, calculateDose } from './utils/medications.js';
 import { getProtocolNextStep, getShockRecommendation, calculateGlasgow } from './protocols/medical.js';
 import * as MedicalBrain from './protocols/medical.js';
 
-import { startPCR, finishPCR, executePCRFinish, restartPCRAfterROSC, startTimer, startCycleProgress, startCompressions, promptRhythmCheck, clearAllIntervals } from './pcr/core.js';
+import { startPCR, executePCRFinish, restartPCRAfterROSC, startTimer, startCycleProgress, startCompressions, promptRhythmCheck, clearAllIntervals } from './pcr/core.js';
+import { finishPCRWithPostRceVitals } from './ui/finish-attendance.js';
 import { showRhythmSelectorScreen, selectRhythmOption, processRhythmSelection, setupShockActionScreen, applyShockAndResume, roscObtido } from './pcr/rhythm.js';
 import { showMedModal, updateMedicationDose, recordMedication, startDrugTimer, stopDrugTimer } from './pcr/medications.js';
 import { addEvent, getIconForEvent, updateTimeline } from './ui/timeline.js';
@@ -235,7 +236,7 @@ window.SIAV = {
 
 // Vincula as funções extraídas da PCR para garantir compatibilidade perfeita com onclicks do HTML
 Object.assign(window, {
-  startPCR, finishPCR, executePCRFinish, restartPCRAfterROSC,
+  startPCR, finishPCR: finishPCRWithPostRceVitals, executePCRFinish, restartPCRAfterROSC,
   startTimer, startCycleProgress, startCompressions, 
   promptRhythmCheck, clearAllIntervals
 });

@@ -149,10 +149,14 @@ export function updatePcrGuidance() {
             .filter(entry => entry.status === 'review' && entry.reason)
             .map(entry => reviewCommands.get(entry.reason) || entry.reason))];
         const isReview = step.message === 'REAVALIAR CONDUTA — SEM DOSE AUTOMÁTICA';
-        const primary = !snapshot.pcrActive ? 'Atendimento encerrado.' : commands.length ? commands.join('\n') : isReview && reviews.length
+        const needsFirstRhythm = isReview && snapshot.clinical?.step == null && !state.currentRhythm
+            && snapshot.clinical?.status === 'arrest' && snapshot.clinical?.episodeId
+            && Array.isArray(snapshot.medications) && snapshot.medications.length === 0
+            && !snapshot.clinical?.historyIncomplete && !snapshot.clinical?.pendingShock;
+        const primary = !snapshot.pcrActive ? 'Atendimento encerrado.' : needsFirstRhythm ? 'Informe o ritmo.' : commands.length ? commands.join('\n') : isReview && reviews.length
             ? reviews[0] : directMessages.get(step.message) || step.message;
         setText(document.getElementById('ac-primary-text'), primary);
-        const next = nextAction(snapshot, step);
+        const next = needsFirstRhythm ? '' : nextAction(snapshot, step);
         setText(document.getElementById('ac-next-text'), next);
         const nextPanel = document.getElementById('ac-next-step');
         if (nextPanel) nextPanel.hidden = !next;
@@ -174,7 +178,7 @@ export function updatePcrGuidance() {
             if (step.dose) warnings.push(step.dose);
             if (step.details) warnings.push(step.details);
         }
-        if (!snapshot.pcrActive) warnings.length = 0;
+        if (!snapshot.pcrActive || needsFirstRhythm) warnings.length = 0;
         const safety = document.getElementById('ac-safety-note');
         setText(safety, [...new Set(warnings)].join('\n'));
         show(safety, warnings.length > 0);

@@ -1,3 +1,5 @@
+import { weightDoseMg } from '../utils/dose-math.js';
+
 // ==========================================
 // CÉREBRO MÉDICO - PROTOCOLOS AHA 2025
 // ==========================================
@@ -121,8 +123,8 @@ export function evaluateMedicationGuidance(snapshot, now = Date.now()) {
         || !Number.isFinite(m.amount) || m.amount <= 0 || m.unit !== 'mg' || !['EV', 'IO'].includes(m.route));
     const badAmounts = history.amiodarona.some((m, index) => m.amount !== (index === 0 ? 300 : 150))
         || history.lidocaina.some((m, index) => !Number.isFinite(m.weightAtAdministration) || m.weightAtAdministration <= 0
-            || m.amount < m.weightAtAdministration * (index === 0 ? 1 : 0.5)
-            || m.amount > m.weightAtAdministration * (index === 0 ? 1.5 : 0.75));
+            || m.amount < weightDoseMg(m.weightAtAdministration, index === 0 ? 1 : 0.5)
+            || m.amount > weightDoseMg(m.weightAtAdministration, index === 0 ? 1.5 : 0.75));
     const mixed = history.amiodarona.length && history.lidocaina.length;
     if (uncertain || mixed || badAmounts) {
         for (const id of ['amiodarona', 'lidocaina']) result[id] = { status: 'review', reason: 'Reavaliar antiarrítmicos: dose tardia, histórico incompleto, outro episódio ou fármacos associados. O PDF não fundamenta uma nova dose automática.' };

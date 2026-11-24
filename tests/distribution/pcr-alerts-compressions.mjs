@@ -114,6 +114,7 @@ export async function checkAlertsAndCompressions(page) {
   assert.equal(await notice.isVisible(), false);
   await page.locator('#finish-pcr-btn').tap();
   page.once('dialog', dialog => dialog.accept()); await page.locator('#rosc-btn').tap();
+  await page.locator('#cancel-vitals-btn').tap();
   assert.equal(await page.evaluate(() => window.SIAV.state.pcrActive), false);
   assert.equal(await button.isDisabled(), true); assert.equal(await notice.isVisible(), false);
   assert.equal(await button.evaluate(el => getComputedStyle(el).animationName), 'none');

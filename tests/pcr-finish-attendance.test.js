@@ -74,7 +74,13 @@ describe('Finalizar atendimento: escolha explícita e uma confirmação', () => 
         const administrations = JSON.stringify(state.medications), shocks = JSON.stringify(state.shocks);
         vi.advanceTimersByTime(5000); const notes = state.notes; openFinish();
         const selected = document.querySelector(`[data-finish-outcome="${type}"]`);
-        selected.click(); selected.click(); core.executePCRFinish();
+        selected.click(); selected.click();
+        if (type === 'rosc') {
+            expect(state.clinical.status).toBe('rosc'); expect(state.pcrActive).toBe(true);
+            expect(window.generateEvolution).not.toHaveBeenCalled();
+            vi.advanceTimersByTime(10000); el('cancel-vitals-btn').click();
+        }
+        core.executePCRFinish();
         expect(window.confirm).toHaveBeenCalledTimes(1); expect(state.pcrActive).toBe(false);
         expect(state.encounterOutcome).toMatchObject({ type, timestamp: NOW + 5020 });
         expect(state.encounterOutcome.id).toBeTruthy(); expect(state.encounterOutcome.episodeId).toBe(state.clinical.episodeId);
@@ -122,6 +128,7 @@ describe('Finalizar atendimento: escolha explícita e uma confirmação', () => 
         expect(state.pcrActive).toBe(true); expect(state.clinical.status).toBe('rosc');
         const count = state.events.filter(event => event.text.startsWith('ROSC OBTIDO')).length;
         openFinish(); window.confirm.mockClear(); el('rosc-btn').click();
+        el('cancel-vitals-btn').click();
         expect(window.confirm).toHaveBeenCalledTimes(1); expect(state.pcrActive).toBe(false);
         expect(state.events.filter(event => event.text.startsWith('ROSC OBTIDO'))).toHaveLength(count);
         expect(state.encounterOutcome.type).toBe('rosc');

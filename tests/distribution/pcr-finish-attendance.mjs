@@ -75,10 +75,20 @@ export async function checkFinishAttendance(page) {
       accept = true; const beforeAccept = dialogs.length;
       await modal.locator(`[data-finish-outcome="${type}"]`).tap(); await modal.waitFor({ state: 'hidden' });
       assert.equal(dialogs.length, beforeAccept + 1, 'Exactly one confirmation for the chosen end action');
+      if (type === 'rosc') {
+        await page.locator('#vitals-modal').waitFor({ state: 'visible' });
+        assert.equal(await page.evaluate(() => window.SIAV.state.roscAchieved), true);
+        assert.equal(await page.evaluate(() => window.SIAV.state.pcrActive), true);
+        await page.locator('#vital-pa-sistolica').fill('120');
+        await page.locator('#vital-pa-diastolica').fill('80');
+        await page.locator('#vital-fc').fill('85');
+        await page.locator('#record-vitals-btn').tap();
+      }
       const result = await page.evaluate(() => ({ active: window.SIAV.state.pcrActive, outcome: window.SIAV.state.encounterOutcome,
         rosc: window.SIAV.state.roscAchieved, notes: window.SIAV.state.notes, report: window.generateEvolution(false) }));
       assert.equal(result.active, false); assert.equal(result.outcome.type, type); assert.equal(result.rosc, type === 'rosc');
       assert.equal(result.notes[0].text, 'NOTA SINTETICA DO ENCERRAMENTO'); assert.ok(result.report.includes(labels[type]));
+      if (type === 'rosc') assert.ok(result.report.includes('SINAIS VITAIS PÓS-RCE: PA: 120x80 mmHg; FC: 85 bpm'));
     }
   } finally { page.off('dialog', handleDialog); }
 }
