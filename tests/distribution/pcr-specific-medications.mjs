@@ -47,6 +47,7 @@ export async function checkSpecificMedications(page) {
   assert.equal(await med.locator('#medication-other-options').getAttribute('open'), null);
   assert.equal(await med.locator('[data-med]').count(), 12);
   await page.setViewportSize({ width: 320, height: 568 }); await page.evaluate(() => window.setTheme('light'));
+  await med.locator('#med-modal-title').tap(); // Clear the opener's transient native touch highlight before capture.
   await capture('catalog-320-light');
   for (const id of ['gluconato_calcio', 'naloxona']) {
     await choose(id);
