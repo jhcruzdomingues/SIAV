@@ -44,9 +44,19 @@ O diagnóstico e o plano foram registrados no commit `552e9b8`, antes das altera
 
 ### Estado da aplicação no Supabase
 
-**Não aplicada.** A revisão automática rejeitou a aplicação porque a criação de tabela, permissões, políticas RLS, gatilho e atualização de função `SECURITY DEFINER` no projeto ativo exige autorização explícita do SQL e de seu escopo. Foi solicitada essa autorização para a migração testada. Não houve tentativa de contornar a rejeição por SQL direto, desativação de gatilhos ou execução indireta.
+**Aplicada em 24/11/2026, às 16h21 (America/Sao_Paulo), após autorização explícita do usuário.** A aplicação anterior havia sido bloqueada pela revisão automática por exigir aprovação do SQL e de seu escopo. Depois da autorização, o catálogo foi novamente conferido: a tabela ainda estava ausente, o gatilho correspondia ao esperado e não havia contas em Auth. Somente a migração revisada foi aplicada, pelo mecanismo de migrações do Supabase, com retorno de sucesso.
 
-A migração está em `supabase/migrations/20261124144808_repair_missing_signup_profiles.sql`, criada com `supabase migration new` da CLI 3.3.0. A CLI foi usada apenas localmente, sem vínculo ao projeto remoto. Seu diretório próprio de configuração foi colocado no workspace com `SUPABASE_HOME`; a configuração `HOME` do ambiente não foi alterada.
+A migração está em `supabase/migrations/20261124192132_repair_missing_signup_profiles.sql`. Ela foi inicialmente criada com `supabase migration new` da CLI 3.3.0 sob a versão `20261124144808`; após a aplicação via MCP, seu nome local foi alinhado à versão efetivamente registrada no histórico remoto, `20261124192132`. O conteúdo SQL aprovado permaneceu idêntico (SHA-256 `428ceead395b88a3a4cf898c319aed4b8bab31a72a310ed43918ddc99986b8e6`). A CLI foi usada apenas localmente, sem vínculo ao projeto remoto. Seu diretório próprio de configuração foi colocado no workspace com `SUPABASE_HOME`; a configuração `HOME` do ambiente não foi alterada.
+
+### Verificação no projeto ativo após a aplicação
+
+- Confirmados `profiles`, RLS habilitada, três políticas vinculadas a `auth.uid()`, permissões de escrita limitadas às colunas pessoais e gatilho de atualização de `updated_at`.
+- O gatilho de Auth foi preservado. Sua função continua `SECURITY DEFINER`, com proprietário `postgres`, `search_path=pg_catalog` e sem execução direta por `anon` ou `authenticated`. `supabase_auth_admin` mantém permissão de inserir em `auth.users`.
+- Dois usuários exclusivamente sintéticos, com IDs aleatórios e e-mails `.invalid`, foram inseridos em uma transação revertida. Verificados criação de perfis, plano inicial `free` mesmo com metadado forjado, normalização de UF/data opcional, leitura apenas do próprio perfil, bloqueio de escrita no perfil alheio, compatibilidade do upsert parcial e bloqueio de mudanças de plano, e-mail e proprietário. Visitantes não conseguem ler perfis.
+- A tentativa inicial de executar essa verificação como `supabase_auth_admin` foi recusada pelo próprio PostgreSQL (`42501`: a conexão de diagnóstico não pode assumir esse papel), antes de inserir registros. Não foram concedidas permissões adicionais. A verificação foi então executada pelo papel de diagnóstico, assumindo apenas `authenticated` e `anon` nos trechos de RLS. Isso valida o gatilho e as permissões, mas não substitui uma chamada real ao serviço de Auth.
+- Depois do `ROLLBACK`, as contagens de contas em Auth e perfis continuaram **zero**. Nenhum e-mail, senha real, sessão ou conta persistente foi criado pelos testes.
+- Os três avisos anteriores da função (search path mutável e execução por visitantes/autenticados) deixaram de aparecer. O advisor de desempenho retornou lista vazia. Permanece um [aviso de descoberta da tabela no esquema GraphQL por usuários autenticados](https://supabase.com/docs/guides/database/database-linter?lint=0027_pg_graphql_authenticated_table_exposed), decorrente do `SELECT` necessário ao perfil. Descobrir a estrutura não comprova acesso às linhas de outros usuários; RLS foi verificada como descrito acima. A superfície GraphQL merece revisão própria, sem revogar o acesso necessário ao frontend nesta correção.
+- `profiles` é a única tabela presente em `public`. As outras tabelas anteriormente observadas permanecem ausentes e não foram recriadas nesta entrega.
 
 ### Proteções verificadas no banco isolado
 
@@ -65,7 +75,7 @@ A migração está em `supabase/migrations/20261124144808_repair_missing_signup_
 - `src/ui/auth-errors.js`, `src/ui/auth-profile.js`: tradução segura de códigos de erro de serviço, senha fraca, endereço inválido, destinatário não autorizado e limites de envio. Erros desconhecidos permanecem neutros quanto à existência de conta; mensagens SQL, tokens, senhas e detalhes brutos não são exibidos.
 - `src/ui/registration-fields.js`, `index.html`: mínimo de 8 caracteres no cadastro, incluindo validação antes de chamar o SDK. Login de contas existentes não recebe essa nova restrição local.
 - `tests/profile-auth.test.js`, `tests/distribution/profile-auth.mjs`: regressões do mínimo de senha, erros úteis, ausência de exposição de detalhes, preservação de campos e desbloqueio do botão sem autenticação simulada.
-- `supabase/migrations/20261124144808_repair_missing_signup_profiles.sql`: recuperação restrita de perfis; ainda não aplicada.
+- `supabase/migrations/20261124192132_repair_missing_signup_profiles.sql`: recuperação restrita de perfis; aplicada após autorização explícita e conferida no projeto ativo.
 - `tests/database/signup-profiles.mjs`, `package.json`: teste real de SQL em container PostgreSQL 17, com imagem oficial fixada por digest; sem portas, volumes ou rede externa durante a execução, usando apenas dados sintéticos e removendo o container no final.
 - `.github/workflows/ci.yml`: inclusão desta branch e execução dos testes isolados de banco. O CI **não** acessa Supabase, não aplica migrações e não usa credenciais de produção. O workflow de deploy de produção não foi modificado.
 - Este documento registra diagnóstico, escopo, resultados e pendências.
@@ -74,17 +84,15 @@ Nenhuma dependência npm nova foi adicionada. Para executar o teste SQL, são ne
 
 Foi corrigida uma condição de corrida na inicialização do teste Docker: a checagem passou a aguardar o servidor PostgreSQL definitivo por TCP no loopback, em vez de aceitar o servidor temporário usado pela imagem na inicialização. O container continua sem portas publicadas e sem rede externa. Essa correção afeta somente a infraestrutura dos testes.
 
-## Próximas verificações após autorização
+## Próximas verificações
 
-1. Confirmar novamente que `profiles` está ausente e o gatilho corresponde ao estado esperado; aplicar somente a migração revisada.
-2. Conferir catálogo, RLS, permissões e histórico da migração. Validar o gatilho com dados sintéticos em transação revertida, sem enviar e-mail nem manter contas de teste.
-3. Repetir o cadastro real pelo usuário, uma vez, com o e-mail autorizado da equipe e senha de pelo menos 8 caracteres; verificar entrega, confirmação e retorno ao app. Nenhum sucesso de autenticação ou entrega foi declarado sem essa observação.
-4. Investigar a recuperação das outras tabelas em etapa própria. O script consolidado antigo não representa integralmente os campos assistenciais atualmente usados pelo frontend e não deve ser executado indiscriminadamente.
+1. Repetir o cadastro real pelo usuário, uma vez, com o e-mail autorizado da equipe e senha de pelo menos 8 caracteres; verificar entrega, confirmação e retorno ao app. Nenhum sucesso de autenticação ou entrega foi declarado sem essa observação. A URL de retorno salva pelo usuário permanece inalterada.
+2. Investigar a recuperação das outras tabelas em etapa própria. O script consolidado antigo não representa integralmente os campos assistenciais atualmente usados pelo frontend e não deve ser executado indiscriminadamente.
 
 ## Reversão e limitações
 
-Enquanto a migração não for aplicada, não há alteração de banco a reverter. O frontend pode voltar à branch anterior, preservada em `c9c9770f9c11db216abc67295d1cb49cd7bbcfbd`, ou receber `git revert` do commit de implementação desta correção.
+O frontend pode voltar à branch anterior, preservada em `c9c9770f9c11db216abc67295d1cb49cd7bbcfbd`, ou receber `git revert` do commit de implementação desta correção. Isso não desfaz a migração já aplicada no Supabase.
 
-Depois de uma futura aplicação, não apagar `profiles` para desfazer a mudança se contas já tiverem sido criadas. Preferir uma correção adicional revisada que preserve perfis e dados de Auth. A remoção da tabela voltaria a quebrar o gatilho de cadastro.
+Não apagar `profiles` para desfazer a mudança se contas já tiverem sido criadas. Preferir uma correção adicional revisada que preserve perfis e dados de Auth. A remoção da tabela voltaria a quebrar o gatilho de cadastro.
 
-Os testes de permissões são de PostgreSQL isolado, não uma homologação de todas as rotas/serviços do projeto ativo. Safari físico, SMTP real, segurança clínica, persistência assistencial e isolamento offline não foram homologados nesta entrega. Previews que continuam no commit anterior manterão o aviso antigo de 6 caracteres e a mensagem genérica até o frontend atualizado ser adotado; o reparo de banco, quando autorizado e aplicado, atenderá os consumidores desse mesmo projeto.
+Os testes de permissões em PostgreSQL isolado e em transação revertida no projeto ativo não homologam todas as rotas/serviços. Safari físico, SMTP real, segurança clínica, persistência assistencial e isolamento offline não foram homologados nesta entrega. Previews que continuam no commit anterior manterão o aviso antigo de 6 caracteres e a mensagem genérica até o frontend atualizado ser adotado; o reparo de banco aplicado atende os consumidores desse mesmo projeto.

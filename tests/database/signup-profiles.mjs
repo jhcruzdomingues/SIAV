@@ -9,7 +9,7 @@ import { randomUUID } from 'node:crypto';
 const image = 'postgres@sha256:f9cf3e1f0066f0eb0c48707d864f0ac5941e9ff454a072077d97a4d278d07d73';
 const container = 'siav-signup-test-' + randomUUID();
 const run = promisify(execFile);
-const migration = await readFile(new URL('../../supabase/migrations/20261124144808_repair_missing_signup_profiles.sql', import.meta.url), 'utf8');
+const migration = await readFile(new URL('../../supabase/migrations/20261124192132_repair_missing_signup_profiles.sql', import.meta.url), 'utf8');
 const A = '00000000-0000-4000-8000-000000000001';
 const B = '00000000-0000-4000-8000-000000000002';
 let started = false;
