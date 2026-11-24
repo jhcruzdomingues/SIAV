@@ -66,13 +66,13 @@ describe('Regressões com módulos e HTML reais', () => {
         shock(); expect(state.clinical.step).toBe(6);
         record('adrenalina', 1);
         shock(); expect(state.clinical.step).toBe(8);
-        expect(text()).toBe('Antiarrítmico indicado');
-        expect(input('ac-dose-text').textContent).toContain('AMIODARONA: 300 mg EV/IO');
-        expect(input('ac-dose-text').textContent).toContain('OU LIDOCAÍNA: 1-1.5 mg/kg EV/IO');
+        expect(text()).toContain('Administre amiodarona');
+        expect(input('ac-primary-text').textContent).toContain('amiodarona 300 mg EV/IO');
+        expect(input('ac-primary-text').textContent).toContain('OU lidocaína 1-1.5 mg/kg EV/IO');
         record('amiodarona', 300);
         const first = state.medications.at(-1);
         expect(first).toMatchObject({ amount: 300, dose: '300 mg', route: 'EV', timestamp: NOW, recordedAt: NOW, requiresReview: false });
-        expect(input('ac-dose-container').style.display).toBe('none');
+        expect(text()).not.toContain('Administre');
         prepare('amiodarona', 150);
         expect(input('med-preview-value').textContent).not.toContain('Orientação do passo atual');
         shock(); expect(state.clinical.step).toBe(6);
@@ -86,9 +86,9 @@ describe('Regressões com módulos e HTML reais', () => {
         shock(); expect(state.clinical.step).toBe(6);
         shock(); expect(state.shockCount).toBe(2);
         expect(state.clinical.step).toBe(8);
-        expect(text()).toBe('Antiarrítmico indicado');
-        expect(input('ac-dose-text').textContent).toContain('AMIODARONA: 300 mg EV/IO');
-        expect(input('ac-dose-text').textContent).toContain('OU LIDOCAÍNA: 1-1.5 mg/kg EV/IO');
+        expect(text()).toContain('Administre amiodarona');
+        expect(input('ac-primary-text').textContent).toContain('amiodarona 300 mg EV/IO');
+        expect(input('ac-primary-text').textContent).toContain('OU lidocaína 1-1.5 mg/kg EV/IO');
     });
     it('FV → AESP → FV volta ao passo 6 após terceiro choque total sem antecipar antiarrítmico', () => {
         shock(); shock(); record('adrenalina', 1);
@@ -105,7 +105,7 @@ describe('Regressões com módulos e HTML reais', () => {
         prepare(id, id === 'amiodarona' ? 300 : 100);
         const result = brain.evaluateMedicationGuidance(getClinicalSnapshot())[id];
         expect(input('med-preview-value').textContent).toContain(result.dose);
-        expect(input('ac-dose-text').textContent).toContain(result.dose);
+        expect(input('ac-primary-text').textContent).toContain(result.dose);
     });
     it('permite documentar dose fora do passo indicado, mas exige reavaliação posterior', () => {
         shock(); record('amiodarona', 300);
@@ -119,7 +119,7 @@ describe('Regressões com módulos e HTML reais', () => {
         rhythm.roscObtido();
         expect(state.roscAchieved).toBe(true); expect(state.pcrActive).toBe(true);
         expect(state.clinical.status).toBe('rosc'); expect(compressionCycle.active).toBe(false);
-        expect(text()).toContain('ROSC CONFIRMADO'); expect(input('compressions-btn').disabled).toBe(true);
+        expect(text()).toContain('ROSC confirmado'); expect(input('compressions-btn').disabled).toBe(true);
         expect(input('restart-pcr-btn').hidden).toBe(false);
         expect(Object.values(intervals).every(value => !value)).toBe(true);
         expect(window.stopMetronome).toHaveBeenCalled();

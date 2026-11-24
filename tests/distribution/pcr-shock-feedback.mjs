@@ -27,8 +27,7 @@ export async function checkShockFeedback(page) {
   assert.equal(await page.locator('body > .transient-alert').count(), 0, 'Successful shock belongs in the PCR panel');
   await prepare(); await apply();
   assert.match(await page.locator('#pcr-feedback-text').textContent(), /200 J registrado/);
-  assert.equal(await page.locator('#ac-primary-text').textContent(), 'Adrenalina indicada');
-  assert.match(await page.locator('#ac-dose-text').textContent(), /ADRENALINA: 1 mg EV\/IO/);
+  assert.equal(await page.locator('#ac-primary-text').textContent(), 'Administre adrenalina 1 mg EV/IO.');
   assert.equal(await page.evaluate(() => window.SIAV.state.medications.length), 0);
   const deadline = await page.evaluate(() => window.compressionCycle.deadline);
   for (const width of [320, 360, 375, 390, 414, 430, 768]) {
@@ -37,11 +36,11 @@ export async function checkShockFeedback(page) {
       await page.evaluate(t => window.setTheme(t), theme); await page.evaluate(() => scrollTo(0, 0));
       const current = await geometry();
       assert.equal(current.app, Math.min(width, 450)); assert.equal(current.overflow, false);
-      const clipped = await page.locator('.ac-timer-label, .ac-timer-value, #ac-primary-text, #ac-dose-text, #ac-next-text')
+      const clipped = await page.locator('.ac-timer-label, .ac-timer-value, #ac-primary-text, #ac-next-text')
         .evaluateAll(xs => xs.filter(el => el.clientWidth && (el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1)).map(el => el.id || el.className));
       assert.deepEqual(clipped, [], `${width}/${theme}: no clipped timers or instructions`);
       assert.equal(await page.locator('#ac-status-badge').isVisible(), false, 'Do not repeat the urgency badge above Agora');
-      assert.equal(await page.locator('#ac-context-details').getAttribute('open'), null);
+      assert.equal(await page.locator('.ac-main-display details, .ac-main-display summary').count(), 0);
       if (width === 320 && theme === 'light' || width === 390 && theme === 'dark') {
         await capture(`after-shock-${width}-${theme}`);
         if (directory) {
@@ -70,7 +69,7 @@ export async function checkShockFeedback(page) {
   await page.locator('#shock-applied-energy').fill('200'); await apply();
   assert.equal((await geometry()).app, Math.min(page.viewportSize().width, 450));
   assert.equal(await page.evaluate(() => window.SIAV.state.shocks.length), 3);
-  assert.equal(await page.locator('#ac-primary-text').textContent(), 'Medicações indicadas');
-  assert.match(await page.locator('#ac-dose-text').textContent(), /AMIODARONA.*\nOU LIDOCAÍNA/);
-  assert.match(await page.locator('#ac-safety-note').textContent(), /alternativas, não uma associação/);
+  assert.match(await page.locator('#ac-primary-text').textContent(), /Administre adrenalina/);
+  assert.match(await page.locator('#ac-primary-text').textContent(), /amiodarona.* OU lidocaína/);
+  assert.match(await page.locator('#ac-safety-note').textContent(), /Não associe amiodarona e lidocaína/);
 }

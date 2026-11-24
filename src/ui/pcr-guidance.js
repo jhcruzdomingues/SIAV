@@ -23,35 +23,45 @@ const show = (node, visible, display = 'block') => {
 };
 let guidanceFailureReported = false;
 
-function conciseInstruction(step) {
-    if (step.criticalAction === 'DRUG') {
-        const due = Object.entries(step.medicationGuidance || {}).filter(([, entry]) => entry.status === 'due').map(([id]) => id);
-        const epi = due.includes('adrenalina'), anti = due.some(id => ['amiodarona', 'lidocaina'].includes(id));
-        if (epi && anti) return 'Medicações indicadas';
-        if (epi) return 'Adrenalina indicada';
-        if (anti) return 'Antiarrítmico indicado';
-    }
-    // Copy changes only when the existing protocol emits this exact message.
-    // An unknown/new clinical message is displayed in full, never guessed.
-    const messages = new Map([
-        ['SUPORTE BÁSICO — AVALIAR RITMO E INICIAR RCP', 'Iniciar RCP e avaliar ritmo'],
-        ['AVALIAR RITMO — MINIMIZAR PAUSA', 'Avaliar ritmo. Minimizar pausa.'],
-        ['RCP DE ALTA QUALIDADE — 100 A 120 BPM', 'RCP de alta qualidade — 100 a 120/min'],
-        ['RCP CONTÍNUA — BUSCAR CAUSAS (5H/5T)', 'Manter RCP e buscar causas (5H/5T)'],
-        ['REAVALIAR CONDUTA — SEM DOSE AUTOMÁTICA', 'Reavaliar conduta']
-    ]);
-    return messages.get(step.message) || step.message;
+const directMessages = new Map([
+    ['SUPORTE BÁSICO — AVALIAR RITMO E INICIAR RCP', 'Avalie o ritmo e inicie a RCP.'],
+    ['AVALIAR RITMO — MINIMIZAR PAUSA', 'Avalie o ritmo e minimize a pausa.'],
+    ['RCP DE ALTA QUALIDADE — 100 A 120 BPM', 'Mantenha RCP de alta qualidade — 100 a 120/min.'],
+    ['RCP CONTÍNUA — BUSCAR CAUSAS (5H/5T)', 'Mantenha a RCP e busque as causas reversíveis (5H/5T).'],
+    ['ROSC CONFIRMADO — CUIDADOS PÓS-PARADA', 'ROSC confirmado. Inicie os cuidados pós-parada.'],
+    ['ATENDIMENTO SEM PCR ATIVA', 'Atendimento encerrado.']
+]);
+const reviewCommands = new Map([
+    ['Reavaliar: percurso clínico incompleto; registrar avaliação de ritmo.', 'Reavalie o percurso clínico e registre a avaliação do ritmo antes de medicar.'],
+    ['Confirmar seleção do algoritmo adulto no preparo do paciente. Não inferir o protocolo pela idade ou pelo peso.', 'Confirme o algoritmo selecionado para o paciente. Não infira o protocolo pela idade ou pelo peso.'],
+    ['Reavaliar adrenalina: dados de administração incompletos ou via fora do algoritmo.', 'Reavalie a adrenalina: confira os dados da administração e a via registrada antes de nova dose.'],
+    ['Reavaliar antiarrítmicos: dose tardia, histórico incompleto, outro episódio ou fármacos associados. O PDF não fundamenta uma nova dose automática.', 'Reavalie os antiarrítmicos: confira dose, horário, histórico, episódio e associações antes de nova administração.'],
+    ['Duas doses já documentadas: reavaliar antes de novas doses.', 'Reavalie o antiarrítmico antes de nova dose: duas administrações já estão registradas.']
+]);
+const knownMedicationMessages = new Set([
+    'ADRENALINA', 'AMIODARONA', 'LIDOCAÍNA', 'AMIODARONA OU LIDOCAÍNA',
+    'ADRENALINA / AMIODARONA', 'ADRENALINA / LIDOCAÍNA', 'ADRENALINA / AMIODARONA OU LIDOCAÍNA'
+].map(names => `${names} — CONDUTAS DO PASSO ATUAL`));
+
+function medicationCommands(step) {
+    if (step.criticalAction !== 'DRUG' || !knownMedicationMessages.has(step.message)) return [];
+    const guidance = step.medicationGuidance || {};
+    const due = id => guidance[id]?.status === 'due' && guidance[id].dose;
+    const commands = [];
+    if (due('adrenalina')) commands.push(`Administre adrenalina ${guidance.adrenalina.dose}.`);
+    const alternatives = ['amiodarona', 'lidocaina'].filter(due).map(id => `${id === 'lidocaina' ? 'lidocaína' : id} ${guidance[id].dose}`);
+    if (alternatives.length) commands.push(`Administre ${alternatives.join(' OU ')}.`);
+    return commands;
 }
 
 // Presentation of the existing sequence only. Never predict the next rhythm,
 // shock, medication or dose: those require their real recorded assessment.
 function nextAction(snapshot, step) {
-    if (snapshot.roscAchieved || snapshot.clinical?.status === 'rosc') return step.details;
     if (!snapshot.pcrActive) return '';
-    if (['rhythm_check', 'shock_advised'].includes(snapshot.currentPhase)) return step.details;
-    if (snapshot.currentPhase === 'preparation') return 'Seguir a conduta do ritmo confirmado.';
-    if (Object.values(step.medicationGuidance || {}).some(entry => entry.status === 'review')) return 'Conferir dados antes de novas doses.';
-    if (snapshot.currentPhase === 'compressions') return 'Reavaliar ritmo ao fim do ciclo.';
+    if (snapshot.roscAchieved || snapshot.clinical?.status === 'rosc') return 'Se a PCR recorrer, confirme a recorrência no aplicativo.';
+    if (['rhythm_check', 'shock_advised'].includes(snapshot.currentPhase)) return 'Desfibrile se indicado e retome as compressões.';
+    if (snapshot.currentPhase === 'preparation') return 'Siga a conduta do ritmo confirmado.';
+    if (snapshot.currentPhase === 'compressions') return 'Reavalie o ritmo ao fim do ciclo.';
     return '';
 }
 
@@ -103,14 +113,9 @@ function renderUnavailable() {
     const center = document.getElementById('pcr-action-center');
     if (center) center.className = 'pcr-action-center status-warning';
     setText(document.getElementById('ac-status-badge'), 'REVISÃO NECESSÁRIA');
-    setText(document.getElementById('ac-primary-text'), 'Orientação indisponível');
-    setText(document.getElementById('ac-dose-text'), '');
-    show(document.getElementById('ac-dose-container'), false);
-    setText(document.getElementById('ac-safety-note'), 'Confira o protocolo e os dados registrados antes de seguir a orientação.');
+    setText(document.getElementById('ac-primary-text'), 'Confira o protocolo antes de prosseguir.');
+    setText(document.getElementById('ac-safety-note'), 'Orientação indisponível. Revise os dados registrados.');
     show(document.getElementById('ac-safety-note'), true);
-    setText(document.getElementById('ac-details-text'), '');
-    const context = document.getElementById('ac-context-details');
-    if (context) context.hidden = true;
     const next = document.getElementById('ac-next-step');
     if (next) next.hidden = true;
     setText(document.getElementById('ac-next-text'), '');
@@ -137,45 +142,43 @@ export function updatePcrGuidance() {
             const glyph = document.createElement('i'); glyph.className = visual.icon; glyph.setAttribute('aria-hidden', 'true');
             icon.textContent = ''; icon.appendChild(glyph); icon.dataset.icon = visual.icon;
         }
-        // Eligibility, drug names, doses and routes still come from the protocol.
-        setText(document.getElementById('ac-primary-text'), conciseInstruction(step));
+        // Only doses already marked due by the unchanged evaluator become
+        // administration commands. There is no new clinical eligibility here.
+        const commands = snapshot.pcrActive ? medicationCommands(step) : [];
+        const reviews = [...new Set(Object.values(step.medicationGuidance || {})
+            .filter(entry => entry.status === 'review' && entry.reason)
+            .map(entry => reviewCommands.get(entry.reason) || entry.reason))];
+        const isReview = step.message === 'REAVALIAR CONDUTA — SEM DOSE AUTOMÁTICA';
+        const primary = !snapshot.pcrActive ? 'Atendimento encerrado.' : commands.length ? commands.join('\n') : isReview && reviews.length
+            ? reviews[0] : directMessages.get(step.message) || step.message;
+        setText(document.getElementById('ac-primary-text'), primary);
         const next = nextAction(snapshot, step);
         setText(document.getElementById('ac-next-text'), next);
         const nextPanel = document.getElementById('ac-next-step');
         if (nextPanel) nextPanel.hidden = !next;
-        const dose = document.getElementById('ac-dose-container');
-        setText(document.getElementById('ac-dose-text'), (step.dose || '').replace(/; /g, '\n').replace(/ OU /g, '\nOU '));
-        show(dose, !!step.dose, 'flex');
-
-        const guidance = Object.values(step.medicationGuidance || {});
         const warnings = (step.style === 'warning' || step.criticalAction === 'DRUG')
-            ? guidance.filter(entry => entry.status === 'review').map(entry => entry.reason).filter(Boolean) : [];
+            ? reviews.filter(command => command !== primary) : [];
+        if (commands.length && snapshot.currentPhase === 'compressions' && !compressionCycle.paused) warnings.unshift('Mantenha a RCP de alta qualidade.');
+        if (step.message === 'RCP DE ALTA QUALIDADE — 100 A 120 BPM') warnings.push('Minimize as interrupções e trate as causas reversíveis.');
+        if (step.message === 'RCP CONTÍNUA — BUSCAR CAUSAS (5H/5T)' || snapshot.currentPhase === 'preparation') warnings.push('Minimize as interrupções.');
         const adrenaline = step.medicationGuidance?.adrenalina;
         if (adrenaline?.status === 'due' && adrenaline.reason) {
             const interval = adrenaline.reason.match(/a cada ([^.,]+ min)/);
-            warnings.push(interval ? `Intervalo: ${interval[1]}.` : adrenaline.reason);
+            const antiDue = ['amiodarona', 'lidocaina'].some(id => step.medicationGuidance?.[id]?.status === 'due');
+            warnings.push(interval ? `Respeite o intervalo de ${interval[1]} entre as doses${antiDue ? ' de adrenalina' : ''}.` : adrenaline.reason);
         }
         const antiDue = ['amiodarona', 'lidocaina'].some(id => step.medicationGuidance?.[id]?.status === 'due');
-        if (antiDue && step.details) {
-            const firstSentence = step.details.split('. ')[0];
-            warnings.unshift(firstSentence.endsWith('.') ? firstSentence : firstSentence + '.');
-            const reasons = ['amiodarona', 'lidocaina'].map(id => step.medicationGuidance?.[id])
-                .filter(entry => entry?.status === 'due' && entry.reason).map(entry => entry.reason);
-            for (const reason of new Set(reasons)) warnings.push(reason.includes('mantendo o fármaco registrado') ? 'Manter o fármaco registrado.' : reason);
+        if (antiDue) warnings.push('Não associe amiodarona e lidocaína. Mantenha o fármaco escolhido.');
+        // Unknown/new protocol messages remain fully visible, not reinterpreted.
+        if (!commands.length && !isReview && !directMessages.has(step.message)) {
+            if (step.dose) warnings.push(step.dose);
+            if (step.details) warnings.push(step.details);
         }
+        if (!snapshot.pcrActive) warnings.length = 0;
         const safety = document.getElementById('ac-safety-note');
         setText(safety, [...new Set(warnings)].join('\n'));
         show(safety, warnings.length > 0);
 
-        const context = document.getElementById('ac-context-details');
-        if (context) {
-            const encounter = String(state.pcrStartTime);
-            if (context.dataset.encounter !== encounter) { context.open = false; context.dataset.encounter = encounter; }
-            context.hidden = !step.details;
-        }
-        const fullContext = [step.message, step.details].filter(Boolean).join('\n');
-        setText(document.getElementById('ac-details-text'), fullContext);
-        show(document.getElementById('ac-details-container'), !!fullContext, 'flex');
         setText(document.getElementById('ac-cycle-counter'), `CICLO ${compressionCycle.cycleCount}`);
         guidanceFailureReported = false;
         return true;

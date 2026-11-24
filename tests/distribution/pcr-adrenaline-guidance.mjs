@@ -16,7 +16,7 @@ export async function checkAdrenalineGuidance(page) {
   await page.locator('#rhythm-conduta-btn').tap();
   await page.locator('[data-rhythm="AESP"]').tap(); await page.locator('#submit-rhythm-selection-btn').tap();
   await page.locator('#pcr-screen.active').waitFor();
-  assert.equal(await panel.locator('#ac-primary-text').textContent(), 'Adrenalina indicada');
+  assert.equal(await panel.locator('#ac-primary-text').textContent(), 'Administre adrenalina 1 mg EV/IO.');
   assert.match(await panel.locator('#ac-next-text').textContent(), /fim do ciclo/);
   assert.equal(await clock.textContent(), '--:--', 'An indication is not an administration');
   if (directory) await panel.screenshot({ path: join(directory, 'before-adrenaline.png'), scale: 'css' });
@@ -72,8 +72,8 @@ export async function checkAdrenalineGuidance(page) {
   // Explicit synthetic uncertainty: no backend, no private history, no inferred clock.
   await page.evaluate(() => { window.SIAV.state.clinical.historyIncomplete = true; window.updatePcrGuidance(); });
   assert.equal(await clock.textContent(), '--:--'); assert.equal(await box.getAttribute('data-clock-state'), 'review');
-  assert.match(await panel.locator('#ac-next-text').textContent(), /Conferir dados/);
-  assert.equal(await panel.locator('#ac-dose-container').isVisible(), false);
+  assert.match(await panel.locator('#ac-primary-text').textContent(), /Reavalie o percurso/);
+  assert.doesNotMatch(await panel.locator('#ac-primary-text').textContent(), /Administre/);
   await page.evaluate(() => { delete window.SIAV.state.clinical.historyIncomplete; window.updatePcrGuidance(); });
   assert.equal(await box.getAttribute('data-clock-state'), 'running');
 }

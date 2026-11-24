@@ -46,9 +46,8 @@ describe('Feedback após choque, sem alertas na lateral do aplicativo', () => {
     it('segundo choque mostra adrenalina indicada, sem gerar administração automática', () => {
         prepareShock(); rhythm.applyShockAndResume(); prepareShock(); rhythm.applyShockAndResume();
         expect(state.clinical.step).toBe(6); expect(state.shockCount).toBe(2);
-        expect(el('ac-primary-text').textContent).toBe('Adrenalina indicada');
-        expect(el('ac-dose-text').textContent).toContain('ADRENALINA: 1 mg EV/IO');
-        expect(el('ac-next-text').textContent).toBe('Reavaliar ritmo ao fim do ciclo.');
+        expect(el('ac-primary-text').textContent).toBe('Administre adrenalina 1 mg EV/IO.');
+        expect(el('ac-next-text').textContent).toBe('Reavalie o ritmo ao fim do ciclo.');
         expect(state.medications).toEqual([]); expect(document.querySelector('body > .transient-alert')).toBeNull();
     });
     it('reprocessar o mesmo choque não duplica registro, feedback ou prazo do ciclo', () => {

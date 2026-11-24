@@ -425,43 +425,10 @@ body #pcr-action-center .ac-hud-title {
     letter-spacing: normal;
     text-transform: none;
     overflow-wrap: break-word;
-}
-body #pcr-action-center .ac-hud-dose {
-    min-width: 0;
-    border: 1px solid var(--guidance-border);
-    border-radius: 8px;
-    background: var(--ui-surface);
-    box-shadow: none;
-    overflow: visible;
-}
-body #pcr-action-center .ac-dose-content { min-width: 0; width: 100%; padding: 10px; gap: 6px; }
-body #pcr-action-center .ac-dose-label { color: var(--ui-muted); font-size: .6875rem; line-height: 1.4; letter-spacing: .02em; }
-body #pcr-action-center .ac-dose-value {
-    color: var(--guidance-ink);
-    font-family: inherit;
-    font-size: .875rem;
-    font-weight: 700;
-    line-height: 1.6;
-    letter-spacing: normal;
     white-space: pre-line;
-    overflow-wrap: break-word;
 }
+body #pcr-action-center.status-danger .ac-hud-title { color: var(--ui-danger-text); }
 body #pcr-action-center .ac-safety-note { margin: 0; font-size: .8125rem; line-height: 1.5; color: var(--guidance-ink); white-space: pre-line; }
-body #pcr-action-center .ac-context-details { min-width: 0; border-top: 1px solid var(--guidance-border); }
-body #pcr-action-center .ac-context-details[hidden] { display: none; }
-body #pcr-action-center .ac-context-details summary {
-    min-height: 44px;
-    padding: 12px 0;
-    color: var(--guidance-ink);
-    font-size: .8125rem;
-    line-height: 1.5;
-    font-weight: 600;
-    cursor: pointer;
-    touch-action: manipulation;
-}
-body #pcr-action-center .ac-context-details summary:focus-visible { outline: 3px solid var(--guidance-ink); outline-offset: 2px; }
-body #pcr-action-center .ac-hud-details { padding: 0 0 8px; border: 0; background: transparent; }
-body #pcr-action-center .ac-details-content { color: var(--ui-text); font-size: .8125rem; line-height: 1.6; font-weight: 400; white-space: pre-line; }
 body #pcr-action-center .pcr-feedback-banner.show { margin: 0; padding: 10px; gap: 8px; }
 body #pcr-action-center .pcr-feedback-icon { flex: 0 0 18px; font-size: 1rem; }
 body #pcr-action-center .pcr-feedback-text { min-width: 0; font-size: .8125rem; line-height: 1.5; }
