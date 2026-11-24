@@ -258,3 +258,119 @@ describe('Seleção de medicamento, dose fixa e cálculo somente quando indicado
         el('medication-confirmed').checked = true; meds.recordMedication(); expect(state.medications[0].requiresReview).toBe(true);
     });
 });
+
+describe('Clareza, doses de amiodarona e aviso de seleção sem indicação', () => {
+    it('preenche primeira dose de 300 mg e segunda de 150 mg somente em oportunidades distintas válidas', () => {
+        opportunity(8); openMed('amiodarona');
+        expect(el('medication-dose').value).toBe('300'); expect(el('med-preview-value').textContent).toBe('1ª dose');
+        expect(el('med-preview-value').getAttribute('role')).toBe('status');
+        expect(el('medication-edit-details').open).toBe(false); expect(el('medication-review-confirmation').hidden).toBe(true);
+        expect(el('record-med-btn').disabled).toBe(false); expect(state.medications).toEqual([]);
+        el('record-med-btn').click(); el('record-med-btn').click(); expect(state.medications).toHaveLength(1);
+        opportunity(8); openMed('amiodarona');
+        expect(el('medication-dose').value).toBe('150'); expect(el('med-preview-value').textContent).toBe('2ª dose');
+        el('record-med-btn').click(); el('record-med-btn').click();
+        expect(state.medications.map(m => m.amount)).toEqual([300, 150]);
+        expect(state.medications.every(m => m.unit === 'mg' && m.route === 'EV' && !m.requiresReview)).toBe(true);
+        opportunity(8); openMed('amiodarona');
+        expect(el('medication-dose').value).toBe(''); expect(el('record-med-btn').disabled).toBe(true);
+        expect(el('med-preview-value').textContent).toContain('Duas doses');
+        expect(el('med-preview-value').getAttribute('role')).toBe('alert');
+    });
+    it('dose no mesmo ciclo gera alerta e não volta a preencher nem registrar automaticamente', () => {
+        opportunity(8); openMed('amiodarona'); el('record-med-btn').click(); openMed('amiodarona');
+        expect(el('med-preview-value').textContent).toContain('Não repetir');
+        expect(el('med-preview-value').classList.contains('is-warning')).toBe(true);
+        expect(el('medication-dose').value).toBe(''); expect(el('record-med-btn').disabled).toBe(true);
+        expect(state.medications).toHaveLength(1);
+    });
+    it('droga não indicada no passo atual avisa imediatamente, sem abrir campos avançados', () => {
+        opportunity(4); openMed('amiodarona');
+        expect(el('med-preview-value').textContent).toBe('Amiodarona não indicada neste passo.');
+        expect(el('med-preview-value').getAttribute('role')).toBe('alert');
+        expect(el('med-preview-value').getAttribute('aria-live')).toBe('assertive');
+        expect(el('medication-edit-details').open).toBe(false);
+        expect(el('medication-review-confirmation').hidden).toBe(false);
+        expect(el('medication-confirmed').closest('details')).toBeNull();
+        expect(el('medication-dose').value).toBe(''); expect(state.medications).toEqual([]);
+    });
+    it('sem ritmo diferencia indicação não verificada de uma proibição clínica', () => {
+        openMed('amiodarona');
+        expect(el('med-preview-value').textContent).toContain('Indicação não verificada');
+        expect(el('med-preview-value').textContent).not.toContain('não indicada neste passo');
+        expect(el('medication-dose').value).toBe(''); expect(el('record-med-btn').disabled).toBe(true);
+    });
+    it('administração manual sem indicação automática exige revisão e preserva a rastreabilidade do fato', () => {
+        opportunity(4); openMed('amiodarona'); change('medication-dose', '250');
+        el('record-med-btn').click(); meds.recordMedication(); expect(state.medications).toEqual([]);
+        el('medication-confirmed').click(); expect(el('record-med-btn').disabled).toBe(false);
+        el('record-med-btn').click(); el('record-med-btn').click();
+        expect(state.medications).toHaveLength(1);
+        expect(state.medications[0]).toMatchObject({ amount: 250, unit: 'mg', route: 'EV', requiresReview: true,
+            timestamp: NOW, recordedAt: NOW, episodeId: state.clinical.episodeId, isRetrospective: false });
+    });
+    it('edição da dose padrão exige revisão visível sem expandir os controles secundários', () => {
+        opportunity(8); openMed('amiodarona'); change('medication-dose', '280');
+        expect(el('medication-review-confirmation').hidden).toBe(false);
+        expect(el('medication-edit-details').open).toBe(false); expect(el('record-med-btn').disabled).toBe(true);
+        el('medication-confirmed').click(); el('record-med-btn').click();
+        expect(state.medications[0]).toMatchObject({ amount: 280, requiresReview: true });
+    });
+    it('trocar a seleção limpa a revisão anterior e remove o aviso quando a indicação é válida', () => {
+        opportunity(10); openMed('amiodarona'); change('medication-dose', '300'); el('medication-confirmed').click();
+        el('medication-edit-details').open = true;
+        document.querySelector('[data-med="adrenalina"]').click();
+        expect(el('med-preview-value').classList.contains('is-warning')).toBe(false);
+        expect(el('med-preview-value').hidden).toBe(true); expect(el('med-preview-value').textContent).toBe('');
+        expect(el('medication-confirmed').checked).toBe(false); expect(el('medication-edit-details').open).toBe(false);
+        expect(el('medication-dose').value).toBe('1'); expect(state.medications).toEqual([]);
+    });
+    it.each(['pediatric', null])('protocolo %s nunca recebe preset adulto de amiodarona', algorithm => {
+        opportunity(8); state.patient.algorithm = algorithm; openMed('amiodarona');
+        expect(el('medication-dose').value).toBe(''); expect(el('med-preview-value').getAttribute('role')).toBe('alert');
+        expect(el('med-preview-value').textContent).toContain('Sem dose adulta');
+        expect(el('record-med-btn').disabled).toBe(true);
+    });
+    it('histórico incompleto não sugere primeira ou segunda dose por simples contagem', () => {
+        opportunity(8); state.clinical.historyIncomplete = true; openMed('amiodarona');
+        expect(el('medication-dose').value).toBe(''); expect(el('med-preview-value').getAttribute('role')).toBe('alert');
+        expect(el('med-preview-value').textContent).toContain('Indicação não verificada');
+    });
+    it('não associa amiodarona automaticamente depois de lidocaína registrada', () => {
+        opportunity(8); state.patient.weight = 70; openMed('lidocaina'); change('medication-dose', '90'); el('record-med-btn').click();
+        opportunity(8); openMed('amiodarona');
+        expect(el('med-preview-value').textContent).toContain('Não associe');
+        expect(el('medication-dose').value).toBe(''); expect(el('record-med-btn').disabled).toBe(true);
+    });
+    it.each([['adrenalina', 'mg'], ['amiodarona', 'mg'], ['lidocaina', 'mg'], ['atropina', 'mg'], ['bicarbonato', 'mEq'], ['sulfato', 'g']])('seleção de %s usa unidade existente %s sem inferir nova dose', (id, unit) => {
+        opportunity(8); openMed(id);
+        expect(el('medication-unit').value).toBe(unit); expect(el('medication-dose-unit').textContent).toBe(unit);
+        if (!['adrenalina', 'amiodarona'].includes(id)) expect(el('medication-dose').value).toBe('');
+        expect(state.medications).toEqual([]);
+    });
+    it.each(['atropina', 'bicarbonato', 'sulfato'])('%s sem avaliador específico recebe aviso, não indicação inventada', id => {
+        opportunity(10); openMed(id);
+        expect(el('med-preview-value').getAttribute('role')).toBe('alert');
+        expect(el('med-preview-value').classList.contains('is-warning')).toBe(true);
+        expect(el('medication-edit-details').open).toBe(false); expect(el('medication-dose').value).toBe('');
+        expect(el('record-med-btn').disabled).toBe(true);
+    });
+    it('unidade manual pode ser editada explicitamente sem ser sobrescrita pelo relógio', () => {
+        opportunity(10); openMed('bicarbonato'); el('medication-edit-details').open = true;
+        vi.advanceTimersByTime(20);
+        change('medication-unit', 'mg'); change('medication-dose', '25'); meds.updateDrugStatusDisplay();
+        expect(el('medication-unit').value).toBe('mg'); expect(el('medication-edit-details').open).toBe(true);
+        expect(el('record-med-btn').disabled).toBe(true);
+        el('medication-confirmed').click(); el('record-med-btn').click();
+        expect(state.medications[0]).toMatchObject({ unit: 'mg', amount: 25, requiresReview: true });
+    });
+    it('aviso muda quando o contexto muda, sem validar a dose anterior silenciosamente', () => {
+        opportunity(8); openMed('amiodarona'); vi.advanceTimersByTime(20);
+        state.clinical.pendingShock = { id: 'SYNTHETIC' };
+        meds.updateDrugStatusDisplay();
+        expect(el('med-preview-value').textContent).toContain('Choque pendente');
+        expect(el('med-preview-value').getAttribute('role')).toBe('alert');
+        expect(el('medication-review-confirmation').hidden).toBe(false); expect(el('record-med-btn').disabled).toBe(true);
+        expect(state.medications).toEqual([]);
+    });
+});

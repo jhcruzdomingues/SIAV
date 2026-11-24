@@ -21,6 +21,7 @@ import { checkFinishAttendance } from './pcr-finish-attendance.mjs';
 import { checkShockFeedback } from './pcr-shock-feedback.mjs';
 import { checkDirectCommands } from './pcr-direct-commands.mjs';
 import { checkMedicationsPostRce } from './pcr-medications-post-rce.mjs';
+import { checkMedicationClarity } from './pcr-medication-clarity.mjs';
 import { SIAV_PROJECT_REF, SIAV_PROJECT_URL } from '../../src/config/public-supabase.js';
 
 let root, temporaryDirectory, server, browser, workerConfig;
@@ -330,5 +331,11 @@ test('PCR: comandos diretos sem duplicação, descrição visível e segurança 
 test('PCR: registro rápido de medicação, peso explícito e sinais vitais somente após RCE', async () => {
   const { context } = await contextFor('Pixel 5');
   try { const page = await readyPage(context); await checkMedicationsPostRce(page); }
+  finally { await context.close(); }
+}, { timeout: 120000 });
+
+test('PCR: dose e via alinhadas, alertas e primeira/segunda dose de amiodarona em retrato', async () => {
+  const { context } = await contextFor('Pixel 5');
+  try { const page = await readyPage(context); await checkMedicationClarity(page); }
   finally { await context.close(); }
 }, { timeout: 120000 });

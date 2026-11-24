@@ -28,3 +28,73 @@ Branch: `fix/pcr-medication-clarity-alerts`. Main, PR #2 e branch anterior de Pr
 ## Limites
 
 Não alterar Supabase, autenticação, dados persistidos, cronômetros, FCT, choques, algoritmos, pagamentos, produção ou branches preservadas. Somente dados sintéticos nos testes. Chromium emulado não homologa Safari físico nem segurança clínica. O problema das demais tabelas ausentes no Supabase continua separado desta entrega.
+
+## Implementação
+
+O plano foi registrado em `ba55c8d` antes das mudanças funcionais. O avaliador em `src/protocols/medical.js`, seus critérios e suas doses permaneceram inalterados.
+
+| Causa verificada | Comportamento corrigido |
+| --- | --- |
+| Campos avançados abertos automaticamente em contexto incerto ou dose vazia | Unidade, horário anterior e via fora do algoritmo ficam recolhidos até abertura explícita. A revisão manual obrigatória foi movida para junto da dose, sempre acessível quando necessária. |
+| Alturas e estruturas diferentes para dose e via | Rótulos e controles alinhados; EV/IO com alvos de toque de pelo menos 44 px. Dose e unidade não invadem a coluna da via. |
+| Rodapé fixo deixa parte dos controles fora da área visível em tela baixa | Após seleção deliberada, revelar o painel completo de dose/revisão pela rolagem interna. Atualizações dos cronômetros e digitação não movimentam a tela. Cabeçalho e confirmação continuam acessíveis. |
+| Texto clínico longo apresentado como descrição comum | Um único aviso curto, com fundo e borda de alerta, `role="alert"` e anúncio acessível, persistente enquanto o contexto existir. Não repetir o mesmo texto em cada atualização do relógio. |
+| Dose e esquema repetidos em vários pontos | Amiodarona elegível mostra “1ª dose” ou “2ª dose”, quantidade no campo e unidade ao lado. A confirmação resume nome, dose e via. Adrenalina elegível não repete uma descrição numérica acima do campo. |
+| Unidade mg reaproveitada para todas as opções | A seleção aplica a unidade já existente no catálogo: mg para adrenalina/amiodarona/lidocaína/atropina, mEq para bicarbonato e g para sulfato de magnésio. Isso não cria quantidade nem indicação para as opções manuais; edição explícita continua disponível. |
+| Realce nativo temporário de toque interfere na aparência selecionada | Desativar o realce de toque apenas nos botões destes formulários; preservar o foco visível e a seleção explícita. |
+
+### Segurança e fluxo
+
+- Amiodarona adulta: preencher **300 mg** somente na primeira oportunidade autorizada pelo avaliador; **150 mg** somente na segunda oportunidade válida e com histórico consistente. Não usar contagem isolada de choques, não repetir no mesmo passo de RCP, não preencher uma terceira dose e não associar automaticamente a lidocaína.
+- Seleção sem indicação no passo atual gera aviso imediato. Histórico incompleto, protocolo não adulto e outras incertezas geram indicação **não verificada**, sem converter ausência de informação em contraindicação ou dose autorizada.
+- Atropina continua identificada como não rotineira na PCR. Bicarbonato e magnésio permanecem com aviso de uso específico e indicação não verificada pelo app. Não foram criados avaliadores para essas situações.
+- Uma escolha nunca grava administração. Fora do padrão, o operador informa a quantidade real e revisa explicitamente o registro. A gravação conserva ID, dose, unidade, via, horário efetivo, horário do registro, episódio e contexto; toques repetidos na mesma operação não duplicam o fato.
+- Trocar a seleção limpa revisão e dose anteriores. Edição manual de unidade não é sobrescrita pelo relógio. Contexto alterado invalida a confirmação anterior e atualiza o aviso; não converte silenciosamente a dose antiga em registro rápido autorizado.
+- A lista permanece com os seis medicamentos existentes. Foi solicitada ao usuário a relação dos itens ausentes para auditoria individual. Cálcio, trombolíticos e outras drogas de circunstâncias específicas não foram acrescentados como rotina nem receberam doses inventadas.
+
+### Arquivos alterados
+
+- `index.html`, `pcr-interface.css`: disposição, alinhamento, revisão manual fora dos campos avançados, estados de aviso e toque/rolagem.
+- `src/pcr/medications.js`: apresentação curta do resultado do avaliador existente, unidades do catálogo e revelação do painel após seleção.
+- `tests/pcr-medications-post-rce.test.js`: 22 novas regressões para primeira/segunda dose, nenhuma terceira sugestão, intervalo/ciclo, ausência de indicação, revisão manual, troca de seleção, unidades, pediatria, histórico e mudanças de contexto.
+- `tests/pcr-medications.test.js`, `tests/pcr-efficiency.test.js`: atualizar expectativas de apresentação preservando verificações de dose, faixa por peso, ausência de seleção automática da quantidade e consistência com o avaliador.
+- `tests/distribution/pcr-medication-clarity.mjs`, `tests/distribution/check.mjs`: cenário novo contra build real servido exclusivamente de `dist/`, sem backend real; doses percorridas pelo fluxo de ritmo/choque e verificação de geometria, aviso, contraste e toque.
+- `.github/workflows/ci.yml`: somente inclusão da nova branch no CI. O workflow de produção não foi alterado.
+- Este documento e capturas sintéticas em `docs/screenshots/pcr-medication-clarity/`.
+
+## Validação
+
+| Verificação | Resultado |
+| --- | --- |
+| `npm run test:run -- --maxWorkers=2 --minWorkers=1` | **427/427**, 28 arquivos; 405 casos anteriores preservados e 22 adicionados. |
+| `npm run test:database` | **11/11**, em PostgreSQL descartável, sem conexão com Supabase. |
+| `npm run build` | Concluído com chave publicável sintética; artefato local não publicado. |
+| Cenário novo de interação Chromium | Aprovado em 320, 360, 375, 390, 414, 430 e 768 px, retrato, claro/escuro. Avisos com contraste de pelo menos 4,5:1; controles sem sobreposição; painel revelado sem corte pelo rodapé. |
+| `SIAV_CHROMIUM_PATH=/usr/bin/chromium npm run test:distribution` | **19/19**, sem falhas ou cenários ignorados; 18 anteriores preservados e um novo cenário completo. Servidor HTTP estático exclusivo de `dist/`, SW real e dependências externas de serviço isoladas por mocks. |
+| `git diff --check` | Sem erros. |
+
+O cenário novo percorre AESP → ramo chocável → passo 8; registra amiodarona 300 mg, verifica bloqueio de repetição no mesmo passo, alcança nova oportunidade e registra 150 mg. Confere duas operações distintas, metadados preservados e ausência de terceira sugestão. Nenhuma chamada de autenticação, envio de e-mail, operação Supabase ou pagamento real é executado nessa validação.
+
+O build conserva os avisos conhecidos de scripts clássicos sem `type="module"`. A distribuição verifica seus arquivos finais pela lista explícita de assets; não houve reempacotamento desses scripts nesta correção.
+
+Capturas com dados exclusivamente sintéticos:
+
+- [Aviso e revisão manual — 320 px, claro](screenshots/pcr-medication-clarity/uncertain-320-light.png).
+- [Primeira dose — 320 px, claro](screenshots/pcr-medication-clarity/amiodarone-first-320-light.png).
+- [Primeira dose — 390 px, escuro](screenshots/pcr-medication-clarity/amiodarone-first-390-dark.png).
+- [Segunda dose — 390 px, escuro](screenshots/pcr-medication-clarity/amiodarone-second-390-dark.png).
+
+## Como testar no celular
+
+1. Vercel → projeto **siav** → **Deployments** → Preview da branch **fix/pcr-medication-clarity-alerts** → **Visit**. Conferir o commit informado na entrega; a URL de um Preview antigo não se atualiza para outra branch.
+2. Em atendimento sintético ainda sem ritmo, abrir Medicações e tocar Amiodarona: verificar aviso, dose vazia, revisão acessível e ausência de registro automático. Trocar a opção e conferir que a seleção anterior não foi gravada.
+3. Percorrer uma oportunidade adulta válida e confirmar 300 mg. No mesmo passo, reabrir: não deve oferecer repetição. Na oportunidade seguinte autorizada pelo percurso, oferecer 150 mg. Após duas doses, exigir reavaliação, sem sugerir terceira.
+4. Testar claro/escuro, rolagem e teclado numérico em retrato. Em telas baixas, o painel da seleção deve ficar inteiro visível; os outros medicamentos continuam acessíveis ao rolar para cima.
+
+## Pendências e reversão
+
+Safari/iPhone e Android físicos, teclado virtual, zoom do sistema, leitor de tela e comportamento da área visível quando o teclado abre ainda exigem teste real. Emulação Chromium não homologa Safari nem o uso clínico.
+
+Novas medicações e seus critérios/doses requerem definição explícita e auditoria específica. Persistência assistencial, tabelas ausentes no Supabase, isolamento offline e segurança clínica geral continuam nas etapas próprias; esta entrega não os corrige nem declara homologados.
+
+Para voltar à versão anterior, continuar usando o Preview preservado em `ed6eb7146d8371809a735d8f28388b6fffe6d751`. Uma reversão de código deve usar `git revert` do commit funcional desta branch em uma branch de trabalho, sem reescrever histórico. Não há migração nem dados a reverter nesta entrega.

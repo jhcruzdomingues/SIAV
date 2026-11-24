@@ -10,6 +10,7 @@ import { generateEvolution } from '../src/pcr/log.js';
 import { showPatientModal, savePatientData, startPCRWithUninformedData } from '../src/ui/patient.js';
 import { updatePcrGuidance } from '../src/ui/pcr-guidance.js';
 import * as brain from '../src/protocols/medical.js';
+import { getClinicalSnapshot } from '../src/pcr/clinical.js';
 
 const body = readFileSync('index.html', 'utf8').match(/<body[^>]*>([\s\S]*)<\/body>/i)[1];
 const NOW = 1_800_000_000_000;
@@ -193,7 +194,8 @@ describe('Registro rápido sem mudar elegibilidade', () => {
         opportunity(8); meds.showMedModal(); meds.selectMedication('lidocaina');
         expect(el('medication-dose').value).toBe('');
         expect(el('record-med-btn').disabled).toBe(true);
-        expect(el('med-preview-value').textContent).toContain('1-1.5 mg/kg');
+        expect(el('med-preview-value').textContent).toContain('70–105 mg (70 kg)');
+        expect(brain.evaluateMedicationGuidance(getClinicalSnapshot()).lidocaina.dose).toContain('1-1.5 mg/kg');
     });
     it.each([null, 'pediatric'])('não preenche dose adulta no algoritmo %s', algorithm => {
         opportunity(); state.patient.algorithm = algorithm;

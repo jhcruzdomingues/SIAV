@@ -5,12 +5,31 @@ import { getAntiarrhythmicHistory, evaluateMedicationGuidance } from '../protoco
 import { getClinicalSnapshot, isClinicalArrestActive, newOperationId } from './clinical.js';
 import { updateAdrenalineTimerDisplay } from '../ui/pcr-adrenaline-timer.js';
 import { weightDoseMg } from '../utils/dose-math.js';
+import { MEDICATIONS } from '../utils/medications.js';
 
 const medNames = { adrenalina: 'Adrenalina', amiodarona: 'Amiodarona', lidocaina: 'Lidocaína', atropina: 'Atropina', bicarbonato: 'Bicarbonato de Sódio', sulfato: 'Sulfato de Magnésio' };
 const reviewText = new Map([
-    ['Reavaliar: percurso clínico incompleto; registrar avaliação de ritmo.', 'Reavaliar: confira o histórico e registre o ritmo antes de medicar.'],
-    ['Reavaliar antiarrítmicos: dose tardia, histórico incompleto, outro episódio ou fármacos associados. O PDF não fundamenta uma nova dose automática.', 'Reavaliar: confira doses, horários, episódio e associações antes de nova dose.']
+    ['Reavaliar: percurso clínico incompleto; registrar avaliação de ritmo.', 'Reavaliar: confirme o ritmo e o histórico. Indicação não verificada.'],
+    ['Reavaliar antiarrítmicos: dose tardia, histórico incompleto, outro episódio ou fármacos associados. O PDF não fundamenta uma nova dose automática.', 'Reavaliar: histórico de antiarrítmicos incerto. Sem dose automática.'],
+    ['Reavaliar adrenalina: dados de administração incompletos ou via fora do algoritmo.', 'Reavaliar: histórico da adrenalina incerto. Sem dose automática.'],
+    ['ROSC: seguir cuidados pós-parada; não recomendar medicação de PCR.', 'RCE registrado. Sem indicação automática de medicação de PCR.'],
+    ['Sem PCR clínica ativa.', 'Sem PCR ativa. Apenas registro manual.'],
+    ['Decisão de choque pendente; manter RCP enquanto prepara a desfibrilação.', 'Choque pendente. Sem dose automática neste momento.'],
+    ['Confirmar seleção do algoritmo adulto no preparo do paciente. Não inferir o protocolo pela idade ou pelo peso.', 'Protocolo não adulto. Sem dose adulta automática.'],
+    ['Priorizar avaliação de ritmo e desfibrilação indicada.', 'Avaliação de ritmo em andamento. Sem dose automática.'],
+    ['Outro antiarrítmico já registrado: reavaliar antes de mudar o fármaco.', 'Outro antiarrítmico já registrado. Não associe automaticamente.'],
+    ['Duas doses já documentadas: reavaliar antes de novas doses.', 'Duas doses já registradas. Reavalie antes de nova dose.'],
+    ['Dose já registrada neste passo de RCP; não repetir automaticamente.', 'Dose já registrada neste ciclo. Não repetir automaticamente.']
 ]);
+
+// Presentation only: eligibility and numeric presets remain in the shared evaluator.
+function selectionWarning(id, entry) {
+    if (!entry) return id === 'atropina' ? 'Atropina não é medicação de rotina na PCR.'
+        : 'Uso em situações específicas. O app não verifica esta indicação.';
+    if (entry.status === 'not_due' && entry.secondsUntilDue > 0) return 'Aguarde o intervalo. A próxima dose ainda não está indicada.';
+    if (entry.reason === 'Sem dose automática neste passo do algoritmo.') return `${medNames[id]} não indicada neste passo.`;
+    return reviewText.get(entry.reason) || 'Indicação não verificada. Reavalie antes de medicar.';
+}
 const formOperation = () => document.getElementById('med-modal')?.dataset.operationId;
 function formFeedback(message) {
     const node = document.getElementById('medication-form-feedback');
@@ -70,7 +89,9 @@ export function selectMedication(id) {
     if (select.value !== id) {
         select.value = id;
         document.getElementById('medication-dose').value = '';
+        document.getElementById('medication-unit').value = MEDICATIONS[id].unit;
         document.getElementById('medication-confirmed').checked = false;
+        document.getElementById('medication-edit-details').open = false;
         delete document.getElementById('med-modal').dataset.selection;
         const feedback = document.getElementById('medication-form-feedback');
         if (feedback) feedback.hidden = true;
@@ -80,6 +101,15 @@ export function selectMedication(id) {
         button.setAttribute('aria-pressed', String(button.dataset.med === id));
     });
     updateMedicationDose();
+    // On short portrait screens, reveal the complete dose/review panel instead of
+    // leaving its inputs half hidden under the fixed confirmation button.
+    // Run only after a deliberate selection, never on a clock tick or while typing.
+    const body = document.querySelector('#med-modal .med-form-body');
+    const panel = document.getElementById('med-preview-panel');
+    if (body?.clientHeight && panel?.offsetHeight <= body.clientHeight) {
+        const overflow = panel.getBoundingClientRect().bottom - body.getBoundingClientRect().bottom;
+        if (overflow > 0) body.scrollTop += overflow + 2;
+    }
 }
 
 export function showMedModal() {
@@ -144,14 +174,20 @@ export function updateMedicationDose() {
     const range = !retrospective && ['EV', 'IO'].includes(route) ? weightRange(id, snapshot) : null;
     const weightField = document.getElementById('medication-weight-field');
     if (weightField) weightField.hidden = !range || range.hasWeight;
-    const text = retrospective ? 'Registro retrospectivo: informar o fato ocorrido; sem recomendação de nova dose.'
-        : route && !['EV', 'IO'].includes(route) ? 'Via fora do algoritmo IV/IO. Apenas documentar o fato e reavaliar; sem recomendação por esta via.'
-            : range ? (range.hasWeight ? `Faixa: ${range.min}–${range.max} mg (${range.dose}). Informe a dose administrada.` : 'Informe o peso para calcular a faixa. Não estime a dose.')
-            : entry?.status === 'due' ? `Dose padrão: ${entry.dose}.`
-                : entry?.status === 'not_due' && entry.secondsUntilDue > 0 ? 'Aguarde o intervalo. A próxima dose ainda não está indicada.'
-                    : reviewText.get(entry?.reason) || entry?.reason || 'Sem dose automática. Informe apenas o que foi administrado.';
+    const warning = !!id && (retrospective || !['EV', 'IO'].includes(route) || entry?.status !== 'due');
+    const text = !id ? '' : retrospective ? 'Registro anterior. Informe o horário real; não é indicação de nova dose.'
+        : route && !['EV', 'IO'].includes(route) ? 'Via fora do algoritmo. Apenas registro manual, sem sugestão de dose.'
+            : range ? (range.hasWeight ? `Faixa: ${range.min}–${range.max} mg (${snapshot.patient.weight} kg).` : 'Informe o peso. Não estime a dose.')
+            : entry?.status === 'due' ? (entry.number ? `${entry.number}ª dose` : '')
+                : selectionWarning(id, entry);
     const preview = document.getElementById('med-preview-value');
-    if (preview) preview.textContent = text;
+    if (preview) {
+        preview.hidden = !text;
+        preview.classList.toggle('is-warning', warning);
+        preview.setAttribute('role', warning ? 'alert' : 'status');
+        preview.setAttribute('aria-live', warning ? 'assertive' : 'polite');
+        if (preview.textContent !== text) preview.textContent = text;
+    }
     const name = document.getElementById('med-preview-name');
     if (name) name.textContent = medNames[id] || '';
     const panel = document.getElementById('med-preview-panel');
@@ -164,7 +200,6 @@ export function updateMedicationDose() {
     const editor = document.getElementById('medication-edit-details');
     if (editor) {
         editor.hidden = !id;
-        if (id && !quick && !rangeEntry) editor.open = true;
     }
     const effectiveField = document.getElementById('medication-effective-field');
     if (effectiveField) effectiveField.hidden = !retrospective;

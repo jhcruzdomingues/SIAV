@@ -955,17 +955,20 @@
                 <strong id="med-preview-name"></strong>
                 <p id="med-preview-value" aria-live="polite"></p>
                 <div class="med-dose-row">
-                    <div><label for="medication-dose">Dose aplicada</label>
+                    <div class="med-dose-field"><label for="medication-dose">Dose</label>
                         <div class="med-dose-input"><input type="number" id="medication-dose" min="0" step="any" inputmode="decimal" required><span id="medication-dose-unit">mg</span></div>
                     </div>
                     <fieldset class="med-route-field"><legend>Via</legend>
+                        <div class="med-route-options">
                         <label><input type="radio" id="route-ev" name="administration-route" value="EV" checked>EV</label>
                         <label><input type="radio" id="route-io" name="administration-route" value="IO">IO</label>
+                        </div>
                     </fieldset>
                 </div>
+                <label id="medication-review-confirmation" hidden><input type="checkbox" id="medication-confirmed">Revisei dose, via, horário e indicação do registro manual.</label>
             </div>
             <details id="medication-edit-details" hidden>
-                <summary>Editar unidade, horário ou registro manual</summary>
+                <summary>Alterar unidade, horário ou via</summary>
                 <label for="medication-unit">Unidade</label>
                 <select id="medication-unit"><option value="mg">mg</option><option value="g">g</option><option value="mEq">mEq</option></select>
                 <label for="medication-timing">Momento da administração</label>
@@ -975,7 +978,6 @@
                     <input type="datetime-local" id="medication-effective-at" step="1">
                 </div>
                 <label class="med-manual-route"><input type="radio" id="route-et" name="administration-route" value="ET">ET · registro manual, sem sugestão de dose</label>
-                <label id="medication-review-confirmation"><input type="checkbox" id="medication-confirmed">Conferi dose, via, horário e contexto do registro manual.</label>
             </details>
             <p id="medication-form-feedback" role="alert" hidden></p>
             </div>

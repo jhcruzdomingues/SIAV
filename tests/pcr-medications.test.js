@@ -104,7 +104,10 @@ describe('Regressões com módulos e HTML reais', () => {
         shock(); record('adrenalina', 1); shock();
         prepare(id, id === 'amiodarona' ? 300 : 100);
         const result = brain.evaluateMedicationGuidance(getClinicalSnapshot())[id];
-        expect(input('med-preview-value').textContent).toContain(result.dose);
+        if (id === 'amiodarona') {
+            expect(input('med-preview-value').textContent).toBe(`${result.number}ª dose`);
+            expect(input('medication-dose').value).toBe('300');
+        } else expect(input('med-preview-value').textContent).toContain('70–105 mg');
         expect(input('ac-primary-text').textContent).toContain(result.dose);
     });
     it('permite documentar dose fora do passo indicado, mas exige reavaliação posterior', () => {
@@ -126,7 +129,7 @@ describe('Regressões com módulos e HTML reais', () => {
         core.startCompressions(); rhythm.applyShockAndResume();
         expect(compressionCycle.currentPhase).toBe('rosc'); expect(state.shockCount).toBe(3);
         prepare('amiodarona', 300);
-        expect(input('med-preview-value').textContent).toContain('ROSC');
+        expect(input('med-preview-value').textContent).toContain('RCE');
         expect(input('med-preview-value').textContent).not.toContain('Orientação do passo atual');
     });
     it('nova PCR após ROSC exige transição explícita e preserva registros e contagem total', () => {
